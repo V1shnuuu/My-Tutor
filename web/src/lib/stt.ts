@@ -103,11 +103,13 @@ async function recordAndUpload(o: ListenOpts): Promise<ListenSession> {
       const lang = (r.language || "").slice(0, 2) as Lang;
       o.onFinal(r.text, ["ar", "en", "fr"].includes(lang) ? lang : null);
     } catch (e) {
-      if (e instanceof ApiError && (e.code === "stt_budget" || e.code === "stt_rpm") && WebSpeech) {
-        // Budget spent mid-session: tell the user and switch modes for next time.
-        o.onMode?.("browser");
-        o.onError("stt_failed");
-      } else o.onError("stt_failed");
+      // Whatever went wrong up there — budget spent, rate limited, the local model missing,
+      // their outage — server STT is not answering for this student right now. This
+      // utterance is lost either way (the audio can't be re-decoded here), so the win is
+      // telling the caller to stop routing to the server, which is what makes the next
+      // press of the mic work instead of failing the same way.
+      if (WebSpeech) o.onMode?.("browser");
+      o.onError(e instanceof ApiError && e.code === "stt_budget" ? "stt_unavailable" : "stt_failed");
     }
   };
   rec.start(250);

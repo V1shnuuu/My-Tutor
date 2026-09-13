@@ -48,6 +48,18 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     stt_daily_cap: int = 1900  # keep under Groq's 2 000/day free window
 
+    # Local STT — the same faster-whisper the ingest pipeline uses, for live questions.
+    # Reached only when Groq has no key or its daily budget is spent, and it keeps voice
+    # input working with no key, no quota and nothing leaving the machine. On Egyptian
+    # Arabic it beats the browser's recogniser, which is the other fallback.
+    # `small` int8 is the CPU-sane default (~1-2s for a short question on 4 cores);
+    # with a GPU set LOCAL_STT_MODEL=large-v3-turbo and LOCAL_STT_DEVICE=cuda.
+    local_stt_enabled: bool = True
+    local_stt_model: str = "small"
+    local_stt_device: str = "cpu"
+    local_stt_compute: str = "int8"
+    local_stt_concurrency: int = 1
+
     # Local model server — any OpenAI-compatible endpoint (Ollama, llama.cpp, vLLM).
     # Preferred over every cloud lane: no key, no quota, no daily cap. Set
     # LOCAL_LLM_ENABLED=false to fall back to the keyed providers only.

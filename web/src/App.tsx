@@ -180,7 +180,9 @@ export default function App() {
     session.current = await startListening({
       token, langHint: lang, serverAvailable: sttServer,
       onInterim: setInterim,
-      onMode: setSttMode,
+      // A mode switch is the STT layer reporting that the server lane is done for this
+      // session; drop serverAvailable too or every later attempt retries the same failure.
+      onMode: (m) => { setSttMode(m); if (m === "browser") setSttServer(false); },
       onFinal: (text, l) => {
         setListening(false); setInterim(""); session.current = null;
         if (l) setLang(l);
