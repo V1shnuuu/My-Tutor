@@ -1,3 +1,22 @@
 * text=auto eol=lf
+# Binary assets must never be EOL-normalised. `text=auto` only skips files with a NUL in
+# the first 8 KB — a .glb opens with a JSON chunk and would be treated as text, so list
+# every binary format explicitly.
 *.png binary
 *.npy binary
+*.glb binary
+*.gltf binary
+*.onnx binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.mp4 binary
+*.webm binary
+*.zip binary
+*.faiss binary
