@@ -28,6 +28,18 @@ class LiveAvatarError(RuntimeError):
         self.no_credits = no_credits
 
 
+def _json(r: httpx.Response) -> dict:
+    """Their errors are not always JSON (gateway HTML, empty 502s); surface the status
+    rather than letting a JSONDecodeError escape as an uninformative 500."""
+    try:
+        data = r.json()
+    except ValueError:
+        raise LiveAvatarError(f"LiveAvatar returned HTTP {r.status_code} (not JSON)") from None
+    if not isinstance(data, dict):
+        raise LiveAvatarError(f"LiveAvatar returned HTTP {r.status_code} (unexpected body)")
+    return data
+
+
 def _persona() -> dict:
     persona: dict = {}
     if settings.liveavatar_voice_id:
@@ -55,6 +67,12 @@ async def start_session(lang: str) -> dict:
             if e.no_credits and not sandbox:
                 return await _start_once(client, lang, True)
             raise
+        except httpx.HTTPError as e:
+            # Their cloud is unreachable (outage, DNS, egress policy, timeout). Without this
+            # the transport error escapes as a bare 500, which CORSMiddleware never gets to
+            # annotate — so the browser reports a misleading CORS failure and the panel can
+            # neither show the real reason nor fall back cleanly.
+            raise LiveAvatarError(f"LiveAvatar unreachable: {type(e).__name__}") from e
 
 
 async def _start_once(client: httpx.AsyncClient, lang: str, sandbox: bool) -> dict:
@@ -72,7 +90,7 @@ async def _start_once(client: httpx.AsyncClient, lang: str, sandbox: bool) -> di
         headers={"X-API-KEY": settings.liveavatar_api_key},
         json=body,
     )
-    data = r.json()
+    data = _json(r)
     if data.get("code") != 1000:
         msg = str(data.get("message", ""))
         raise LiveAvatarError(msg, no_credits="credit" in msg.lower())
@@ -83,7 +101,7 @@ async def _start_once(client: httpx.AsyncClient, lang: str, sandbox: bool) -> di
         headers={"Authorization": f"Bearer {session_token}"},
         json={},
     )
-    data = r.json()
+    data = _json(r)
     if data.get("code") != 1000:
         msg = str(data.get("message", ""))
         raise LiveAvatarError(msg, no_credits="credit" in msg.lower())
@@ -100,9 +118,14 @@ async def _start_once(client: httpx.AsyncClient, lang: str, sandbox: bool) -> di
 async def stop_session(session_id: str) -> None:
     if not settings.liveavatar_api_key:
         return
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        await client.post(
-            f"{API_BASE}/v1/sessions/stop",
-            headers={"X-API-KEY": settings.liveavatar_api_key},
-            json={"session_id": session_id, "reason": "USER_CLOSED"},
-        )
+    # Best-effort: the session also expires on its own, so a failure to tell them about it
+    # must not turn the caller's teardown into a 500.
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            await client.post(
+                f"{API_BASE}/v1/sessions/stop",
+                headers={"X-API-KEY": settings.liveavatar_api_key},
+                json={"session_id": session_id, "reason": "USER_CLOSED"},
+            )
+    except httpx.HTTPError:
+        pass

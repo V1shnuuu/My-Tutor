@@ -36,6 +36,12 @@ export default function App() {
   const [toast, setToast] = useState<string | null>(null);
   const [videoCollapsed, setVideoCollapsed] = useState(false);
   const [view, setView] = useState<"notebook" | "split">((getPref("view") as "notebook" | "split") || "split");
+  // LiveAvatar is an enhancement, never a dependency: a sandbox session stops itself after
+  // ~60s and a failed one never starts, so speech re-checks this before every sentence and
+  // falls back to Piper/the OS voice. `liveUp` is a ref because the streaming callbacks below
+  // are created once per send and must see the current value, not the one they closed over.
+  const liveUp = useRef(false);
+  const [liveDown, setLiveDown] = useState(false);
   const player = useRef<PlayerHandle>(null);
   const session = useRef<ListenSession | null>(null);
   const sentences = useRef<Map<number, string>>(new Map());
@@ -97,11 +103,18 @@ export default function App() {
 
   const getViseme = useCallback(() => speaker.current_viseme(), []);
 
+  const speaking = () => LIVE_AVATAR && liveUp.current;
+  // Interrupting an inactive engine is a no-op, so stop both rather than guessing which
+  // one is mid-sentence when a session drops.
+  const stopSpeech = useCallback(() => { liveAvatar.current?.interrupt(); speaker.stop(); }, []);
+  const onLiveReady = useCallback(() => { liveUp.current = true; setLiveDown(false); }, []);
+  const onLiveUnavailable = useCallback(() => { liveUp.current = false; setLiveDown(true); }, []);
+
   // ---- send a message and stream the answer
   const send = useCallback(async (text: string) => {
     if (!token || streaming) return;
     ensureUnlocked();
-    if (LIVE_AVATAR) liveAvatar.current?.interrupt(); else speaker.stop();
+    stopSpeech();
     sentences.current.clear();
     const userMsg: StoredMessage = { role: "user", content: text, lang, citations: [], ts: Date.now() };
     userMsg.id = await db.messages.add(userMsg);
@@ -110,7 +123,7 @@ export default function App() {
     setStreaming(true); setLive({ stage: "retrieving" });
     const history = messages.slice(-6).map((m) => ({ role: m.role, content: m.content }));
     const splitter = new SentenceSplitter((s) => {
-      if (LIVE_AVATAR) { liveAvatar.current?.speakText(s); return; }
+      if (speaking()) { liveAvatar.current?.speakText(s); return; }
       const id = speaker.enqueue(s, asst.lang);
       sentences.current.set(id, s);
     });
@@ -127,13 +140,18 @@ export default function App() {
         } else if (ev.type === "token") {
           content += ev.text; update({ content }); splitter.push(ev.text);
         } else if (ev.type === "replace") {
-          if (LIVE_AVATAR) liveAvatar.current?.interrupt(); else speaker.stop();
+          stopSpeech();
           content = ev.text; update({ content });
           for (const s of ev.text.split(/\n+/)) {
             if (!s.trim()) continue;
-            if (LIVE_AVATAR) liveAvatar.current?.speakText(s.trim());
+            if (speaking()) liveAvatar.current?.speakText(s.trim());
             else sentences.current.set(speaker.enqueue(s, asst.lang), s.trim());
           }
+        } else if (ev.type === "error") {
+          // The server gave up early (e.g. the encoder is unavailable). Say so in place of
+          // the empty answer bubble rather than leaving the student watching a spinner.
+          const msg = t("offline", lang);
+          asst.content = msg; update({ content: msg });
         } else if (ev.type === "done") {
           splitter.flush();
           asst.content = ev.answer || content; asst.source = ev.source;
@@ -157,7 +175,7 @@ export default function App() {
   const mic = useCallback(async () => {
     if (!token) return;
     ensureUnlocked();
-    if (LIVE_AVATAR) liveAvatar.current?.interrupt(); else speaker.stop();
+    stopSpeech();
     setInterim(""); setListening(true);
     session.current = await startListening({
       token, langHint: lang, serverAvailable: sttServer,
@@ -177,14 +195,14 @@ export default function App() {
   const stopMic = useCallback(() => session.current?.stop(), []);
 
   const jump = useCallback((c: Citation) => {
-    if (LIVE_AVATAR) liveAvatar.current?.interrupt(); else speaker.stop();
+    stopSpeech();
     setVideoCollapsed(false);
     setView("split"); setPref("view", "split");
     player.current?.jump(c.video_id, c.t);
     document.querySelector(".panel-video")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
 
-  const newChat = async () => { if (LIVE_AVATAR) liveAvatar.current?.interrupt(); else speaker.stop(); await db.messages.clear(); setMessages([{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]); };
+  const newChat = async () => { stopSpeech(); await db.messages.clear(); setMessages([{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]); };
   const toggleVoice = () => { ensureUnlocked(); const v = !voiceOn; setVoiceOn(v); setPref("voice", v ? "on" : "off"); };
 
   useEffect(() => { if (toast) { const id = setTimeout(() => setToast(null), 5000); return () => clearTimeout(id); } }, [toast]);
@@ -228,13 +246,19 @@ export default function App() {
 
   const avatar = (
     <section className="panel panel-avatar" aria-label={t("avatar_label", lang)}>
-      {LIVE_AVATAR ? (
+      {/* Once the session is gone, swap the dead <video> for the local face: it lip-syncs the
+          Piper/OS voice that speech has already fallen back to, so the tutor keeps a talking
+          head instead of an error caption. Not re-mounted afterwards — a sandbox session
+          cannot be resumed, and retrying would loop. */}
+      {LIVE_AVATAR && !liveDown ? (
         <LiveAvatarPanel
           ref={liveAvatar}
           token={token}
           lang={lang}
           label={t("avatar_label", lang)}
           onState={(s) => setSpeakerState(s === "speaking" ? "speaking" : "idle")}
+          onReady={onLiveReady}
+          onUnavailable={onLiveUnavailable}
         />
       ) : (
         <Avatar state={avatarState} getViseme={getViseme} label={t("avatar_label", lang)} stateLabel={t(`state_${avatarState}` as const, lang)} muteLabel={t("enable_voice", lang)} onUnmute={() => { ensureUnlocked(); if (!voiceOn) toggleVoice(); }} />
