@@ -35,6 +35,7 @@ export default function App() {
   const [budget, setBudget] = useState<{ used: number; cap: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [videoCollapsed, setVideoCollapsed] = useState(false);
+  const [view, setView] = useState<"notebook" | "split">((getPref("view") as "notebook" | "split") || "split");
   const player = useRef<PlayerHandle>(null);
   const session = useRef<ListenSession | null>(null);
   const sentences = useRef<Map<number, string>>(new Map());
@@ -77,6 +78,17 @@ export default function App() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
   useEffect(() => { document.documentElement.dir = dirOf(lang); document.documentElement.lang = lang; }, [lang]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "t" && e.key !== "T") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || /^(input|textarea|select)$/i.test(el.tagName))) return;
+      setView((v) => { const next = v === "split" ? "notebook" : "split"; setPref("view", next); return next; });
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const ensureUnlocked = useCallback(() => {
     if (!isUnlocked()) setUnlocked(unlockAudio());
@@ -167,6 +179,7 @@ export default function App() {
   const jump = useCallback((c: Citation) => {
     if (LIVE_AVATAR) liveAvatar.current?.interrupt(); else speaker.stop();
     setVideoCollapsed(false);
+    setView("split"); setPref("view", "split");
     player.current?.jump(c.video_id, c.t);
     document.querySelector(".panel-video")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
@@ -195,6 +208,17 @@ export default function App() {
       {voiceOn && engine === "none" && <span className="pill warn" title="No voice for this language on this device or server">{lang} voice ✗</span>}
       {voiceOn && engine === "server" && <span className="pill" title="Server voice (Piper)">🗣 piper</span>}
       <span className="pill"><button onClick={newChat}>{t("new_chat", lang)}</button></span>
+      <span className="viewtoggle">
+        <span className="label">{t("view", lang)}</span>
+        <span className="segmented" role="group" aria-label={t("view", lang)}>
+          {(["notebook", "split"] as const).map((v) => (
+            <button key={v} aria-pressed={view === v} onClick={() => { setView(v); setPref("view", v); }}>
+              {t(v === "notebook" ? "view_notebook" : "view_split", lang)}
+            </button>
+          ))}
+        </span>
+        <span className="kbd-hint">{t("view_hint", lang)}</span>
+      </span>
       <span className="pill">
         {(["ar", "en", "fr"] as Lang[]).map((l) => <button key={l} onClick={() => { setLang(l); setPref("lang", l); }} style={{ fontWeight: l === lang ? 700 : 400 }}>{l.toUpperCase()}</button>)}
       </span>
@@ -224,7 +248,7 @@ export default function App() {
   );
 
   return (
-    <div className="app" lang={lang}>
+    <div className={`app view-${view}`} lang={lang}>
       <div className={`top ${videoCollapsed ? "video-collapsed" : ""}`} >
         {avatar}
         {video}
