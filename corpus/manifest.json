@@ -1,0 +1,15 @@
+{
+  "corpus_version": "5e5e523d66",
+  "videos": [
+    {
+      "id": "sample-6006-l01",
+      "title": "Sample — MIT 6.006 Lecture 1: Algorithmic Thinking, Peak Finding",
+      "source": "youtube",
+      "youtube_id": "HtSuA80QTyo",
+      "url": null,
+      "duration": 3201.65,
+      "lang": "en",
+      "week": 1
+    }
+  ]
+}

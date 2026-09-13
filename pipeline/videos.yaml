@@ -1,0 +1,10 @@
+# Course video registry. Add an entry, run `python pipeline/ingest.py`, commit corpus/.
+# SAMPLE entries below (MIT OpenCourseWare, CC BY-NC-SA) — replace with the course's own videos.
+videos:
+  - id: sample-6006-l01
+    title: "Sample — MIT 6.006 Lecture 1: Algorithmic Thinking, Peak Finding"
+    source: youtube
+    youtube_id: HtSuA80QTyo
+    transcript: auto
+    lang: en
+    week: 1

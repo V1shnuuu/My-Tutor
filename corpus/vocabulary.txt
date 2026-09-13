@@ -1,0 +1,2 @@
+Adaptive Tutor course vocabulary (used as the Whisper prompt to improve recognition of technical terms).
+algorithm, complexity, big O, peak finding, binary search, recursion, induction, asymptotic, linear, logarithmic, divide and conquer, matrix, array, index, invariant
