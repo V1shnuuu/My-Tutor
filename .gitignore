@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+!.env.example
+core/data/
+corpus/cache/
+corpus/media/
+pipeline/.work/
+*.log
+.DS_Store
