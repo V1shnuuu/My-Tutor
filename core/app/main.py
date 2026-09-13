@@ -46,6 +46,14 @@ def _startup() -> None:
         embed_queries(["warmup"])
     except Exception as e:  # model download may be pending on first boot
         print("embedding warmup failed:", e)
+    # Warm server voices so the first spoken answer does not pay the ONNX load.
+    for lang, ok in tts.availability().items():
+        if ok:
+            try:
+                tts._load(lang)
+                tts.prepare_text("warmup", lang)
+            except Exception as e:
+                print("tts warmup failed:", lang, e)
 
 
 # ---------------------------------------------------------------- health / meta
