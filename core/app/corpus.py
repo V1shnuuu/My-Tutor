@@ -70,6 +70,7 @@ class Corpus:
         self.vecs: np.ndarray = np.zeros((0, 768), dtype=np.float32)
         self._bm25 = None
         self._by_id: dict[str, int] = {}
+        self.shard_mtimes: dict[str, float] = {}
 
     # ---- loading -------------------------------------------------------------
     def load(self) -> None:
@@ -80,11 +81,13 @@ class Corpus:
         videos = {v["id"]: Video(**{k: v.get(k) for k in Video.__dataclass_fields__}) for v in manifest["videos"]}
         chunks: list[Chunk] = []
         mats: list[np.ndarray] = []
+        mtimes: dict[str, float] = {}
         for vid in videos:
             cpath = self.root / "index" / f"{vid}.chunks.jsonl"
             vpath = self.root / "index" / f"{vid}.vecs.npy"
             if not (cpath.exists() and vpath.exists()):
                 continue
+            mtimes[vid] = max(cpath.stat().st_mtime, vpath.stat().st_mtime)
             rows = [json.loads(l) for l in cpath.read_text(encoding="utf-8").splitlines() if l.strip()]
             m = np.load(vpath).astype(np.float32)
             if len(rows) != m.shape[0]:
@@ -105,6 +108,7 @@ class Corpus:
             self.vecs = vecs
             self._bm25 = bm25
             self._by_id = {c.chunk_id: i for i, c in enumerate(chunks)}
+            self.shard_mtimes = mtimes
 
     @property
     def size(self) -> int:

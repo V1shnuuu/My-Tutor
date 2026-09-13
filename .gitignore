@@ -12,3 +12,4 @@ corpus/media/
 pipeline/.work/
 *.log
 .DS_Store
+infra/.env

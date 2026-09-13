@@ -1,0 +1,36 @@
+# Transcribe + index new/changed videos on free GitHub Actions CPU, commit the shards,
+# and hot-reload the running core. Bulk first-time transcription is better done on Kaggle GPU
+# (see README) — this job is for clips added during the term.
+name: ingest
+on:
+  push:
+    branches: [main]
+    paths: ["pipeline/videos.yaml", "pipeline/ingest.py", "corpus/vocabulary.txt", "corpus/transcripts/*.vtt"]
+  workflow_dispatch:
+    inputs:
+      force: { description: "Re-transcribe everything", type: boolean, default: false }
+concurrency: { group: ingest, cancel-in-progress: false }
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - run: pip install --extra-index-url https://download.pytorch.org/whl/cpu "torch>=2.4,<2.6" && pip install -r pipeline/requirements.txt
+      - name: Ingest
+        env: { WHISPER_MODEL: large-v3-turbo }
+        run: python pipeline/ingest.py ${{ inputs.force && '--force' || '' }}
+      - name: Offline eval (must pass before the corpus ships)
+        run: python eval/run_eval.py --json eval/last_report.json
+      - name: Commit corpus
+        run: |
+          git config user.name "tutor-bot" && git config user.email "tutor-bot@users.noreply.github.com"
+          git add corpus eval/last_report.json
+          git diff --cached --quiet || git commit -m "corpus: ingest $(date -u +%F)" && git push
+      - name: Hot-reload core
+        if: ${{ secrets.CORE_URL != '' }}
+        run: curl -fsS -X POST "${{ secrets.CORE_URL }}/admin/reload" -H "x-admin-token: ${{ secrets.ADMIN_TOKEN }}"

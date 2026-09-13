@@ -1,0 +1,10 @@
+# Continuous SQLite replication to Cloudflare R2 (free 10 GB). Restore: litestream restore -config /etc/litestream.yml /data/tutor.sqlite
+dbs:
+  - path: /data/tutor.sqlite
+    replicas:
+      - type: s3
+        bucket: ${R2_BUCKET}
+        path: tutor
+        endpoint: ${R2_ENDPOINT}     # https://<account_id>.r2.cloudflarestorage.com
+        region: auto
+        sync-interval: 10s

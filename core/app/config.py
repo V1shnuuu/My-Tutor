@@ -31,9 +31,9 @@ class Settings(BaseSettings):
 
     # Retrieval / gating
     top_k: int = 6
-    gate_threshold_ar: float = 0.78
+    gate_threshold_ar: float = 0.77
     gate_threshold_en: float = 0.80
-    gate_threshold_fr: float = 0.80
+    gate_threshold_fr: float = 0.78
     cache_threshold: float = 0.95
 
     # Fair share per student

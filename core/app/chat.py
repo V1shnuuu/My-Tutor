@@ -22,6 +22,7 @@ from .config import settings
 from .corpus import Hit, corpus
 from .db import log_event
 from .embed import embed_queries
+from .guard import is_blocked
 from .lang import detect, transliterate_arabizi
 from .router import ProviderError, router
 
@@ -124,6 +125,14 @@ async def run_chat(student_id: str, message: str, history: list[dict], prev_lang
     det = detect(message, prev_lang)
     lang = det.lang
     yield sse({"type": "meta", "lang": lang, "arabizi": det.arabizi, "budget": budget})
+    if is_blocked(message):
+        answer = REFUSAL[lang]
+        yield sse({"type": "status", "stage": "refusal"})
+        for piece in chunk_text(answer):
+            yield sse({"type": "token", "text": piece})
+        log_event("gate_refuse", lang, int((time.time() - t0) * 1000), f"{student_id} blocked")
+        yield sse({"type": "done", "answer": answer, "source": "refusal", "ms": int((time.time() - t0) * 1000)})
+        return
     yield sse({"type": "status", "stage": "retrieving"})
 
     # ---- embed (+ Arabizi transliteration widens retrieval) ----

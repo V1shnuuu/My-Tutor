@@ -98,7 +98,8 @@ def yt_auto_captions(youtube_id: str, lang: str, out_dir: Path) -> Path:
     }
     with yt_dlp.YoutubeDL(opts) as ydl:
         ydl.download([f"https://www.youtube.com/watch?v={youtube_id}"])
-    cands = sorted(out_dir.glob(f"{youtube_id}*.vtt"))
+    prefer = [out_dir / f"{youtube_id}.{lang}.vtt", out_dir / f"{youtube_id}.{lang}-orig.vtt"]
+    cands = [p for p in prefer if p.exists()] or sorted(out_dir.glob(f"{youtube_id}.{lang}*.vtt"))
     if not cands:
         raise RuntimeError(f"no captions found for {youtube_id} ({lang})")
     return cands[0]
@@ -312,7 +313,8 @@ def write_manifest(videos: list[dict]) -> None:
         if not meta_path.exists():
             continue
         meta = json.loads(meta_path.read_text(encoding="utf-8"))
-        parts.append(f"{v['id']}:{meta['fingerprint']}")
+        chunks_sha = hashlib.sha256((idx / f"{v['id']}.chunks.jsonl").read_bytes()).hexdigest()[:8]
+        parts.append(f"{v['id']}:{meta['fingerprint']}:{chunks_sha}")
         entries.append({
             "id": v["id"], "title": v.get("title", v["id"]), "source": v.get("source", "youtube"),
             "youtube_id": v.get("youtube_id"), "url": v.get("url"), "duration": meta.get("duration"),

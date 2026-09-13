@@ -1,0 +1,35 @@
+# VM deployment: core API + Cloudflare Tunnel (no open inbound ports) + Litestream backups to R2.
+# 1. Copy core/.env.example → core/.env and fill keys.   2. Put TUNNEL_TOKEN in infra/.env.
+# 3. docker compose -f infra/docker-compose.yml up -d --build
+services:
+  core:
+    build: { context: .., dockerfile: core/Dockerfile }
+    env_file: ../core/.env
+    environment:
+      - DATA_DIR=/data
+      - CORPUS_DIR=/srv/corpus
+    volumes:
+      - tutor-data:/data
+      - ../corpus:/srv/corpus:ro
+    restart: unless-stopped
+    ports: ["127.0.0.1:8000:8000"]   # local only; the Tunnel reaches it over the compose network
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    depends_on: [core]
+    restart: unless-stopped
+
+  litestream:
+    image: litestream/litestream:latest
+    command: replicate -config /etc/litestream.yml
+    volumes:
+      - tutor-data:/data
+      - ./litestream.yml:/etc/litestream.yml:ro
+    env_file: ./.env      # LITESTREAM_ACCESS_KEY_ID / LITESTREAM_SECRET_ACCESS_KEY (R2)
+    restart: unless-stopped
+
+volumes:
+  tutor-data:

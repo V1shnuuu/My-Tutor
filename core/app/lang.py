@@ -8,7 +8,9 @@ from dataclasses import dataclass
 
 ARABIC_RE = re.compile(r"[؀-ۿݐ-ݿ]")
 LATIN_RE = re.compile(r"[A-Za-zÀ-ÿ]")
-ARABIZI_DIGIT_RE = re.compile(r"(?i)\b[a-z]*[23579][a-z]+\b|\b[a-z]+[23579][a-z]*\b")
+# Arabizi digit-letters: lowercase words with a digit *inside* (ta3reef, ma3lesh) or digit-initial
+# with ≥3 letters (3ayez). Case-sensitive on purpose so "2D", "3D", "H2O" are not read as Arabizi.
+ARABIZI_DIGIT_RE = re.compile(r"\b[a-z]{2,}[23579][a-z]+\b|\b[23579][a-z]{3,}\b")
 
 # Egyptian Arabizi function words / very common tokens (Latin script).
 ARABIZI_LEX = {
@@ -58,7 +60,10 @@ def detect(text: str, previous: str | None = None) -> Detected:
     letters = arabic + latin
     if letters == 0:
         return Detected(previous or "en", confidence=0.0)
-    if arabic / letters > 0.3:
+    arabic_words = len(re.findall(r"[؀-ۿ]{2,}", t))
+    # Egyptian tech-speak frames English terms with Arabic grammar ("worst case بتاع greedy ascent هو ... صح؟"):
+    # two or more Arabic words, or a fifth of the letters, makes the message Arabic.
+    if arabic / letters > 0.2 or arabic_words >= 2:
         return Detected("ar")
 
     tokens = re.findall(r"(?i)[a-zà-ÿ0-9']+", t.lower())
@@ -70,7 +75,7 @@ def detect(text: str, previous: str | None = None) -> Detected:
     arz_hits = sum(1 for w in tokens if w in ARABIZI_LEX)
     en_hits = sum(1 for w in tokens if w in EN_LEX)
     fr_hits = sum(1 for w in tokens if w in FR_LEX)
-    if digit_words >= 1 or (arz_hits >= 2 and arz_hits > max(en_hits, fr_hits)):
+    if digit_words >= 2 or (digit_words >= 1 and arz_hits >= 1) or (arz_hits >= 2 and arz_hits > max(en_hits, fr_hits)):
         return Detected("ar", arabizi=True, confidence=0.8)
     if arz_hits >= 1 and en_hits == 0 and fr_hits == 0 and len(tokens) <= 3:
         return Detected("ar", arabizi=True, confidence=0.6)

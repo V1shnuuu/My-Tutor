@@ -181,17 +181,12 @@ def admin_codes(request: Request, n: int = 0, labels: UploadFile | None = File(N
 def admin_reload(request: Request):
     """Hot-swap the corpus after the pipeline commits new shards; evict cache for changed videos."""
     auth.require_admin(request)
-    before = {vid: _shard_mtime(vid) for vid in corpus.videos}
+    before = dict(corpus.shard_mtimes)
     corpus.load()
-    changed = [vid for vid in corpus.videos if before.get(vid) != _shard_mtime(vid)]
+    changed = [vid for vid, m in corpus.shard_mtimes.items() if before.get(vid) != m] + [vid for vid in before if vid not in corpus.shard_mtimes]
     evicted = semantic_cache.evict_videos(changed)
     semantic_cache.load(corpus.version)
     return {"corpus_version": corpus.version, "chunks": corpus.size, "changed": changed, "cache_evicted": evicted}
-
-
-def _shard_mtime(vid: str) -> float | None:
-    p = settings.corpus_dir / "index" / f"{vid}.vecs.npy"
-    return p.stat().st_mtime if p.exists() else None
 
 
 @app.get("/admin/status")
