@@ -193,7 +193,7 @@ def write_vtt(cues: list[dict], path: Path) -> None:
     lines = ["WEBVTT", ""]
     for c in cues:
         lines += [f"{_fmt(c['start'])} --> {_fmt(c['end'])}", c["text"], ""]
-    path.write_text("\n".join(lines), encoding="utf-8")
+    path.write_text("\n".join(lines), encoding="utf-8", newline="\n")
 
 
 # ------------------------------------------------------------------ chunking
@@ -281,7 +281,7 @@ def ingest_video(v: dict, vocab: str, force: bool) -> bool:
 
     vecs = embed_passages([c["text"] for c in chunks])
     np.save(idx / f"{vid}.vecs.npy", vecs)
-    with open(idx / f"{vid}.chunks.jsonl", "w", encoding="utf-8") as f:
+    with open(idx / f"{vid}.chunks.jsonl", "w", encoding="utf-8", newline="\n") as f:
         for c in chunks:
             f.write(json.dumps(c, ensure_ascii=False) + "\n")
     meta_path.write_text(json.dumps({
@@ -321,7 +321,7 @@ def write_manifest(videos: list[dict]) -> None:
             "lang": v.get("lang"), "week": v.get("week"),
         })
     version = hashlib.sha256("|".join(sorted(parts)).encode()).hexdigest()[:10]
-    (CORPUS / "manifest.json").write_text(json.dumps({"corpus_version": version, "videos": entries}, ensure_ascii=False, indent=2), encoding="utf-8")
+    (CORPUS / "manifest.json").write_text(json.dumps({"corpus_version": version, "videos": entries}, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
     print(f"manifest: {len(entries)} videos, corpus_version={version}")
 
 
