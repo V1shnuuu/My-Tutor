@@ -20,6 +20,8 @@ jobs:
         with: { python-version: "3.12", cache: pip }
       - run: pip install --extra-index-url https://download.pytorch.org/whl/cpu "torch>=2.4,<2.6" && pip install -r core/requirements.txt
       - run: python -c "import compileall,sys; sys.exit(0 if compileall.compile_dir('core/app', quiet=1) else 1)"
+      - name: Tests
+        run: pip install pytest && python -m pytest
       - name: RAG eval gate
         run: python eval/run_eval.py
   image:
