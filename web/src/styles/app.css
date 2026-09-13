@@ -12,13 +12,21 @@
   --accent-ink: #ffffff;
   --highlighter: #fff3a3;
   --highlighter-ink: #4a3d00;
+  /* Display ink: headings, brand and nav are written in navy, the way a pen
+     differs from the printed rule it sits on. */
+  --ink-display: #1b3b6f;
+  --hole: #e2ded1;
+  --hole-edge: #cdc7b6;
   --ok: #1f7a4d;
   --warn: #9a6700;
   --danger: #b42318;
   --shadow: 0 1px 2px rgba(31, 41, 51, 0.08), 0 6px 18px rgba(31, 41, 51, 0.06);
   --lh: 28px;
   --radius: 10px;
-  --font-body: "Inter", "Cairo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Everything Latin is handwritten: Patrick Hand for running text and UI,
+     Caveat for display. Arabic keeps Cairo — no handwriting face reads well
+     at this size in Arabic, and legibility wins over the conceit. */
+  --font-body: "Patrick Hand", "Inter", "Cairo", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-hand: "Caveat", "Patrick Hand", cursive;
   --font-ar: "Cairo", "IBM Plex Sans Arabic", "Noto Naskh Arabic", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
@@ -39,6 +47,9 @@
     --highlighter: #4a4118;
     --highlighter-ink: #ffe98a;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35);
+    --ink-display: #9dc0ef;
+    --hole: #0e1215;
+    --hole-edge: #333d45;
     color-scheme: dark;
   }
 }
@@ -56,6 +67,9 @@
   --highlighter: #4a4118;
   --highlighter-ink: #ffe98a;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 18px rgba(0, 0, 0, 0.35);
+  --ink-display: #9dc0ef;
+  --hole: #0e1215;
+  --hole-edge: #333d45;
   color-scheme: dark;
 }
 
@@ -65,7 +79,7 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font: 400 16px/var(--lh) var(--font-body);
+  font: 400 17px/var(--lh) var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 :lang(ar), [lang="ar"] { font-family: var(--font-ar); line-height: 1.9; }
@@ -87,16 +101,26 @@ button { cursor: pointer; }
     "chat chat";
   gap: 12px;
   padding: 12px;
+  padding-inline-start: 46px;
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(transparent 0 calc(var(--lh) - 1px), var(--rule-2) calc(var(--lh) - 1px) var(--lh));
+  position: relative;
+}
+/* Punched holes down the binding edge of the page. */
+.app::before {
+  content: ""; position: absolute; inset-block: 0; inset-inline-start: 15px; width: 14px;
+  background-image: radial-gradient(circle at 50% 50%, var(--hole) 5.5px, var(--hole-edge) 6px, transparent 6.5px);
+  background-size: 100% 76px; background-position: 0 30px; background-repeat: repeat-y;
+  pointer-events: none; z-index: 1;
 }
 .panel-avatar { grid-area: avatar; }
 .panel-video { grid-area: video; }
 .panel-chat { grid-area: chat; min-height: 0; display: flex; flex-direction: column; }
 .panel-chat .topbar { flex: none; }
 .panel {
-  background: var(--paper-2);
-  border: 1px solid var(--rule);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
   min-width: 0;
   min-height: 0;
   position: relative;
@@ -112,10 +136,13 @@ button { cursor: pointer; }
     grid-template-areas: "top" "chat";
     gap: 8px;
     padding: 8px;
+    padding-inline-start: 8px;
     padding-bottom: calc(8px + env(safe-area-inset-bottom));
   }
+  .app::before { display: none; }
   .top { grid-area: top; display: grid !important; grid-template-columns: 96px minmax(0, 1fr); gap: 8px; }
   .panel-avatar { grid-area: auto; height: 96px; }
+  .panel-avatar .mute-badge, .panel-avatar .avatar-state { display: none; }
   .panel-video { grid-area: auto; }
   .video { grid-template-rows: auto auto; height: auto; }
   .video-stage { aspect-ratio: 16 / 9; }
@@ -131,18 +158,61 @@ button { cursor: pointer; }
 /* ---------------- top bar ---------------- */
 .topbar {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  padding: 6px 10px; border-bottom: 1px solid var(--rule); background: var(--paper-2);
-  font-size: 13px; color: var(--ink-2);
+  padding: 8px 10px 10px; border-bottom: 1px solid var(--rule); background: transparent;
+  font-size: 14px; color: var(--ink-2);
 }
-.topbar .brand { font: 600 22px/1 var(--font-hand); color: var(--ink); margin-inline-end: auto; }
-.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); font-size: 12.5px; }
+.topbar .brand {
+  font: 700 30px/1 var(--font-hand); color: var(--ink-display); margin-inline-end: auto;
+  position: relative; padding-block-end: 4px;
+}
+.topbar .brand::after {
+  content: ""; position: absolute; inset-inline: 2px 14%; inset-block-end: -2px; height: 3px;
+  background: var(--margin); border-radius: 999px; transform: rotate(-0.6deg);
+}
+.pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 12px; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); font-size: 14px; }
 .pill.ok { color: var(--ok); }
 .pill.warn { color: var(--warn); }
 .pill.danger { color: var(--danger); }
 .pill button, .btn-ghost { background: none; border: 0; padding: 0 2px; color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
+/* ---------------- view toggle ---------------- */
+.viewtoggle { display: inline-flex; align-items: center; gap: 8px; }
+.viewtoggle .label { color: var(--ink-3); font-size: 13.5px; }
+.segmented {
+  display: inline-flex; padding: 3px; border: 1px solid var(--rule); border-radius: 999px;
+  background: var(--paper-2);
+}
+.segmented button {
+  border: 0; border-radius: 999px; padding: 3px 16px; background: none; color: var(--ink-2);
+  font: 700 17px/1.4 var(--font-hand);
+}
+/* The active view is highlighted the way you'd swipe a marker over it. */
+.segmented button[aria-pressed="true"] { background: var(--highlighter); color: var(--highlighter-ink); }
+.kbd-hint {
+  border: 1px dashed var(--rule); border-radius: 8px; padding: 2px 10px;
+  color: var(--ink-3); font-size: 13px; white-space: nowrap;
+}
+@media (max-width: 767px) { .viewtoggle .label, .kbd-hint { display: none; } }
+
+/* Notebook view: the page is only the chat, so the video keeps playing audio
+   in a strip and the avatar steps aside. */
+.app.view-notebook {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "top" "chat";
+}
+.app.view-notebook .top { grid-area: top; display: grid !important; grid-template-columns: 84px minmax(0, 1fr); gap: 8px; }
+.app.view-notebook .panel-avatar { grid-area: auto; height: 84px; }
+.app.view-notebook .panel-video { grid-area: auto; height: 84px; }
+.app.view-notebook .video { grid-template-rows: minmax(0, 1fr) auto; }
+/* At strip height the badge and state caption would cover the face they
+   annotate; the topbar's own voice pill still offers the same action. */
+.app.view-notebook .mute-badge, .app.view-notebook .avatar-state { display: none; }
+.app.view-notebook .video-title { display: none; }
+
 /* ---------------- avatar ---------------- */
-.avatar-wrap { width: 100%; height: 100%; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 30%, var(--paper) 0%, var(--paper-2) 70%); }
+/* Transparent so the page's ruling runs behind the face, as if drawn on it. */
+.avatar-wrap { width: 100%; height: 100%; display: grid; place-items: center; background: transparent; }
 /* 2D face and 3D canvas stack in the same cell so the swap on load does not reflow. */
 .avatar-wrap > svg, .avatar-3d { grid-area: 1 / 1; }
 .avatar-wrap svg { width: min(100%, 100%); height: 100%; max-height: 100%; }
@@ -175,21 +245,14 @@ button { cursor: pointer; }
 /* ---------------- chat ---------------- */
 .chat { display: grid; grid-template-rows: minmax(0, 1fr) auto auto; flex: 1; min-height: 0; }
 .messages {
-  overflow-y: auto; padding: 8px 16px 8px 56px;
+  overflow-y: auto; padding: 8px 16px 8px 26px;
   background-color: var(--paper);
   background-image: repeating-linear-gradient(transparent 0 calc(var(--lh) - 1px), var(--rule-2) calc(var(--lh) - 1px) var(--lh));
   background-attachment: local;
   border-inline-start: 2px solid var(--margin);
-  margin-inline-start: 40px;
   position: relative;
 }
-.messages::before {
-  content: ""; position: absolute; inset-block: 0; inset-inline-start: -22px; width: 7px;
-  background-image: radial-gradient(circle, var(--rule) 3px, transparent 3.5px);
-  background-size: 100% 34px; background-position: 0 14px; background-repeat: repeat-y;
-  pointer-events: none;
-}
-@media (max-width: 767px) { .messages { margin-inline-start: 20px; padding-inline-start: 14px; } .messages::before { display: none; } }
+@media (max-width: 767px) { .messages { padding-inline-start: 14px; } }
 .msg { max-width: min(78ch, 100%); margin: 8px 0 14px; position: relative; }
 .msg.user { margin-inline-start: auto; }
 .msg .bubble {
@@ -203,7 +266,7 @@ button { cursor: pointer; }
 .cite {
   display: inline-flex; align-items: center; gap: 4px; margin: 0 2px; padding: 0 8px; border-radius: 999px;
   background: var(--highlighter); color: var(--highlighter-ink); border: 1px solid color-mix(in srgb, var(--highlighter-ink) 25%, transparent);
-  font: 600 12px/20px var(--font-body); vertical-align: middle; cursor: pointer; direction: ltr;
+  font: 400 14px/20px var(--font-body); vertical-align: middle; cursor: pointer; direction: ltr;
 }
 .cite:hover { filter: brightness(0.95); }
 .cite .t { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
@@ -214,10 +277,10 @@ button { cursor: pointer; }
 
 .composer { display: flex; gap: 8px; align-items: flex-end; padding: 10px 12px; border-top: 1px solid var(--rule); background: var(--paper-2); }
 .composer textarea {
-  flex: 1; resize: none; min-height: 44px; max-height: 140px; padding: 9px 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); line-height: 1.5;
+  flex: 1; resize: none; min-height: 48px; max-height: 140px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); line-height: 1.6;
   unicode-bidi: plaintext;
 }
-.composer .btn { border: 1px solid var(--rule); background: var(--paper); border-radius: 10px; width: 44px; height: 44px; display: grid; place-items: center; font-size: 18px; }
+.composer .btn { border: 1px solid var(--rule); background: var(--paper); border-radius: 10px; width: 48px; height: 48px; display: grid; place-items: center; font-size: 18px; }
 .composer .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 .composer .btn.rec { background: var(--danger); color: #fff; border-color: transparent; animation: pulse 1s ease-in-out infinite; }
 .composer .btn:disabled { opacity: .5; cursor: default; }
@@ -227,9 +290,13 @@ button { cursor: pointer; }
 [dir="rtl"] .icon-dir { transform: scaleX(-1); }
 
 /* ---------------- login / onboarding ---------------- */
-.login { min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: var(--paper); }
+.login {
+  min-height: 100dvh; display: grid; place-items: center; padding: 24px;
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(transparent 0 calc(var(--lh) - 1px), var(--rule-2) calc(var(--lh) - 1px) var(--lh));
+}
 .card { width: min(440px, 100%); background: var(--paper-2); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--shadow); padding: 28px; }
-.card h1 { font: 600 40px/1 var(--font-hand); margin: 0 0 6px; position: relative; display: inline-block; }
+.card h1 { font: 700 44px/1 var(--font-hand); color: var(--ink-display); margin: 0 0 6px; position: relative; display: inline-block; }
 .card h1::after {
   content: ""; position: absolute; inset-inline-start: 2px; inset-block-end: -6px; width: 78%; height: 6px;
   background: var(--margin); border-radius: 999px; transform: rotate(-1deg);
@@ -241,3 +308,9 @@ button { cursor: pointer; }
 .lang-row { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
 .lang-row button { border: 1px solid var(--rule); background: var(--paper); border-radius: 999px; padding: 2px 12px; font-size: 13px; }
 .lang-row button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+/* Last, so it wins over the base .composer rule above: at phone width the
+   placeholder wraps to two lines and must not be clipped. */
+@media (max-width: 767px) {
+  .composer textarea { min-height: 58px; }
+}

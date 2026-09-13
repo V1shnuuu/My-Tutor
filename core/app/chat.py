@@ -21,7 +21,7 @@ from .cache import semantic_cache
 from .config import settings
 from .corpus import Hit, corpus
 from .db import log_event
-from .embed import embed_queries
+from .embed import EmbeddingUnavailable, embed_queries
 from .guard import is_blocked
 from .lang import detect, transliterate_arabizi
 from .router import ProviderError, router
@@ -139,7 +139,15 @@ async def run_chat(student_id: str, message: str, history: list[dict], prev_lang
     queries = [message]
     if det.arabizi:
         queries.append(transliterate_arabizi(message))
-    qvecs = await asyncio.to_thread(embed_queries, queries)
+    try:
+        qvecs = await asyncio.to_thread(embed_queries, queries)
+    except EmbeddingUnavailable as e:
+        # Retrieval is dense-first and the dense score is also the gate signal, so there is no
+        # honest degraded answer to give here — say so at once instead of hanging or refusing
+        # every question as off-topic.
+        log_event("embed_unavailable", lang, int((time.time() - t0) * 1000), str(e))
+        yield sse({"type": "error", "code": "embeddings_unavailable"})
+        return
     qvec = qvecs[0]
 
     # ---- semantic cache ----
