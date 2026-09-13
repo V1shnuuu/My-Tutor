@@ -10,7 +10,8 @@ videos.yaml entry:
     title: "Lecture 1 — Intro"
     source: youtube                # youtube | file
     youtube_id: ZA-tUyM_y7s        # for source: youtube
-    url: https://.../lec01.mp4     # for source: file (served to the player)
+    url: /media/lec01.mp4          # for source: file — what the BROWSER plays (served from web/public)
+    file: D:/clips/lec01.mp4       # optional — where the clip is on the machine running ingest
     transcript: whisper            # whisper | auto (YouTube captions) | file
     transcript_file: path.vtt      # for transcript: file
     lang: en                       # hint for Whisper / caption language (ar, en, fr)
@@ -42,6 +43,7 @@ sys.path.insert(0, str(ROOT / "core"))
 CORPUS = ROOT / "corpus"
 WORK = ROOT / "pipeline" / ".work"
 VIDEOS_YAML = ROOT / "pipeline" / "videos.yaml"
+WEB_PUBLIC = ROOT / "web" / "public"
 
 TARGET_S, MIN_S, MAX_S, OVERLAP_S = 60.0, 30.0, 90.0, 15.0
 
@@ -236,7 +238,7 @@ def chunk_cues(cues: list[dict], video_id: str) -> list[dict]:
 
 # ------------------------------------------------------------------ driver
 def fingerprint(v: dict) -> str:
-    keys = {k: v.get(k) for k in ("id", "source", "youtube_id", "url", "transcript", "transcript_file", "lang")}
+    keys = {k: v.get(k) for k in ("id", "source", "youtube_id", "url", "file", "transcript", "transcript_file", "lang")}
     h = hashlib.sha256(json.dumps(keys, sort_keys=True).encode()).hexdigest()[:12]
     if v.get("transcript") == "file" and v.get("transcript_file"):
         p = ROOT / v["transcript_file"]
@@ -269,7 +271,7 @@ def ingest_video(v: dict, vocab: str, force: bool) -> bool:
         if v.get("source") == "youtube":
             audio = yt_download_audio(v["youtube_id"], WORK / "audio")
         else:
-            audio = Path(v["url"]) if not str(v["url"]).startswith("http") else _download(v["url"], WORK / "audio")
+            audio = source_media(v)
         cues = whisper_transcribe(audio, v.get("lang"), vocab)
     if not cues:
         raise RuntimeError(f"{vid}: empty transcript")
@@ -290,6 +292,33 @@ def ingest_video(v: dict, vocab: str, force: bool) -> bool:
     }), encoding="utf-8")
     print(f"  {len(cues)} cues → {len(chunks)} chunks in {time.time() - t0:.0f}s")
     return True
+
+
+def source_media(v: dict) -> Path:
+    """The clip on *this* machine, for transcription.
+
+    `url` is what the browser plays, so for a local clip it is a served path like
+    /media/lec01.mp4 — meaningful to the player, not openable as a file. Those are
+    resolved under web/public, which is what add_videos.py fills. `file:` overrides
+    with an explicit path when the media lives somewhere else entirely.
+    """
+    src = str(v.get("file") or v.get("url") or "").strip()
+    if not src:
+        raise RuntimeError(f"{v['id']}: source: file needs `file:` (a path here) or `url:`")
+    if src.startswith(("http://", "https://")):
+        return _download(src, WORK / "audio")
+    served = WEB_PUBLIC / src.lstrip("/")
+    if src.startswith("/") and served.exists():
+        return served
+    p = Path(src)
+    if not p.is_absolute():
+        p = ROOT / src
+    if not p.exists():
+        raise RuntimeError(
+            f"{v['id']}: no media at {p}. `url:` is the path the browser plays; set `file:` "
+            f"to where the clip actually is on this machine, or run pipeline/add_videos.py."
+        )
+    return p
 
 
 def _download(url: str, out_dir: Path) -> Path:

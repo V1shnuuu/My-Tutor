@@ -9,6 +9,9 @@ __pycache__/
 core/data/
 corpus/cache/
 corpus/media/
+# Course clips registered by pipeline/add_videos.py: served to the player from here,
+# far too big for the repo. Only corpus/ transcripts and index shards get committed.
+web/public/media/
 pipeline/.work/
 *.log
 .DS_Store
