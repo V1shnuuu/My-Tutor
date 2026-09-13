@@ -48,6 +48,14 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     stt_daily_cap: int = 1900  # keep under Groq's 2 000/day free window
 
+    # Local model server — any OpenAI-compatible endpoint (Ollama, llama.cpp, vLLM).
+    # Preferred over every cloud lane: no key, no quota, no daily cap. Set
+    # LOCAL_LLM_ENABLED=false to fall back to the keyed providers only.
+    local_llm_enabled: bool = True
+    local_llm_base_url: str = "http://localhost:11434/v1"
+    local_llm_model: str = "qwen3:8b"
+    local_llm_concurrency: int = 2
+
     # LLM provider keys (empty = provider disabled)
     gemini_api_key: str = ""
     cerebras_api_key: str = ""
@@ -55,6 +63,18 @@ class Settings(BaseSettings):
     openrouter_api_key: str = ""
     cloudflare_account_id: str = ""
     cloudflare_api_token: str = ""
+
+    # LiveAvatar (HeyGen real-time streaming) — local/dev-only, bills per minute from their
+    # cloud. See core/app/liveavatar.py for why this can't be the free 400-student default.
+    liveavatar_enabled: bool = False
+    liveavatar_sandbox: bool = False
+    liveavatar_api_key: str = ""
+    liveavatar_avatar_id: str = ""
+    liveavatar_voice_id: str = ""
+    liveavatar_tts_speed: float = 1.0
+    liveavatar_tts_stability: float = 0.8
+    liveavatar_tts_style: float = 0.25
+    liveavatar_tts_model: str = "eleven_multilingual_v2"
 
     # CORS
     allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
@@ -68,19 +88,28 @@ settings.data_dir.mkdir(parents=True, exist_ok=True)
 
 
 def load_providers() -> list[dict]:
-    """Providers from YAML, filtered to those whose API key is present in the env."""
+    """Providers from YAML. A keyed provider is active only when its API key is in the env;
+    a `local: true` provider needs no key and is configured from LOCAL_LLM_* instead."""
     with open(settings.providers_file, "r", encoding="utf-8") as f:
         doc = yaml.safe_load(f)
     out = []
     for p in doc["providers"]:
-        key = os.environ.get(p["key_env"], "") or getattr(settings, p["key_env"].lower(), "")
-        if not key:
-            continue
         p = dict(p)
-        p["api_key"] = key
-        if p.get("base_url_template"):
-            p["base_url"] = p["base_url_template"].format(
-                account_id=settings.cloudflare_account_id
-            )
+        if p.get("local"):
+            if not settings.local_llm_enabled:
+                continue
+            p["api_key"] = "local"  # Ollama ignores the header; vLLM accepts any token
+            p["base_url"] = settings.local_llm_base_url
+            p["model"] = settings.local_llm_model
+            p["concurrency"] = settings.local_llm_concurrency
+        else:
+            key = os.environ.get(p["key_env"], "") or getattr(settings, p["key_env"].lower(), "")
+            if not key:
+                continue
+            p["api_key"] = key
+            if p.get("base_url_template"):
+                p["base_url"] = p["base_url_template"].format(
+                    account_id=settings.cloudflare_account_id
+                )
         out.append(p)
     return out

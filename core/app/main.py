@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
-from . import auth, stt, tts
+from . import auth, liveavatar, stt, tts
 from .cache import semantic_cache
 from .chat import run_chat
 from .config import settings
@@ -181,6 +181,30 @@ async def tts_endpoint(body: TtsIn, student=auth.Student):
         raise HTTPException(404, "no_voice")
     wav, duration = await tts.synthesize(body.text, body.lang)
     return Response(wav, media_type="audio/wav", headers={"X-Duration": f"{duration:.3f}", "Cache-Control": "private, max-age=86400"})
+
+
+# ---------------------------------------------------------------- live avatar (dev-only)
+class LiveAvatarSessionIn(BaseModel):
+    lang: str = Field(pattern="^(ar|en|fr)$")
+
+
+@app.get("/avatar/live/available")
+def live_avatar_available():
+    return {"enabled": settings.liveavatar_enabled and bool(settings.liveavatar_api_key)}
+
+
+@app.post("/avatar/live/session")
+async def live_avatar_session(body: LiveAvatarSessionIn, student=auth.Student):
+    try:
+        return await liveavatar.start_session(body.lang)
+    except liveavatar.LiveAvatarError as e:
+        raise HTTPException(502, str(e)) from e
+
+
+@app.post("/avatar/live/session/{session_id}/stop")
+async def live_avatar_stop(session_id: str, student=auth.Student):
+    await liveavatar.stop_session(session_id)
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------- admin

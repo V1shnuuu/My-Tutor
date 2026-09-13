@@ -8,6 +8,27 @@
 #   langs: languages this provider is preferred for (others still allowed)
 
 providers:
+  # Local model server — no API key, no rate limit, no daily cap, nothing leaves the machine.
+  # `priority` outranks every cloud lane, so the keyed providers below are only ever reached
+  # when this one is down or saturated. base_url/model/concurrency come from LOCAL_LLM_* in
+  # core/.env; set LOCAL_LLM_ENABLED=false to drop it entirely.
+  # reasoning_effort=none is required for Qwen3: otherwise it spends the whole max_tokens
+  # budget on its <think> pass and streams back empty content.
+  - id: local-qwen
+    local: true
+    base_url: http://localhost:11434/v1
+    model: qwen3:8b
+    tier: A
+    priority: 1
+    langs: [ar, en, fr]
+    rpm: 0
+    rpd: 0
+    tpm: 0
+    tpd: 0
+    concurrency: 2
+    extra_body:
+      reasoning_effort: none
+
   - id: gemini-flash-lite
     key_env: GEMINI_API_KEY
     base_url: https://generativelanguage.googleapis.com/v1beta/openai

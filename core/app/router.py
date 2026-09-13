@@ -117,7 +117,7 @@ class Router:
             h = p.headroom(est_tokens)
             if h <= 0:
                 continue
-            score = h
+            score = h + p.cfg.get("priority", 0)
             if p.cfg["tier"] == "A":
                 score += 0.5
             if lang in p.cfg.get("langs", []):
@@ -165,6 +165,7 @@ class Router:
             "temperature": 0.2,
             "max_tokens": settings.max_output_tokens,
         }
+        body.update(cfg.get("extra_body") or {})
         out_tokens = 0
         ok = False
         try:
