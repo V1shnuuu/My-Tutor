@@ -1,0 +1,52 @@
+import type { Lang } from "./api";
+
+const S = {
+  appName: { ar: "المُدرّس", en: "Tutor", fr: "Tuteur" },
+  login_title: { ar: "أهلاً بيك", en: "Welcome", fr: "Bienvenue" },
+  login_help: { ar: "اكتب كود التسجيل اللي استلمته من الكلية.", en: "Enter the enrollment code you received from the college.", fr: "Saisis le code d'inscription reçu de l'école." },
+  login_btn: { ar: "ادخل", en: "Enter", fr: "Entrer" },
+  login_invalid: { ar: "الكود مش صح.", en: "That code isn't valid.", fr: "Ce code n'est pas valide." },
+  login_used: { ar: "الكود ده اتستخدم على جهاز تاني.", en: "This code was already used on another device.", fr: "Ce code a déjà été utilisé sur un autre appareil." },
+  login_offline: { ar: "مش قادر أوصل للسيرفر. جرّب تاني بعد شوية.", en: "Can't reach the server. Try again in a moment.", fr: "Impossible de joindre le serveur. Réessaie dans un instant." },
+  placeholder: { ar: "اسأل عن أي حاجة في المحاضرات…", en: "Ask anything about the lectures…", fr: "Pose une question sur les cours…" },
+  send: { ar: "إرسال", en: "Send", fr: "Envoyer" },
+  mic: { ar: "اتكلم", en: "Speak", fr: "Parler" },
+  stop: { ar: "وقّف", en: "Stop", fr: "Arrêter" },
+  listening: { ar: "بسمعك", en: "Listening", fr: "J'écoute" },
+  retrieving: { ar: "بدوّر في المحاضرات", en: "Looking through the lectures", fr: "Je cherche dans les cours" },
+  generating: { ar: "بكتب الإجابة", en: "Writing the answer", fr: "Je rédige la réponse" },
+  cached: { ar: "⚡ إجابة محفوظة", en: "⚡ from cache", fr: "⚡ réponse mémorisée" },
+  floor: { ar: "من المحاضرة مباشرة", en: "Straight from the lecture", fr: "Directement du cours" },
+  refusal: { ar: "خارج المنهج", en: "Outside the course", fr: "Hors programme" },
+  jump: { ar: "روح للدقيقة", en: "Jump to", fr: "Aller à" },
+  enable_voice: { ar: "🔈 دوس عشان تشغّل الصوت", en: "🔈 Tap to enable voice", fr: "🔈 Touche pour activer la voix" },
+  voice_off: { ar: "الصوت مقفول", en: "Voice off", fr: "Voix désactivée" },
+  voice_on: { ar: "الصوت شغال", en: "Voice on", fr: "Voix activée" },
+  new_chat: { ar: "محادثة جديدة", en: "New chat", fr: "Nouvelle discussion" },
+  budget: { ar: "أسئلة النهارده", en: "Questions today", fr: "Questions aujourd'hui" },
+  daily_cap: { ar: "خلّصت أسئلة النهارده. كمّل بكرة!", en: "You've used today's questions. Come back tomorrow!", fr: "Tu as utilisé tes questions du jour. À demain !" },
+  minute_cap: { ar: "على مهلك شوية 🙂 استنى دقيقة.", en: "Slow down a little 🙂 wait a minute.", fr: "Doucement 🙂 attends une minute." },
+  offline: { ar: "المُدرّس بيعمل ريستارت. جرّب كمان دقيقة.", en: "The tutor is restarting. Try again in a minute.", fr: "Le tuteur redémarre. Réessaie dans une minute." },
+  stt_fallback: { ar: "بستخدم التعرّف على الصوت من المتصفح", en: "Using the browser's speech recognition", fr: "Reconnaissance vocale du navigateur" },
+  stt_unavailable: { ar: "الصوت مش متاح في المتصفح ده — اكتب سؤالك.", en: "Voice isn't available in this browser — type your question.", fr: "La voix n'est pas disponible ici — écris ta question." },
+  no_video: { ar: "مفيش فيديوهات لسه", en: "No videos yet", fr: "Pas encore de vidéos" },
+  captions: { ar: "ترجمة", en: "CC", fr: "ST" },
+  speed: { ar: "سرعة", en: "Speed", fr: "Vitesse" },
+  play: { ar: "تشغيل", en: "Play", fr: "Lecture" },
+  pause: { ar: "إيقاف", en: "Pause", fr: "Pause" },
+  avatar_label: { ar: "صورة المُدرّس", en: "Tutor avatar", fr: "Avatar du tuteur" },
+  state_idle: { ar: "مستني", en: "idle", fr: "en attente" },
+  state_listening: { ar: "بسمع", en: "listening", fr: "écoute" },
+  state_thinking: { ar: "بفكر", en: "thinking", fr: "réfléchit" },
+  state_speaking: { ar: "بتكلم", en: "speaking", fr: "parle" },
+  state_muted: { ar: "صامت", en: "muted", fr: "muet" },
+  welcome: {
+    ar: "أهلاً! اسألني أي حاجة عن محاضرات الكورس — بالعربي أو English أو français. هجاوبك من المحاضرات نفسها وأوريك الدقيقة اللي بتتكلم عن سؤالك.",
+    en: "Hi! Ask me anything about the course lectures — in Arabic, English, or French. I answer only from the lectures and link you to the exact minute.",
+    fr: "Salut ! Pose-moi une question sur les cours — en arabe, en anglais ou en français. Je réponds uniquement à partir des cours et je t'indique la minute exacte.",
+  },
+} as const;
+
+export type Key = keyof typeof S;
+export const t = (k: Key, lang: Lang): string => S[k][lang] ?? S[k].en;
+export const dirOf = (lang: Lang) => (lang === "ar" ? "rtl" : "ltr");
