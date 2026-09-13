@@ -70,7 +70,7 @@ export async function redeem(code: string, deviceId: string): Promise<string> {
 
 export async function me(token: string) {
   const r = await check(await fetch(`${API}/me`, { headers: headers(token) }));
-  return r.json() as Promise<{ id: string; budget: { used: number; cap: number }; stt: boolean }>;
+  return r.json() as Promise<{ id: string; budget: { used: number; cap: number }; stt: boolean; tts?: Partial<Record<Lang, boolean>> }>;
 }
 
 export async function listVideos(token: string): Promise<Video[]> {

@@ -13,3 +13,5 @@ pipeline/.work/
 *.log
 .DS_Store
 infra/.env
+eval/ab_results*.txt
+eval/last_report.json

@@ -32,7 +32,7 @@ def main(models: list[str]) -> None:
 
     for name in models:
         t0 = time.time()
-        model = SentenceTransformer(name, device="cpu")
+        model = SentenceTransformer(name, device="cpu", model_kwargs={"use_safetensors": True})
         load_s = time.time() - t0
         is_e5 = "e5" in name
         pfx_p, pfx_q = ("passage: ", "query: ") if is_e5 else ("", "")

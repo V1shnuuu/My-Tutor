@@ -19,7 +19,7 @@ def get_model():
             if _model is None:
                 from sentence_transformers import SentenceTransformer
 
-                _model = SentenceTransformer(settings.embed_model, device=settings.embed_device)
+                _model = SentenceTransformer(settings.embed_model, device=settings.embed_device, model_kwargs={"use_safetensors": True})
     return _model
 
 

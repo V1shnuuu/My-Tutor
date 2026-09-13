@@ -9,10 +9,10 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
+from fastapi.responses import FileResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
-from . import auth, stt
+from . import auth, stt, tts
 from .cache import semantic_cache
 from .chat import run_chat
 from .config import settings
@@ -99,7 +99,7 @@ def me(student=auth.Student):
     day = auth.today()
     rows = query("SELECT messages FROM usage WHERE student_id = ? AND day = ?", (student["sub"], day))
     used = rows[0]["messages"] if rows else 0
-    return {"id": student["sub"], "budget": {"used": used, "cap": settings.student_daily_cap}, "stt": stt.budget()["available"]}
+    return {"id": student["sub"], "budget": {"used": used, "cap": settings.student_daily_cap}, "stt": stt.budget()["available"], "tts": tts.availability()}
 
 
 # ---------------------------------------------------------------- corpus
@@ -154,6 +154,25 @@ async def stt_endpoint(file: UploadFile = File(...), lang_hint: str | None = For
     result = await stt.transcribe(audio, file.filename or "audio.webm", file.content_type or "audio/webm", lang_hint, vocab)
     auth.bump_usage(student["sub"], stt_calls=1)
     return result
+
+
+# ---------------------------------------------------------------- tts (server fallback voice)
+class TtsIn(BaseModel):
+    text: str = Field(min_length=1, max_length=600)
+    lang: str = Field(pattern="^(ar|en|fr)$")
+
+
+@app.get("/tts/voices")
+def tts_voices(student=auth.Student):
+    return tts.availability()
+
+
+@app.post("/tts")
+async def tts_endpoint(body: TtsIn, student=auth.Student):
+    if not tts.available(body.lang):
+        raise HTTPException(404, "no_voice")
+    wav, duration = await tts.synthesize(body.text, body.lang)
+    return Response(wav, media_type="audio/wav", headers={"X-Duration": f"{duration:.3f}", "Cache-Control": "private, max-age=86400"})
 
 
 # ---------------------------------------------------------------- admin

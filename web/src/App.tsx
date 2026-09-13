@@ -5,7 +5,7 @@ import Login from "./components/Login";
 import VideoPlayer, { type PlayerHandle } from "./components/VideoPlayer";
 import { ApiError, chat as chatApi, listVideos, me, type Citation, type Lang, type Video } from "./lib/api";
 import { dirOf, t } from "./lib/i18n";
-import { SentenceSplitter, Speaker, hasSpeech, isUnlocked, unlockAudio, voiceAvailable } from "./lib/speech";
+import { SentenceSplitter, Speaker, hasSpeech, isUnlocked, resumeAudio, unlockAudio } from "./lib/speech";
 import { startListening, type ListenSession } from "./lib/stt";
 import { db, getPref, getToken, setPref, setToken, type StoredMessage } from "./lib/store";
 
@@ -43,6 +43,7 @@ export default function App() {
         const m = await me(token);
         if (!alive) return;
         setBudget(m.budget); setSttServer(m.stt);
+        speaker.configure(token, m.tts || {});
         const vs = await listVideos(token);
         if (!alive) return;
         setVideos(vs); setActiveVideo((a) => a || vs[0]?.id || null);
@@ -65,7 +66,7 @@ export default function App() {
     speaker.setEnabled(voiceOn);
   }, [voiceOn]);
   useEffect(() => {
-    const onVis = () => { if (document.hidden) speaker.stop(); };
+    const onVis = () => { if (document.hidden) speaker.stop(); else resumeAudio(); };
     document.addEventListener("visibilitychange", onVis);
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
@@ -167,19 +168,20 @@ export default function App() {
     if (listening) return "listening";
     if (speakerState === "speaking") return "speaking";
     if (streaming) return "thinking";
-    if (!voiceOn || (!unlocked && !isUnlocked()) || !hasSpeech()) return "muted";
+    if (!voiceOn || (!unlocked && !isUnlocked()) || (!hasSpeech() && speaker.engineFor(lang) === "none")) return "muted";
     return "idle";
   }, [listening, speakerState, streaming, voiceOn, unlocked]);
 
   if (!token) return <Login lang={lang} onLang={setLang} onToken={(tk) => { setToken(tk); setTok(tk); }} />;
 
-  const arVoice = voiceAvailable("ar");
+  const engine = speaker.engineFor(lang);
   const topbar = (
     <div className="topbar">
       <span className="brand">📓 {t("appName", lang)}</span>
       {budget && <span className="pill">{t("budget", lang)}: {budget.used}/{budget.cap}</span>}
       <span className={`pill ${voiceOn ? "ok" : ""}`}><button onClick={toggleVoice}>{voiceOn ? t("voice_on", lang) : t("voice_off", lang)}</button></span>
-      {lang === "ar" && voiceOn && !arVoice && <span className="pill warn" title="No Arabic voice installed on this device">ar voice ✗</span>}
+      {voiceOn && engine === "none" && <span className="pill warn" title="No voice for this language on this device or server">{lang} voice ✗</span>}
+      {voiceOn && engine === "server" && <span className="pill" title="Server voice (Piper)">🗣 piper</span>}
       <span className="pill"><button onClick={newChat}>{t("new_chat", lang)}</button></span>
       <span className="pill">
         {(["ar", "en", "fr"] as Lang[]).map((l) => <button key={l} onClick={() => { setLang(l); setPref("lang", l); }} style={{ fontWeight: l === lang ? 700 : 400 }}>{l.toUpperCase()}</button>)}
