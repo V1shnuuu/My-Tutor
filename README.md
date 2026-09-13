@@ -50,9 +50,9 @@ video's `transcript: file` + `transcript_file: corpus/transcripts/<id>.vtt`, pus
 | Web | Cloudflare Pages | Connect the repo → root `web`, build `npm ci && npm run build`, output `dist`, env `VITE_API_URL=https://api.<domain>` |
 | Core | Oracle Cloud Always Free (Ampere A1, 4 OCPU/24 GB) | `git clone`, `cp core/.env.example core/.env` (fill), `cp infra/.env.example infra/.env` (Tunnel token + R2 keys), `docker compose -f infra/docker-compose.yml up -d --build` |
 | Tunnel | Cloudflare Zero Trust → Tunnels | Public hostname `api.<domain>` → `http://core:8000`; no inbound ports on the VM |
-| Standby | Hugging Face Space (Docker, free CPU) | Same image (`ghcr.io/<you>/<repo>/core`), same env; point `VITE_API_URL` at it if the VM is down |
+| Standby | Hugging Face Space (Docker, free CPU) | `infra/hf-space/Dockerfile` (same image, same env); point `VITE_API_URL` at it if the VM is down |
 | Backups | Cloudflare R2 (10 GB free) | Litestream replicates `tutor.sqlite` every 10 s (`infra/litestream.yml`) |
-| Monitoring | Grafana Cloud Free + UptimeRobot | Scrape `GET /metrics`; ping `GET /healthz` every 5 min |
+| Monitoring | Grafana Cloud Free + UptimeRobot | `infra/monitoring.md` — scrape `GET /metrics`, ping `GET /healthz`, alert rules |
 
 Set `ALLOWED_ORIGINS` in `core/.env` to the Pages URL. Generate codes once the core is up:
 `curl -X POST "$CORE/admin/codes?n=400" -H "x-admin-token: $ADMIN_TOKEN" > codes.csv`
