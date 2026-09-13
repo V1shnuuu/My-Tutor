@@ -41,6 +41,13 @@ export default function App() {
   // falls back to Piper/the OS voice. `liveUp` is a ref because the streaming callbacks below
   // are created once per send and must see the current value, not the one they closed over.
   const liveUp = useRef(false);
+  const avatarSandbox = useRef(false);
+  // Hands-free: the mic re-arms itself after the tutor finishes speaking, and the energy
+  // VAD in lib/stt.ts closes it when the student stops. Off by default — arming a
+  // microphone is the user's decision, and the first tap is also the gesture the browser
+  // needs before it will grant mic access or unlock audio.
+  const [handsFree, setHandsFree] = useState(getPref("handsfree") === "on");
+  const arming = useRef(false);
   const [liveDown, setLiveDown] = useState(false);
   const player = useRef<PlayerHandle>(null);
   const session = useRef<ListenSession | null>(null);
@@ -103,11 +110,25 @@ export default function App() {
 
   const getViseme = useCallback(() => speaker.current_viseme(), []);
 
-  const speaking = () => LIVE_AVATAR && liveUp.current;
+  // Which engine says this sentence out loud.
+  //
+  // The sandbox avatar is HeyGen's fixed demo persona — core/app/liveavatar.py sends an
+  // empty persona when is_sandbox, so the configured voice is ignored and it speaks
+  // English. Handing it an Arabic or French answer produces that answer mispronounced by
+  // an English voice, which is worse than not using the avatar at all. Those languages go
+  // to Piper (a real Arabic voice) with the local face lip-syncing from the viseme clock.
+  const avatarSpeaks = (l: Lang) => {
+    if (!LIVE_AVATAR || !liveUp.current) return false;
+    return avatarSandbox.current ? l === "en" : true;
+  };
   // Interrupting an inactive engine is a no-op, so stop both rather than guessing which
   // one is mid-sentence when a session drops.
   const stopSpeech = useCallback(() => { liveAvatar.current?.interrupt(); speaker.stop(); }, []);
-  const onLiveReady = useCallback(() => { liveUp.current = true; setLiveDown(false); }, []);
+  const onLiveReady = useCallback((sandbox: boolean) => {
+    liveUp.current = true;
+    avatarSandbox.current = sandbox;
+    setLiveDown(false);
+  }, []);
   const onLiveUnavailable = useCallback(() => { liveUp.current = false; setLiveDown(true); }, []);
 
   // ---- send a message and stream the answer
@@ -123,7 +144,7 @@ export default function App() {
     setStreaming(true); setLive({ stage: "retrieving" });
     const history = messages.slice(-6).map((m) => ({ role: m.role, content: m.content }));
     const splitter = new SentenceSplitter((s) => {
-      if (speaking()) { liveAvatar.current?.speakText(s); return; }
+      if (avatarSpeaks(asst.lang)) { liveAvatar.current?.speakText(s); return; }
       const id = speaker.enqueue(s, asst.lang);
       sentences.current.set(id, s);
     });
@@ -144,7 +165,7 @@ export default function App() {
           content = ev.text; update({ content });
           for (const s of ev.text.split(/\n+/)) {
             if (!s.trim()) continue;
-            if (speaking()) liveAvatar.current?.speakText(s.trim());
+            if (avatarSpeaks(asst.lang)) liveAvatar.current?.speakText(s.trim());
             else sentences.current.set(speaker.enqueue(s, asst.lang), s.trim());
           }
         } else if (ev.type === "error") {
@@ -190,11 +211,35 @@ export default function App() {
       },
       onError: (code) => {
         setListening(false); setInterim(""); session.current = null;
+        // Hands-free would otherwise retry a broken mic forever, one attempt per gap.
+        if (code === "mic_denied" || code === "stt_unavailable") {
+          setHandsFree(false);
+          setPref("handsfree", "off");
+        }
         setToast(code === "stt_unavailable" ? t("stt_unavailable", lang) : code === "mic_denied" ? "🎙 ✗" : t("stt_unavailable", lang));
       },
     });
   }, [token, lang, sttServer, send, ensureUnlocked]);
   const stopMic = useCallback(() => session.current?.stop(), []);
+
+  // Re-arm only in the gaps: never while the tutor is talking (its own voice through the
+  // speakers is exactly what the VAD would hear), never mid-answer, never in a hidden tab.
+  useEffect(() => {
+    if (!handsFree || !token) return;
+    if (listening || streaming || speakerState === "speaking" || document.hidden) return;
+    if (arming.current) return;
+    arming.current = true;
+    // A beat after the audio stops, so the tail of the last word doesn't open the mic.
+    const id = setTimeout(() => { arming.current = false; void mic(); }, 500);
+    return () => { clearTimeout(id); arming.current = false; };
+  }, [handsFree, token, listening, streaming, speakerState, mic]);
+
+  const toggleHandsFree = () => {
+    const on = !handsFree;
+    setHandsFree(on);
+    setPref("handsfree", on ? "on" : "off");
+    if (on) ensureUnlocked(); else stopMic();
+  };
 
   const jump = useCallback((c: Citation) => {
     stopSpeech();
@@ -227,6 +272,11 @@ export default function App() {
       <span className={`pill ${voiceOn ? "ok" : ""}`}><button onClick={toggleVoice}>{voiceOn ? t("voice_on", lang) : t("voice_off", lang)}</button></span>
       {voiceOn && engine === "none" && <span className="pill warn" title="No voice for this language on this device or server">{lang} voice ✗</span>}
       {voiceOn && engine === "server" && <span className="pill" title="Server voice (Piper)">🗣 piper</span>}
+      <span className={`pill ${handsFree ? "ok" : ""}`}>
+        <button onClick={toggleHandsFree} aria-pressed={handsFree}>
+          {handsFree ? t("handsfree_on", lang) : t("handsfree_off", lang)}
+        </button>
+      </span>
       <span className="pill"><button onClick={newChat}>{t("new_chat", lang)}</button></span>
       <span className="viewtoggle">
         <span className="label">{t("view", lang)}</span>
