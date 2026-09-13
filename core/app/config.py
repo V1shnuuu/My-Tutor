@@ -64,6 +64,18 @@ class Settings(BaseSettings):
     cloudflare_account_id: str = ""
     cloudflare_api_token: str = ""
 
+    # LiveAvatar (HeyGen real-time streaming) — local/dev-only, bills per minute from their
+    # cloud. See core/app/liveavatar.py for why this can't be the free 400-student default.
+    liveavatar_enabled: bool = False
+    liveavatar_sandbox: bool = False
+    liveavatar_api_key: str = ""
+    liveavatar_avatar_id: str = ""
+    liveavatar_voice_id: str = ""
+    liveavatar_tts_speed: float = 1.0
+    liveavatar_tts_stability: float = 0.8
+    liveavatar_tts_style: float = 0.25
+    liveavatar_tts_model: str = "eleven_multilingual_v2"
+
     # CORS
     allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 

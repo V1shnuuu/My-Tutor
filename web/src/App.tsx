@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Avatar, { type AvatarState } from "./components/Avatar";
 import Chat, { type LiveState } from "./components/Chat";
+import LiveAvatarPanel, { type LiveAvatarHandle } from "./components/LiveAvatarPanel";
 import Login from "./components/Login";
 import VideoPlayer, { type PlayerHandle } from "./components/VideoPlayer";
 import { ApiError, chat as chatApi, listVideos, me, type Citation, type Lang, type Video } from "./lib/api";
+
+// Local/dev-only: HeyGen LiveAvatar bills per minute from its own cloud, so it can't be the
+// free default — opt in with VITE_LIVE_AVATAR=1 in web/.env.local. See core/app/liveavatar.py.
+const LIVE_AVATAR = import.meta.env.VITE_LIVE_AVATAR === "1";
 import { dirOf, t } from "./lib/i18n";
 import { SentenceSplitter, Speaker, hasSpeech, isUnlocked, resumeAudio, unlockAudio } from "./lib/speech";
 import { startListening, type ListenSession } from "./lib/stt";
@@ -33,6 +38,7 @@ export default function App() {
   const player = useRef<PlayerHandle>(null);
   const session = useRef<ListenSession | null>(null);
   const sentences = useRef<Map<number, string>>(new Map());
+  const liveAvatar = useRef<LiveAvatarHandle>(null);
 
   // ---- bootstrap after login
   useEffect(() => {
@@ -83,7 +89,7 @@ export default function App() {
   const send = useCallback(async (text: string) => {
     if (!token || streaming) return;
     ensureUnlocked();
-    speaker.stop();
+    if (LIVE_AVATAR) liveAvatar.current?.interrupt(); else speaker.stop();
     sentences.current.clear();
     const userMsg: StoredMessage = { role: "user", content: text, lang, citations: [], ts: Date.now() };
     userMsg.id = await db.messages.add(userMsg);
@@ -92,6 +98,7 @@ export default function App() {
     setStreaming(true); setLive({ stage: "retrieving" });
     const history = messages.slice(-6).map((m) => ({ role: m.role, content: m.content }));
     const splitter = new SentenceSplitter((s) => {
+      if (LIVE_AVATAR) { liveAvatar.current?.speakText(s); return; }
       const id = speaker.enqueue(s, asst.lang);
       sentences.current.set(id, s);
     });
@@ -108,8 +115,13 @@ export default function App() {
         } else if (ev.type === "token") {
           content += ev.text; update({ content }); splitter.push(ev.text);
         } else if (ev.type === "replace") {
-          speaker.stop(); content = ev.text; update({ content });
-          for (const s of ev.text.split(/\n+/)) if (s.trim()) sentences.current.set(speaker.enqueue(s, asst.lang), s.trim());
+          if (LIVE_AVATAR) liveAvatar.current?.interrupt(); else speaker.stop();
+          content = ev.text; update({ content });
+          for (const s of ev.text.split(/\n+/)) {
+            if (!s.trim()) continue;
+            if (LIVE_AVATAR) liveAvatar.current?.speakText(s.trim());
+            else sentences.current.set(speaker.enqueue(s, asst.lang), s.trim());
+          }
         } else if (ev.type === "done") {
           splitter.flush();
           asst.content = ev.answer || content; asst.source = ev.source;
@@ -133,7 +145,7 @@ export default function App() {
   const mic = useCallback(async () => {
     if (!token) return;
     ensureUnlocked();
-    speaker.stop();
+    if (LIVE_AVATAR) liveAvatar.current?.interrupt(); else speaker.stop();
     setInterim(""); setListening(true);
     session.current = await startListening({
       token, langHint: lang, serverAvailable: sttServer,
@@ -153,13 +165,13 @@ export default function App() {
   const stopMic = useCallback(() => session.current?.stop(), []);
 
   const jump = useCallback((c: Citation) => {
-    speaker.stop();
+    if (LIVE_AVATAR) liveAvatar.current?.interrupt(); else speaker.stop();
     setVideoCollapsed(false);
     player.current?.jump(c.video_id, c.t);
     document.querySelector(".panel-video")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
 
-  const newChat = async () => { speaker.stop(); await db.messages.clear(); setMessages([{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]); };
+  const newChat = async () => { if (LIVE_AVATAR) liveAvatar.current?.interrupt(); else speaker.stop(); await db.messages.clear(); setMessages([{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]); };
   const toggleVoice = () => { ensureUnlocked(); const v = !voiceOn; setVoiceOn(v); setPref("voice", v ? "on" : "off"); };
 
   useEffect(() => { if (toast) { const id = setTimeout(() => setToast(null), 5000); return () => clearTimeout(id); } }, [toast]);
@@ -192,7 +204,17 @@ export default function App() {
 
   const avatar = (
     <section className="panel panel-avatar" aria-label={t("avatar_label", lang)}>
-      <Avatar state={avatarState} getViseme={getViseme} label={t("avatar_label", lang)} stateLabel={t(`state_${avatarState}` as const, lang)} muteLabel={t("enable_voice", lang)} onUnmute={() => { ensureUnlocked(); if (!voiceOn) toggleVoice(); }} />
+      {LIVE_AVATAR ? (
+        <LiveAvatarPanel
+          ref={liveAvatar}
+          token={token}
+          lang={lang}
+          label={t("avatar_label", lang)}
+          onState={(s) => setSpeakerState(s === "speaking" ? "speaking" : "idle")}
+        />
+      ) : (
+        <Avatar state={avatarState} getViseme={getViseme} label={t("avatar_label", lang)} stateLabel={t(`state_${avatarState}` as const, lang)} muteLabel={t("enable_voice", lang)} onUnmute={() => { ensureUnlocked(); if (!voiceOn) toggleVoice(); }} />
+      )}
     </section>
   );
   const video = (
