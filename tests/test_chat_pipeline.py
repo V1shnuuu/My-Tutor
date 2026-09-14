@@ -175,6 +175,37 @@ def test_missing_encoder_fails_fast_instead_of_hanging(chat, monkeypatch):
     assert not any(e.get("type") == "done" for e in events)
 
 
+def test_spoken_answers_ask_for_a_shorter_register(chat, fixed_query_vector, monkeypatch):
+    """The same answer read on screen and spoken aloud want different lengths: ~150 words
+    is a fine paragraph and a solid minute of talking."""
+    seen = {}
+
+    def capture(text):
+        async def stream(provider, messages, est_tokens):
+            seen["system"] = messages[0]["content"]
+            try:
+                yield text
+            finally:
+                provider.inflight -= 1
+        return stream
+
+    monkeypatch.setattr(chat.router, "stream", capture("A peak is a local maximum [C1]"))
+
+    chat.embed_queries = lambda texts: np.repeat(fixed_query_vector(10), len(texts), axis=0)
+
+    async def ask(spoken):
+        async for _ in chat.run_chat("s", "What is a peak?", [], None, {"used": 0, "cap": 60}, spoken):
+            pass
+        return seen["system"]
+
+    read = asyncio.run(ask(False))
+    assert "150 words" in read
+
+    spoken = asyncio.run(ask(True))
+    assert "read aloud" in spoken
+    assert "150 words" not in spoken, "the reading length must not survive into a spoken answer"
+
+
 def test_blocked_question_never_reaches_retrieval(chat, monkeypatch):
     monkeypatch.setattr(chat, "is_blocked", lambda m: True)
 

@@ -24,6 +24,8 @@ const S = {
   voice_on: { ar: "الصوت شغال", en: "Voice on", fr: "Voix activée" },
   new_chat: { ar: "محادثة جديدة", en: "New chat", fr: "Nouvelle discussion" },
   view: { ar: "العرض", en: "view", fr: "vue" },
+  handsfree_on: { ar: "المايك شغال", en: "Hands-free", fr: "Mains libres" },
+  handsfree_off: { ar: "المايك مقفول", en: "Push to talk", fr: "Appuyer pour parler" },
   view_notebook: { ar: "دفتر", en: "Notebook", fr: "Cahier" },
   view_split: { ar: "مقسوم", en: "Split", fr: "Divisé" },
   view_hint: { ar: "دوس T", en: "press T", fr: "touche T" },

@@ -12,8 +12,9 @@ interface Props {
   lang: Lang;
   label: string;
   onState: (s: LiveAvatarState) => void;
-  /** The session is live and can speak. */
-  onReady: () => void;
+  /** The session is live and can speak. `sandbox` is HeyGen's fixed demo persona, which
+   *  speaks English only — the caller needs that to decide what it may hand over. */
+  onReady: (sandbox: boolean) => void;
   /** It failed to start, or ended (a sandbox session stops itself after ~60s). The caller
    *  must fall back to local speech — otherwise the tutor goes silent for good. */
   onUnavailable: () => void;
@@ -54,7 +55,7 @@ const LiveAvatarPanel = forwardRef<LiveAvatarHandle, Props>(function LiveAvatarP
         if (cancelled) return;
         setSandbox(isSandbox);
         setStatus("live");
-        onReady();
+        onReady(isSandbox);
       } catch (e) {
         console.error("LiveAvatarPanel: failed to start session —", e);
         if (!cancelled) { setStatus("error"); onUnavailable(); }

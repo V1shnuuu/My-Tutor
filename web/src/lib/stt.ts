@@ -15,6 +15,13 @@ export interface ListenOpts {
   onError: (code: "stt_unavailable" | "mic_denied" | "stt_failed") => void;
   onLevel?: (rms: number) => void;
   onMode?: (mode: "server" | "browser") => void;
+  /** Is the tutor talking right now? While it is, the mic stays open but the bar to count
+   *  as speech is raised, so the tutor's own voice leaking past echo cancellation cannot
+   *  interrupt it — only the student can. */
+  tutorSpeaking?: () => boolean;
+  /** Fired once, the moment the student is judged to be speaking. The caller uses this to
+   *  cut the tutor off mid-sentence, which is what makes an interruption feel instant. */
+  onSpeechStart?: () => void;
 }
 export interface ListenSession {
   stop: () => void; // stop and transcribe what was captured
@@ -68,6 +75,10 @@ async function recordAndUpload(o: ListenOpts): Promise<ListenSession> {
   const data = new Float32Array(an.fftSize);
   let spokeAt = 0, startedAt = performance.now(), spoke = false, cancelled = false, stopped = false;
   const hang = o.langHint === "ar" ? 1300 : 1100;
+  // Ordinary open-mic threshold, and the raised one used while the tutor is talking.
+  // Browser echo cancellation removes most of the playback, and this covers the rest —
+  // deliberately conservative, since a false barge-in cuts the tutor off mid-word.
+  const SPEECH_RMS = 0.02, BARGE_RMS = 0.085;
   const tick = () => {
     if (stopped) return;
     an.getFloatTimeDomainData(data);
@@ -76,7 +87,15 @@ async function recordAndUpload(o: ListenOpts): Promise<ListenSession> {
     const rms = Math.sqrt(s / data.length);
     o.onLevel?.(rms);
     const now = performance.now();
-    if (rms > 0.02) { spoke = true; spokeAt = now; }
+    const speaking = o.tutorSpeaking?.() ?? false;
+    if (rms > (speaking ? BARGE_RMS : SPEECH_RMS)) {
+      if (!spoke) o.onSpeechStart?.();   // cut the tutor off on the first syllable
+      spoke = true;
+      spokeAt = now;
+    }
+    // Waiting through the tutor's answer is not the student being silent, so neither the
+    // give-up timer nor the hard cap may run while it is still talking.
+    if (speaking) { startedAt = now; requestAnimationFrame(tick); return; }
     if ((spoke && now - spokeAt > hang) || now - startedAt > 30000) { stop(); return; }
     if (!spoke && now - startedAt > 8000) { cancel(); o.onFinal("", null); return; }
     requestAnimationFrame(tick);
