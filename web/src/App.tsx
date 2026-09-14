@@ -116,15 +116,11 @@ export default function App() {
 
   // Which engine says this sentence out loud.
   //
-  // The sandbox avatar is HeyGen's fixed demo persona — core/app/liveavatar.py sends an
-  // empty persona when is_sandbox, so the configured voice is ignored and it speaks
-  // English. Handing it an Arabic or French answer produces that answer mispronounced by
-  // an English voice, which is worse than not using the avatar at all. Those languages go
-  // to Piper (a real Arabic voice) with the local face lip-syncing from the viseme clock.
-  const avatarSpeaks = (l: Lang) => {
-    if (!LIVE_AVATAR || !liveUp.current) return false;
-    return avatarSandbox.current ? l === "en" : true;
-  };
+  // The avatar takes every language. Sandbox drops the configured voice_id, but
+  // liveavatar.py still sends persona.language, so HeyGen speaks the answer's language in
+  // its own voice rather than an English one. Piper stays as the fallback for when no
+  // session can be held at all.
+  const avatarSpeaks = (_l: Lang) => LIVE_AVATAR && liveUp.current;
   // Interrupting an inactive engine is a no-op, so stop both rather than guessing which
   // one is mid-sentence when a session drops.
   const stopSpeech = useCallback(() => { liveAvatar.current?.interrupt(); speaker.stop(); }, []);
@@ -133,6 +129,9 @@ export default function App() {
     avatarSandbox.current = sandbox;
     setLiveDown(false);
   }, []);
+  // Speech must not be queued at a session that is mid-reconnect; it would be dropped
+  // silently. The panel reconnects on its own, so this only pauses the hand-off.
+  const onLivePaused = useCallback(() => { liveUp.current = false; }, []);
   const onLiveUnavailable = useCallback(() => { liveUp.current = false; setLiveDown(true); }, []);
 
   // ---- send a message and stream the answer
@@ -319,7 +318,10 @@ export default function App() {
           token={token}
           lang={lang}
           label={t("avatar_label", lang)}
-          onState={(s) => setSpeakerState(s === "speaking" ? "speaking" : "idle")}
+          onState={(s) => {
+            setSpeakerState(s === "speaking" ? "speaking" : "idle");
+            if (s === "closed" || s === "error") onLivePaused();
+          }}
           onReady={onLiveReady}
           onUnavailable={onLiveUnavailable}
         />

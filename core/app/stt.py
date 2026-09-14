@@ -69,12 +69,29 @@ def _local_whisper():
     return _local_model
 
 
+# Whisper's Arabic is overwhelmingly Modern Standard, so an Egyptian question comes back
+# "corrected" into MSA — كيف for إزاي, ماذا for إيه. initial_prompt sets the register it
+# continues in, so a line of ordinary Cairo speech in front of the course jargon keeps the
+# transcript in the dialect the student actually spoke.
+DIALECT_PRIMER = {
+    "ar": "إزاي الطريقة دي بتشتغل؟ إيه الفرق بين الحاجتين دول؟ ليه بنعمل كده؟",
+    "en": "",
+    "fr": "",
+}
+
+
+def _prompt_for(lang_hint: str | None, vocab: str) -> str | None:
+    primer = DIALECT_PRIMER.get(lang_hint or "", "")
+    prompt = f"{primer} {vocab}".strip() if primer else vocab
+    return prompt[:800] or None
+
+
 def _transcribe_local_sync(audio: bytes, lang_hint: str | None, vocab: str) -> dict:
     model = _local_whisper()
     segments, info = model.transcribe(
         io.BytesIO(audio),
         language=lang_hint if lang_hint in ("ar", "en", "fr") else None,
-        initial_prompt=vocab[:800] or None,  # course jargon, same as the Groq lane
+        initial_prompt=_prompt_for(lang_hint, vocab),
         beam_size=1,  # a live question is short: greedy keeps it responsive
         vad_filter=True,  # drop the silence around the utterance before decoding
     )
@@ -113,8 +130,9 @@ async def transcribe(audio: bytes, filename: str, content_type: str, lang_hint: 
     data = {"model": "whisper-large-v3-turbo", "response_format": "verbose_json", "temperature": "0"}
     if lang_hint in ("ar", "en", "fr"):
         data["language"] = lang_hint
-    if vocab:
-        data["prompt"] = vocab[:800]
+    prompt = _prompt_for(lang_hint, vocab)
+    if prompt:
+        data["prompt"] = prompt
     files = {"file": (filename or "audio.webm", audio, content_type or "audio/webm")}
     async with httpx.AsyncClient(timeout=30.0) as client:
         r = await client.post(GROQ_URL, headers={"Authorization": f"Bearer {settings.groq_api_key}"}, data=data, files=files)

@@ -15,8 +15,8 @@ interface Props {
   /** The session is live and can speak. `sandbox` is HeyGen's fixed demo persona, which
    *  speaks English only — the caller needs that to decide what it may hand over. */
   onReady: (sandbox: boolean) => void;
-  /** It failed to start, or ended (a sandbox session stops itself after ~60s). The caller
-   *  must fall back to local speech — otherwise the tutor goes silent for good. */
+  /** Every attempt to hold a session has failed. Only then does the caller fall back to
+   *  local speech — a single expiry is reconnected through, not surrendered to. */
   onUnavailable: () => void;
 }
 
@@ -32,6 +32,11 @@ const LiveAvatarPanel = forwardRef<LiveAvatarHandle, Props>(function LiveAvatarP
   const sessionRef = useRef<LiveAvatarSession | null>(null);
   const [status, setStatus] = useState<"connecting" | "live" | "error">("connecting");
   const [sandbox, setSandbox] = useState(false);
+  // A sandbox session stops itself after ~60s, which is ordinary rather than exceptional:
+  // reconnect instead of handing the panel back. The counter only guards against a hard
+  // failure (bad key, their cloud down) turning into an endless connect loop.
+  const failures = useRef(0);
+  const MAX_FAILURES = 4;
 
   useImperativeHandle(ref, () => ({
     speakText: (text) => sessionRef.current?.speakText(text),
@@ -40,28 +45,53 @@ const LiveAvatarPanel = forwardRef<LiveAvatarHandle, Props>(function LiveAvatarP
 
   useEffect(() => {
     let cancelled = false;
-    const session = new LiveAvatarSession(token);
-    sessionRef.current = session;
-    session.onState = (s) => {
-      onState(s);
-      // "closed" is both the ~60s sandbox expiry and any mid-session drop. Either way the
-      // session can no longer speak, so hand speech back before the next sentence is queued.
-      if (s === "closed" && !cancelled) onUnavailable();
+    let timer: number | undefined;
+
+    const connect = () => {
+      const session = new LiveAvatarSession(token);
+      sessionRef.current = session;
+      session.onState = (s) => {
+        onState(s);
+        // The sandbox expiry arrives here as "closed". Reconnect rather than surrender:
+        // a fresh session is what keeps one continuous avatar across the cap.
+        if (s === "closed" && !cancelled && sessionRef.current === session) {
+          setStatus("connecting");
+          timer = window.setTimeout(connect, 300);
+        }
+      };
+      (async () => {
+        try {
+          const video = videoRef.current!;
+          const { sandbox: isSandbox } = await session.start(lang, video);
+          if (cancelled) return;
+          failures.current = 0;      // a session that spoke proves the lane works
+          setSandbox(isSandbox);
+          setStatus("live");
+          onReady(isSandbox);
+        } catch (e) {
+          if (cancelled) return;
+          failures.current += 1;
+          console.error(`LiveAvatarPanel: session failed (${failures.current}/${MAX_FAILURES}) —`, e);
+          if (failures.current >= MAX_FAILURES) {
+            // Not a expiry any more: the lane itself is down, so stop burning attempts.
+            setStatus("error");
+            onUnavailable();
+            return;
+          }
+          setStatus("connecting");
+          timer = window.setTimeout(connect, 500 * failures.current);   // back off
+        }
+      })();
     };
-    (async () => {
-      try {
-        const video = videoRef.current!;
-        const { sandbox: isSandbox } = await session.start(lang, video);
-        if (cancelled) return;
-        setSandbox(isSandbox);
-        setStatus("live");
-        onReady(isSandbox);
-      } catch (e) {
-        console.error("LiveAvatarPanel: failed to start session —", e);
-        if (!cancelled) { setStatus("error"); onUnavailable(); }
-      }
-    })();
-    return () => { cancelled = true; sessionRef.current = null; void session.stop(); };
+
+    connect();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+      const session = sessionRef.current;
+      sessionRef.current = null;
+      void session?.stop();
+    };
     // lang/token intentionally not re-run on every render — a new value starts a fresh session
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
