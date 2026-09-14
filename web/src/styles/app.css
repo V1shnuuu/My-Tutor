@@ -17,6 +17,12 @@
   --ink-display: #1b3b6f;
   --hole: #e2ded1;
   --hole-edge: #cdc7b6;
+  /* An index card laid on the page: lighter than the paper it sits on, which is
+     what separates it from the ruled ground rather than a border would. */
+  --card: #fffefb;
+  --card-edge: rgba(31, 41, 51, 0.07);
+  --tape: rgba(250, 221, 126, 0.85);
+  --tape-edge: rgba(198, 158, 44, 0.45);
   --ok: #1f7a4d;
   --warn: #9a6700;
   --danger: #b42318;
@@ -50,6 +56,10 @@
     --ink-display: #9dc0ef;
     --hole: #0e1215;
     --hole-edge: #333d45;
+    --card: #222a31;
+    --card-edge: rgba(255, 255, 255, 0.09);
+    --tape: rgba(140, 118, 44, 0.5);
+    --tape-edge: rgba(190, 163, 70, 0.28);
     color-scheme: dark;
   }
 }
@@ -70,6 +80,10 @@
   --ink-display: #9dc0ef;
   --hole: #0e1215;
   --hole-edge: #333d45;
+  --card: #222a31;
+  --card-edge: rgba(255, 255, 255, 0.09);
+  --tape: rgba(140, 118, 44, 0.5);
+  --tape-edge: rgba(190, 163, 70, 0.28);
   color-scheme: dark;
 }
 
@@ -254,14 +268,50 @@ button { cursor: pointer; }
 }
 @media (max-width: 767px) { .messages { padding-inline-start: 14px; } }
 .msg { max-width: min(78ch, 100%); margin: 8px 0 14px; position: relative; }
-.msg.user { margin-inline-start: auto; }
+.msg.user { margin-inline-start: auto; width: fit-content; max-width: min(52ch, 100%); }
 .msg .bubble {
   padding: 8px 14px; border-radius: 4px 12px 12px 12px; background: var(--paper-2); border: 1px solid var(--rule); box-shadow: var(--shadow);
   white-space: pre-wrap; overflow-wrap: anywhere; unicode-bidi: plaintext;
 }
+/* The tutor's answers are index cards taped to the page: card stock lighter than
+   the paper, squared corners, and a strip of tape over the top edge. The card
+   stays axis-aligned and only the tape is skewed — a tilted card costs
+   readability over a long answer, and the tape alone reads as hand-placed. */
+.msg.assistant .bubble {
+  position: relative;
+  margin-block-start: 15px;
+  padding: 14px 18px 13px;
+  border-radius: 3px;
+  background: var(--card);
+  border: 1px solid var(--card-edge);
+  box-shadow: 0 1px 1px rgba(31, 41, 51, .05), 0 10px 24px -12px rgba(31, 41, 51, .28);
+}
+.msg.assistant .bubble::before {
+  content: ""; position: absolute; inset-block-start: -13px; inset-inline-start: 30px;
+  width: 92px; height: 27px;
+  background: var(--tape); border-inline: 1px solid var(--tape-edge);
+  box-shadow: 0 1px 2px rgba(31, 41, 51, .10);
+  transform: rotate(-2.4deg);
+  pointer-events: none;
+}
+/* A three-step cycle so a long session doesn't read as a stamped column. Counted
+   over all sibling messages rather than the answers alone, which is what makes it
+   rotate at all: answers land on every other row. Purely decorative — if the count
+   shifts, the tape moves and nothing else does.
+   The offsets are logical, so an Arabic answer tapes from the other edge. */
+.msg.assistant:nth-of-type(3n) .bubble::before {
+  inset-inline-start: auto; inset-inline-end: 42px; width: 80px; transform: rotate(2deg);
+}
+.msg.assistant:nth-of-type(3n + 2) .bubble::before {
+  inset-inline-start: 50%; inset-inline-end: auto; width: 86px; transform: translateX(-50%) rotate(-1.2deg);
+}
 .msg.user .bubble { background: var(--highlighter); color: var(--highlighter-ink); border-color: transparent; border-radius: 12px 4px 12px 12px; }
 .msg .meta { font-size: 11.5px; color: var(--ink-3); margin-top: 3px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.msg .meta .tag { font-family: var(--font-mono); letter-spacing: .04em; }
+/* Source tags read like the stack line under a project card: small, rust, spaced. */
+.msg .meta .tag {
+  font-family: var(--font-mono); letter-spacing: .06em; text-transform: lowercase; color: var(--accent);
+}
+.msg.assistant .meta { padding-inline-start: 4px; }
 .msg .speaking-now { background: color-mix(in srgb, var(--highlighter) 60%, transparent); border-radius: 3px; }
 .cite {
   display: inline-flex; align-items: center; gap: 4px; margin: 0 2px; padding: 0 8px; border-radius: 999px;
