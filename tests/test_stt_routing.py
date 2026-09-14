@@ -94,3 +94,18 @@ def test_local_model_failure_is_503_not_a_crash(stt, monkeypatch):
         asyncio.run(stt._transcribe_local(b"audio", "ar", ""))
     assert e.value.status_code == 503
     assert e.value.detail == "stt_local_failed"
+
+
+def test_egyptian_primer_leads_the_arabic_prompt(stt):
+    """Whisper's Arabic defaults to MSA and quietly "corrects" إزاي into كيف. The primer
+    sets the register; the course jargon still has to survive alongside it."""
+    prompt = stt._prompt_for("ar", "peak finding, divide and conquer")
+    assert "إزاي" in prompt
+    assert "peak finding" in prompt
+    assert len(prompt) <= 800
+
+
+def test_other_languages_get_the_vocabulary_unchanged(stt):
+    assert stt._prompt_for("en", "peak finding") == "peak finding"
+    assert stt._prompt_for("fr", "") is None
+    assert stt._prompt_for(None, "") is None
