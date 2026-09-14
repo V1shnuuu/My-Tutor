@@ -158,11 +158,14 @@ def doctor(ask: bool = False) -> int:
     if b["engine"] == "groq":
         _row(OK, "stt", f"Groq Whisper, {b['used']}/{b['cap']} used today")
     elif b["engine"] == "local":
+        # The intended default, not a degraded mode: no key, no quota, Egyptian-primed.
+        # If it is slow, the answer is a bigger model on a GPU, not somebody's API key.
         _row(OK, "stt", f"local faster-whisper ({settings.local_stt_model}, {settings.local_stt_device})",
-             "first question downloads the model; set GROQ_API_KEY for better Egyptian accuracy")
+             "first question downloads the model; on a GPU use LOCAL_STT_MODEL=large-v3-turbo "
+             "LOCAL_STT_DEVICE=cuda")
     else:
         _row(WARN, "stt", "server lanes off — students fall back to the browser recogniser",
-             "set GROQ_API_KEY, or LOCAL_STT_ENABLED=true")
+             "LOCAL_STT_ENABLED=true (keyless, and much better Arabic than the browser)")
 
     print("\nVOICE (speech out)")
     try:
