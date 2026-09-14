@@ -47,6 +47,9 @@ export default function App() {
   // microphone is the user's decision, and the first tap is also the gesture the browser
   // needs before it will grant mic access or unlock audio.
   const [handsFree, setHandsFree] = useState(getPref("handsfree") === "on");
+  // The VAD polls this every frame from inside a callback created once per session, so it
+  // has to read live state rather than whatever was captured when listening began.
+  const speakerStateRef = useRef<"idle" | "speaking">("idle");
   const arming = useRef(false);
   const [liveDown, setLiveDown] = useState(false);
   const player = useRef<PlayerHandle>(null);
@@ -80,6 +83,7 @@ export default function App() {
   }, [token]);
 
   // ---- speaker wiring
+  useEffect(() => { speakerStateRef.current = speakerState; }, [speakerState]);
   useEffect(() => {
     speaker.onState = setSpeakerState;
     speaker.onSentence = (id) => setSpeakingSentence(id == null ? null : sentences.current.get(id) ?? null);
@@ -151,7 +155,8 @@ export default function App() {
     let content = "";
     const update = (patch: Partial<StoredMessage>) => setMessages((m) => { const c = [...m]; c[c.length - 1] = { ...c[c.length - 1], ...patch }; return c; });
     try {
-      for await (const ev of chatApi(token, text, history, lang)) {
+      // Spoken answers get a much shorter register; a muted session keeps the reading length.
+      for await (const ev of chatApi(token, text, history, lang, voiceOn)) {
         if (ev.type === "meta") {
           asst.lang = ev.lang; setLang(ev.lang); setPref("lang", ev.lang); setBudget(ev.budget); update({ lang: ev.lang });
         } else if (ev.type === "status") {
@@ -201,6 +206,9 @@ export default function App() {
     session.current = await startListening({
       token, langHint: lang, serverAvailable: sttServer,
       onInterim: setInterim,
+      tutorSpeaking: () => speakerStateRef.current === "speaking",
+      // Barge-in: the student started talking over the answer, so drop it mid-sentence.
+      onSpeechStart: () => { if (speakerStateRef.current === "speaking") stopSpeech(); },
       // A mode switch is the STT layer reporting that the server lane is done for this
       // session; drop serverAvailable too or every later attempt retries the same failure.
       onMode: (m) => { setSttMode(m); if (m === "browser") setSttServer(false); },
@@ -226,7 +234,10 @@ export default function App() {
   // speakers is exactly what the VAD would hear), never mid-answer, never in a hidden tab.
   useEffect(() => {
     if (!handsFree || !token) return;
-    if (listening || streaming || speakerState === "speaking" || document.hidden) return;
+    // Deliberately no longer excludes speakerState === "speaking": the mic stays open
+    // through the answer so an interruption lands immediately. lib/stt.ts raises the
+    // threshold for the duration so the tutor cannot interrupt itself.
+    if (listening || streaming || document.hidden) return;
     if (arming.current) return;
     arming.current = true;
     // A beat after the audio stops, so the tail of the last word doesn't open the mic.
