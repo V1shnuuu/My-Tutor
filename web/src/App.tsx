@@ -31,7 +31,7 @@ export default function App() {
   const [interim, setInterim] = useState("");
   const [sttMode, setSttMode] = useState<"server" | "browser" | null>(null);
   const [sttServer, setSttServer] = useState(false);
-  const [budget, setBudget] = useState<{ used: number; cap: number } | null>(null);
+  const [, setBudget] = useState<{ used: number; cap: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [videoCollapsed, setVideoCollapsed] = useState(false);
   // Whether to stream HeyGen instead of the local face. The server decides — it holds the
@@ -255,7 +255,6 @@ export default function App() {
   const topbar = (
     <div className="topbar">
       <span className="brand">📓 {t("appName", lang)}</span>
-      {budget && <span className="pill">{t("budget", lang)}: {budget.used}/{budget.cap}</span>}
       <span className={`pill ${voiceOn ? "ok" : ""}`}><button onClick={toggleVoice}>{voiceOn ? t("voice_on", lang) : t("voice_off", lang)}</button></span>
       {voiceOn && engine === "none" && <span className="pill warn" title="No voice for this language on this device or server">{lang} voice ✗</span>}
       {voiceOn && engine === "server" && <span className="pill" title="Server voice (Piper)">🗣 piper</span>}

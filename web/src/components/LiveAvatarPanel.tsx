@@ -92,9 +92,10 @@ const LiveAvatarPanel = forwardRef<LiveAvatarHandle, Props>(function LiveAvatarP
       sessionRef.current = null;
       void session?.stop();
     };
-    // lang/token intentionally not re-run on every render — a new value starts a fresh session
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+    // HeyGen's language is a session-level persona property (core/app/liveavatar.py), not a
+    // per-message one, so a language switch must tear down and reconnect with the new lang —
+    // otherwise the avatar keeps speaking whatever language it first connected with.
+  }, [token, lang]);
 
   return (
     <div className="avatar-wrap live-avatar">
