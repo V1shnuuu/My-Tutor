@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Avatar, { type AvatarState } from "./components/Avatar";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Chat, { type LiveState } from "./components/Chat";
 import Curriculum from "./components/Curriculum";
 import LiveAvatarPanel, { type LiveAvatarHandle } from "./components/LiveAvatarPanel";
@@ -8,14 +7,17 @@ import VideoPlayer, { type PlayerHandle } from "./components/VideoPlayer";
 import { ApiError, chat as chatApi, listVideos, me, type Citation, type Lang, type Video } from "./lib/api";
 
 import { dirOf, t } from "./lib/i18n";
-import { SentenceSplitter, Speaker, hasSpeech, isUnlocked, resumeAudio, unlockAudio } from "./lib/speech";
+import { SentenceSplitter, Speaker, isUnlocked, resumeAudio, unlockAudio } from "./lib/speech";
 import { startListening, type ListenSession } from "./lib/stt";
 import { db, getPref, getToken, setPref, setToken, type StoredMessage } from "./lib/store";
 
 const speaker = new Speaker();
 
+type Theme = "light" | "dark";
+
 export default function App() {
   const [token, setTok] = useState<string | null>(getToken());
+  const [theme, setTheme] = useState<Theme>((getPref("theme") as Theme) || "light");
   const [lang, setLang] = useState<Lang>((getPref("lang") as Lang) || (navigator.language.startsWith("ar") ? "ar" : navigator.language.startsWith("fr") ? "fr" : "en"));
   const [videos, setVideos] = useState<Video[]>([]);
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
@@ -25,7 +27,6 @@ export default function App() {
   const [speakerState, setSpeakerState] = useState<"idle" | "speaking">("idle");
   const [speakingSentence, setSpeakingSentence] = useState<string | null>(null);
   const [voiceOn, setVoiceOn] = useState(getPref("voice") !== "off");
-  const [unlocked, setUnlocked] = useState(false);
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState("");
   const [sttMode, setSttMode] = useState<"server" | "browser" | null>(null);
@@ -41,7 +42,6 @@ export default function App() {
   // falls back to Piper/the OS voice. `liveUp` is a ref because the streaming callbacks below
   // are created once per send and must see the current value, not the one they closed over.
   const liveUp = useRef(false);
-  const avatarSandbox = useRef(false);
   // Hands-free: the mic re-arms itself after the tutor finishes speaking, and the energy
   // VAD in lib/stt.ts closes it when the student stops. Off by default — arming a
   // microphone is the user's decision, and the first tap is also the gesture the browser
@@ -51,7 +51,6 @@ export default function App() {
   // has to read live state rather than whatever was captured when listening began.
   const speakerStateRef = useRef<"idle" | "speaking">("idle");
   const arming = useRef(false);
-  const [liveDown, setLiveDown] = useState(false);
   const player = useRef<PlayerHandle>(null);
   const session = useRef<ListenSession | null>(null);
   const sentences = useRef<Map<number, string>>(new Map());
@@ -95,13 +94,12 @@ export default function App() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
   useEffect(() => { document.documentElement.dir = dirOf(lang); document.documentElement.lang = lang; }, [lang]);
+  useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
+  const toggleTheme = () => { const next = theme === "dark" ? "light" : "dark"; setTheme(next); setPref("theme", next); };
 
   const ensureUnlocked = useCallback(() => {
-    if (!isUnlocked()) setUnlocked(unlockAudio());
-    else setUnlocked(true);
+    if (!isUnlocked()) unlockAudio();
   }, []);
-
-  const getViseme = useCallback(() => speaker.current_viseme(), []);
 
   // Which engine says this sentence out loud.
   //
@@ -113,15 +111,13 @@ export default function App() {
   // Interrupting an inactive engine is a no-op, so stop both rather than guessing which
   // one is mid-sentence when a session drops.
   const stopSpeech = useCallback(() => { liveAvatar.current?.interrupt(); speaker.stop(); }, []);
-  const onLiveReady = useCallback((sandbox: boolean) => {
+  const onLiveReady = useCallback(() => {
     liveUp.current = true;
-    avatarSandbox.current = sandbox;
-    setLiveDown(false);
   }, []);
   // Speech must not be queued at a session that is mid-reconnect; it would be dropped
   // silently. The panel reconnects on its own, so this only pauses the hand-off.
   const onLivePaused = useCallback(() => { liveUp.current = false; }, []);
-  const onLiveUnavailable = useCallback(() => { liveUp.current = false; setLiveDown(true); }, []);
+  const onLiveUnavailable = useCallback(() => { liveUp.current = false; }, []);
 
   // ---- send a message and stream the answer
   const send = useCallback(async (text: string) => {
@@ -252,14 +248,6 @@ export default function App() {
 
   useEffect(() => { if (toast) { const id = setTimeout(() => setToast(null), 5000); return () => clearTimeout(id); } }, [toast]);
 
-  const avatarState: AvatarState = useMemo(() => {
-    if (listening) return "listening";
-    if (speakerState === "speaking") return "speaking";
-    if (streaming) return "thinking";
-    if (!voiceOn || (!unlocked && !isUnlocked()) || (!hasSpeech() && speaker.engineFor(lang) === "none")) return "muted";
-    return "idle";
-  }, [listening, speakerState, streaming, voiceOn, unlocked]);
-
   if (!token) return <Login lang={lang} onLang={setLang} onToken={(tk) => { setToken(tk); setTok(tk); }} />;
 
   const engine = speaker.engineFor(lang);
@@ -279,17 +267,18 @@ export default function App() {
       <span className="pill">
         {(["ar", "en", "fr"] as Lang[]).map((l) => <button key={l} onClick={() => { setLang(l); setPref("lang", l); }} style={{ fontWeight: l === lang ? 700 : 400 }}>{l.toUpperCase()}</button>)}
       </span>
+      <span className="pill">
+        <button onClick={toggleTheme} aria-pressed={theme === "dark"} title={theme === "dark" ? "Switch to light" : "Switch to dark"}>
+          {theme === "dark" ? "🌙" : "☀️"}
+        </button>
+      </span>
       {toast && <span className="pill danger" role="status">{toast}</span>}
     </div>
   );
 
   const avatar = (
     <section className="panel panel-avatar" aria-label={t("avatar_label", lang)}>
-      {/* Once the session is gone, swap the dead <video> for the local face: it lip-syncs the
-          Piper/OS voice that speech has already fallen back to, so the tutor keeps a talking
-          head instead of an error caption. Not re-mounted afterwards — a sandbox session
-          cannot be resumed, and retrying would loop. */}
-      {liveAvatarOn && !liveDown ? (
+      {liveAvatarOn ? (
         <LiveAvatarPanel
           ref={liveAvatar}
           token={token}
@@ -303,7 +292,9 @@ export default function App() {
           onUnavailable={onLiveUnavailable}
         />
       ) : (
-        <Avatar state={avatarState} getViseme={getViseme} label={t("avatar_label", lang)} stateLabel={t(`state_${avatarState}` as const, lang)} muteLabel={t("enable_voice", lang)} onUnmute={() => { ensureUnlocked(); if (!voiceOn) toggleVoice(); }} />
+        <div className="avatar-wrap">
+          <span className="avatar-state danger" aria-hidden="true">live avatar unavailable</span>
+        </div>
       )}
     </section>
   );

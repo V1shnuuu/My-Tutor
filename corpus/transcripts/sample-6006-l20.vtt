@@ -1,0 +1,3838 @@
+WEBVTT
+
+00:00:01.870 --> 00:00:04.640
+The following content is provided under a Creative Commons license. Your support
+
+00:00:04.640 --> 00:00:06.760
+a Creative Commons license. Your support will help MIT Open Courseware continue
+
+00:00:06.760 --> 00:00:08.640
+will help MIT Open Courseware continue to offer high-quality educational
+
+00:00:08.640 --> 00:00:10.560
+to offer high-quality educational resources for free.
+
+00:00:10.560 --> 00:00:12.720
+resources for free. To make a donation or view additional
+
+00:00:12.720 --> 00:00:15.360
+To make a donation or view additional materials from hundreds of MIT courses,
+
+00:00:15.360 --> 00:00:17.360
+materials from hundreds of MIT courses, visit MIT Open Courseware at
+
+00:00:17.360 --> 00:00:22.430
+visit MIT Open Courseware at ocw.mit.edu.
+
+00:00:23.990 --> 00:00:25.800
+All right, today we continue our exciting adventure into dynamic
+
+00:00:25.800 --> 00:00:28.760
+exciting adventure into dynamic programming. Are you excited? I'm
+
+00:00:28.760 --> 00:00:30.160
+programming. Are you excited? I'm excited.
+
+00:00:30.160 --> 00:00:32.800
+excited. Super excited. Dynamic programming, as
+
+00:00:32.800 --> 00:00:34.400
+Super excited. Dynamic programming, as you recall, way back before
+
+00:00:34.400 --> 00:00:36.800
+you recall, way back before Thanksgiving, is a super exciting,
+
+00:00:36.800 --> 00:00:39.120
+Thanksgiving, is a super exciting, powerful technique to design algorithms,
+
+00:00:39.120 --> 00:00:41.120
+powerful technique to design algorithms, especially to solve optimization
+
+00:00:41.120 --> 00:00:42.920
+especially to solve optimization problems where you want to maximize or
+
+00:00:42.920 --> 00:00:44.560
+problems where you want to maximize or minimize something.
+
+00:00:44.560 --> 00:00:47.960
+minimize something. Last time we saw how two algorithms we
+
+00:00:47.960 --> 00:00:50.040
+Last time we saw how two algorithms we already knew, namely how to compute the
+
+00:00:50.040 --> 00:00:53.480
+already knew, namely how to compute the nth Fibonacci number, uh and how to
+
+00:00:53.480 --> 00:00:56.040
+nth Fibonacci number, uh and how to compute shortest paths via Bellman-Ford,
+
+00:00:56.040 --> 00:00:58.720
+compute shortest paths via Bellman-Ford, are really dynamic programs in disguise.
+
+00:00:58.720 --> 00:01:00.480
+are really dynamic programs in disguise. And indeed, for at least for
+
+00:01:00.480 --> 00:01:01.840
+And indeed, for at least for Bellman-Ford, that's how they were
+
+00:01:01.840 --> 00:01:03.200
+Bellman-Ford, that's how they were invented.
+
+00:01:03.200 --> 00:01:04.879
+invented. Uh was to apply a general technique,
+
+00:01:04.879 --> 00:01:07.720
+Uh was to apply a general technique, which we're going to see today in
+
+00:01:07.720 --> 00:01:10.040
+which we're going to see today in full generality, more or less, most of
+
+00:01:10.040 --> 00:01:13.200
+full generality, more or less, most of the generality, in five easy steps.
+
+00:01:13.200 --> 00:01:15.120
+the generality, in five easy steps. And uh we're going to see that technique
+
+00:01:15.120 --> 00:01:17.320
+And uh we're going to see that technique applied to two new problems, which are
+
+00:01:17.320 --> 00:01:18.760
+applied to two new problems, which are much more interesting than the ones
+
+00:01:18.760 --> 00:01:20.960
+much more interesting than the ones we've already solved. Namely, how to
+
+00:01:20.960 --> 00:01:23.080
+we've already solved. Namely, how to make your text look nice in a paragraph,
+
+00:01:23.080 --> 00:01:25.080
+make your text look nice in a paragraph, where to break the lines. That's text
+
+00:01:25.080 --> 00:01:27.640
+where to break the lines. That's text justification. And how to win and make
+
+00:01:27.640 --> 00:01:29.880
+justification. And how to win and make loads of money at blackjack. So, lots of
+
+00:01:29.880 --> 00:01:32.120
+loads of money at blackjack. So, lots of practical stuff here. And we're going to
+
+00:01:32.120 --> 00:01:35.840
+practical stuff here. And we're going to get understand see one new technique for
+
+00:01:35.840 --> 00:01:38.000
+get understand see one new technique for general dynamic programming. Uh these
+
+00:01:38.000 --> 00:01:39.200
+general dynamic programming. Uh these are some
+
+00:01:39.200 --> 00:01:40.640
+are some some things I wrote last time. Actually,
+
+00:01:40.640 --> 00:01:42.560
+some things I wrote last time. Actually, one of them I didn't write last time. In
+
+00:01:42.560 --> 00:01:43.880
+one of them I didn't write last time. In general, you can think of dynamic
+
+00:01:43.880 --> 00:01:46.200
+general, you can think of dynamic programming as a a carefully executed
+
+00:01:46.200 --> 00:01:48.560
+programming as a a carefully executed brute-force search. So, in some sense,
+
+00:01:48.560 --> 00:01:50.120
+brute-force search. So, in some sense, it's your algorithm is going to be
+
+00:01:50.120 --> 00:01:52.520
+it's your algorithm is going to be trying all the possibilities,
+
+00:01:52.520 --> 00:01:54.600
+trying all the possibilities, but somehow avoiding the fact that there
+
+00:01:54.600 --> 00:01:56.600
+but somehow avoiding the fact that there are exponentially many of them. By
+
+00:01:56.600 --> 00:01:58.760
+are exponentially many of them. By thinking of it in a clever way, you can
+
+00:01:58.760 --> 00:02:00.480
+thinking of it in a clever way, you can reduce the exponential search space down
+
+00:02:00.480 --> 00:02:02.160
+reduce the exponential search space down to a polynomial one. Even though you're
+
+00:02:02.160 --> 00:02:03.960
+to a polynomial one. Even though you're still not being very intelligent, and
+
+00:02:03.960 --> 00:02:05.560
+still not being very intelligent, and you're still blindly trying all
+
+00:02:05.560 --> 00:02:07.200
+you're still blindly trying all possibilities.
+
+00:02:07.200 --> 00:02:09.759
+possibilities. So, that's the brute-force part.
+
+00:02:09.759 --> 00:02:12.240
+So, that's the brute-force part. Uh in more detail, the three main
+
+00:02:12.240 --> 00:02:14.600
+Uh in more detail, the three main techniques in dynamic programming are
+
+00:02:14.600 --> 00:02:17.680
+techniques in dynamic programming are the idea of guessing, the idea that uh I
+
+00:02:17.680 --> 00:02:19.400
+the idea of guessing, the idea that uh I want to find the best way to solve a
+
+00:02:19.400 --> 00:02:22.760
+want to find the best way to solve a problem. Let's pick out some feature of
+
+00:02:22.760 --> 00:02:25.440
+problem. Let's pick out some feature of the solution that I want to know.
+
+00:02:25.440 --> 00:02:27.360
+the solution that I want to know. I don't know it, so I'll guess the
+
+00:02:27.360 --> 00:02:28.560
+I don't know it, so I'll guess the answer.
+
+00:02:28.560 --> 00:02:30.640
+answer. Meaning, I'll try all the possibilities
+
+00:02:30.640 --> 00:02:32.520
+Meaning, I'll try all the possibilities for that choice,
+
+00:02:32.520 --> 00:02:34.880
+for that choice, and take the best one.
+
+00:02:34.880 --> 00:02:36.320
+and take the best one. So, guessing is really central to
+
+00:02:36.320 --> 00:02:37.920
+So, guessing is really central to dynamic programming.
+
+00:02:37.920 --> 00:02:42.000
+dynamic programming. Then, uh we also use a recursion, some
+
+00:02:42.000 --> 00:02:43.640
+Then, uh we also use a recursion, some way to express the solution to our
+
+00:02:43.640 --> 00:02:46.280
+way to express the solution to our problem uh in terms of solutions to
+
+00:02:46.280 --> 00:02:47.880
+problem uh in terms of solutions to subproblems.
+
+00:02:47.880 --> 00:02:49.480
+subproblems. So, it's usually very easy to get a
+
+00:02:49.480 --> 00:02:51.360
+So, it's usually very easy to get a recursion for a lot of problems, as long
+
+00:02:51.360 --> 00:02:53.720
+recursion for a lot of problems, as long as they have some kind of substructure.
+
+00:02:53.720 --> 00:02:55.200
+as they have some kind of substructure. Like shortest paths, we had that
+
+00:02:55.200 --> 00:02:56.680
+Like shortest paths, we had that subpaths of shortest paths were also
+
+00:02:56.680 --> 00:02:59.240
+subpaths of shortest paths were also shortest paths. So, that was handy. Uh
+
+00:02:59.240 --> 00:03:00.840
+shortest paths. So, that was handy. Uh usually, the recursion by itself is
+
+00:03:00.840 --> 00:03:02.680
+usually, the recursion by itself is exponential time, like even with
+
+00:03:02.680 --> 00:03:04.800
+exponential time, like even with Fibonacci numbers. But we add in this
+
+00:03:04.800 --> 00:03:07.080
+Fibonacci numbers. But we add in this technique of memoization, which is just
+
+00:03:07.080 --> 00:03:08.840
+technique of memoization, which is just once we compute an answer, we put stored
+
+00:03:08.840 --> 00:03:10.560
+once we compute an answer, we put stored in a lookup table. If we ever need that
+
+00:03:10.560 --> 00:03:12.440
+in a lookup table. If we ever need that answer again, we reuse it instead of
+
+00:03:12.440 --> 00:03:15.520
+answer again, we reuse it instead of recomputing it. So, we store we memo we
+
+00:03:15.520 --> 00:03:17.320
+recomputing it. So, we store we memo we write down in our memo pad anything that
+
+00:03:17.320 --> 00:03:19.480
+write down in our memo pad anything that we compute.
+
+00:03:19.480 --> 00:03:21.080
+we compute. Those technique all these techniques
+
+00:03:21.080 --> 00:03:22.280
+Those technique all these techniques together
+
+00:03:22.280 --> 00:03:24.480
+together give you typically a polynomial time
+
+00:03:24.480 --> 00:03:26.000
+give you typically a polynomial time dynamic program, when they work, of
+
+00:03:26.000 --> 00:03:27.760
+dynamic program, when they work, of course. The memoization makes the
+
+00:03:27.760 --> 00:03:30.080
+course. The memoization makes the recursion polynomial time. The guessing
+
+00:03:30.080 --> 00:03:33.200
+recursion polynomial time. The guessing is what is doing a brute-force search.
+
+00:03:33.200 --> 00:03:35.440
+is what is doing a brute-force search. And magically, it all works.
+
+00:03:35.440 --> 00:03:37.520
+And magically, it all works. If you're careful.
+
+00:03:37.520 --> 00:03:40.120
+If you're careful. Um another perspective,
+
+00:03:40.120 --> 00:03:41.800
+Um another perspective, kind of an orthogonal perspective, or
+
+00:03:41.800 --> 00:03:43.120
+kind of an orthogonal perspective, or another way of thinking about it, which
+
+00:03:43.120 --> 00:03:44.480
+another way of thinking about it, which I think should be comfortable for you,
+
+00:03:44.480 --> 00:03:45.920
+I think should be comfortable for you, because we spent a lot of time doing
+
+00:03:45.920 --> 00:03:47.400
+because we spent a lot of time doing shortest paths
+
+00:03:47.400 --> 00:03:49.480
+shortest paths and expressing problems that we care
+
+00:03:49.480 --> 00:03:51.120
+and expressing problems that we care about in terms of shortest paths, even
+
+00:03:51.120 --> 00:03:52.440
+about in terms of shortest paths, even if they don't look like it at first
+
+00:03:52.440 --> 00:03:53.640
+if they don't look like it at first glance.
+
+00:03:53.640 --> 00:03:55.520
+glance. Dynamic programming, in some sense, is
+
+00:03:55.520 --> 00:03:58.360
+Dynamic programming, in some sense, is always computing shortest paths in a
+
+00:03:58.360 --> 00:04:00.160
+always computing shortest paths in a DAG.
+
+00:04:00.160 --> 00:04:01.400
+DAG. So, you have some problem you want to
+
+00:04:01.400 --> 00:04:03.280
+So, you have some problem you want to solve, like you have text you want to
+
+00:04:03.280 --> 00:04:05.120
+solve, like you have text you want to split it up into lines, so it looks nice
+
+00:04:05.120 --> 00:04:06.560
+split it up into lines, so it looks nice in a paragraph.
+
+00:04:06.560 --> 00:04:08.320
+in a paragraph. Um
+
+00:04:08.320 --> 00:04:11.200
+Um You express that problem somehow as a
+
+00:04:11.200 --> 00:04:13.480
+You express that problem somehow as a directed acyclic graph.
+
+00:04:13.480 --> 00:04:15.200
+directed acyclic graph. And then we know how to compute shortest
+
+00:04:15.200 --> 00:04:16.799
+And then we know how to compute shortest paths in directed acyclic graphs in
+
+00:04:16.799 --> 00:04:19.040
+paths in directed acyclic graphs in linear time. And that's basically what
+
+00:04:19.040 --> 00:04:21.000
+linear time. And that's basically what dynamic programming is doing. I haven't
+
+00:04:21.000 --> 00:04:23.680
+dynamic programming is doing. I haven't I didn't realize this until last week.
+
+00:04:23.680 --> 00:04:25.080
+I didn't realize this until last week. So, this is a new perspective. It's an
+
+00:04:25.080 --> 00:04:26.840
+So, this is a new perspective. It's an experimental perspective, but I think
+
+00:04:26.840 --> 00:04:28.280
+experimental perspective, but I think it's helpful. It's actually dynamic
+
+00:04:28.280 --> 00:04:30.800
+it's helpful. It's actually dynamic programming is not that new.
+
+00:04:30.800 --> 00:04:32.360
+programming is not that new. It's all about how to be clever in
+
+00:04:32.360 --> 00:04:34.200
+It's all about how to be clever in setting up that DAG. But in the end, the
+
+00:04:34.200 --> 00:04:36.800
+setting up that DAG. But in the end, the algorithm is very simple.
+
+00:04:36.800 --> 00:04:38.760
+algorithm is very simple. Okay? And then we had this other
+
+00:04:38.760 --> 00:04:41.720
+Okay? And then we had this other perspective, uh or not back back to this
+
+00:04:41.720 --> 00:04:44.200
+perspective, uh or not back back to this perspective, I guess. Um in general, we
+
+00:04:44.200 --> 00:04:46.920
+perspective, I guess. Um in general, we have the real problem we want to solve,
+
+00:04:46.920 --> 00:04:48.560
+have the real problem we want to solve, we
+
+00:04:48.560 --> 00:04:49.960
+we generalize it in some sense by
+
+00:04:49.960 --> 00:04:51.120
+generalize it in some sense by considering lots of different
+
+00:04:51.120 --> 00:04:53.640
+considering lots of different subproblems that we might care about.
+
+00:04:53.640 --> 00:04:55.840
+subproblems that we might care about. Like with Fibonacci, we had the nth
+
+00:04:55.840 --> 00:04:59.280
+Like with Fibonacci, we had the nth Fibonacci number. We wanted to uh we
+
+00:04:59.280 --> 00:05:00.640
+Fibonacci number. We wanted to uh we really just wanted the nth Fibonacci
+
+00:05:00.640 --> 00:05:01.880
+really just wanted the nth Fibonacci number, but along the way we're going to
+
+00:05:01.880 --> 00:05:04.760
+number, but along the way we're going to compute all F1 up to Fn. So, those are
+
+00:05:04.760 --> 00:05:06.360
+compute all F1 up to Fn. So, those are our subproblems.
+
+00:05:06.360 --> 00:05:08.160
+our subproblems. And if we compute the amount of time we
+
+00:05:08.160 --> 00:05:10.400
+And if we compute the amount of time we need to solve each subproblem,
+
+00:05:10.400 --> 00:05:11.680
+need to solve each subproblem, and multiply that by the number of
+
+00:05:11.680 --> 00:05:13.640
+and multiply that by the number of subproblems, we get the total time
+
+00:05:13.640 --> 00:05:15.080
+subproblems, we get the total time required by the algorithm. This is a
+
+00:05:15.080 --> 00:05:16.280
+required by the algorithm. This is a general
+
+00:05:16.280 --> 00:05:19.080
+general true fact. Uh and the fun part here is
+
+00:05:19.080 --> 00:05:21.720
+true fact. Uh and the fun part here is we get to treat any recursive calls in
+
+00:05:21.720 --> 00:05:23.320
+we get to treat any recursive calls in this recursion
+
+00:05:23.320 --> 00:05:25.920
+this recursion as free, as constant time.
+
+00:05:25.920 --> 00:05:28.120
+as free, as constant time. Because we really only pay for it the
+
+00:05:28.120 --> 00:05:31.000
+Because we really only pay for it the first time, that's counted out here. The
+
+00:05:31.000 --> 00:05:32.640
+first time, that's counted out here. The second time we call it, it's already
+
+00:05:32.640 --> 00:05:34.320
+second time we call it, it's already memoized, so we don't have to pay for
+
+00:05:34.320 --> 00:05:36.200
+memoized, so we don't have to pay for it.
+
+00:05:36.200 --> 00:05:37.520
+it. So, this is in some sense an
+
+00:05:37.520 --> 00:05:38.920
+So, this is in some sense an amortization, if you remember
+
+00:05:38.920 --> 00:05:41.800
+amortization, if you remember amortization from table doubling.
+
+00:05:41.800 --> 00:05:43.920
+amortization from table doubling. Uh we're just changing around when we
+
+00:05:43.920 --> 00:05:45.960
+Uh we're just changing around when we count the cost of each subproblem, and
+
+00:05:45.960 --> 00:05:49.240
+count the cost of each subproblem, and then this is the total running time.
+
+00:05:49.240 --> 00:05:52.120
+then this is the total running time. Okay. So, that's the spirit uh we saw
+
+00:05:52.120 --> 00:05:54.360
+Okay. So, that's the spirit uh we saw already. I'm going to give you the five
+
+00:05:54.360 --> 00:05:55.600
+already. I'm going to give you the five general steps, and then we're going to
+
+00:05:55.600 --> 00:05:59.480
+general steps, and then we're going to apply them to two new problems.
+
+00:05:59.480 --> 00:06:01.440
+apply them to two new problems. So,
+
+00:06:01.440 --> 00:06:04.200
+So, five easy
+
+00:06:04.200 --> 00:06:06.200
+five easy steps
+
+00:06:06.200 --> 00:06:13.830
+steps to dynamic program.
+
+00:06:15.390 --> 00:06:16.840
+Unfortunately, these are not necessarily sequential steps. They're a little bit
+
+00:06:16.840 --> 00:06:19.680
+sequential steps. They're a little bit interdependent, and so easy should be in
+
+00:06:19.680 --> 00:06:21.280
+interdependent, and so easy should be in quotes.
+
+00:06:21.280 --> 00:06:24.120
+quotes. This is how you This is how you
+
+00:06:24.120 --> 00:06:27.240
+This is how you This is how you would express a dynamic program, in some
+
+00:06:27.240 --> 00:06:29.440
+would express a dynamic program, in some sense, how you would invent one.
+
+00:06:29.440 --> 00:06:30.480
+sense, how you would invent one. When in particular, how you would
+
+00:06:30.480 --> 00:06:32.680
+When in particular, how you would explain one.
+
+00:06:32.680 --> 00:06:34.920
+explain one. Okay, there Let's Let me get to the main
+
+00:06:34.920 --> 00:06:42.830
+Okay, there Let's Let me get to the main steps first.
+
+00:06:45.430 --> 00:06:48.440
+First step is to figure out what your subproblems are going to be.
+
+00:06:48.440 --> 00:06:51.200
+subproblems are going to be. Second part is to guess something.
+
+00:06:51.200 --> 00:06:52.680
+Second part is to guess something. Third step
+
+00:06:52.680 --> 00:06:57.590
+Third step is to
+
+00:06:59.670 --> 00:07:02.800
+relate subproblem solutions, usually with a recurrence.
+
+00:07:02.800 --> 00:07:08.070
+with a recurrence. I guess always with the recurrence.
+
+00:07:11.190 --> 00:07:20.550
+Fourth step is to actually build an algorithm.
+
+00:07:22.270 --> 00:07:24.000
+And we saw two ways to do that last time. One was to use recursion and
+
+00:07:24.000 --> 00:07:25.640
+time. One was to use recursion and memoization, which is the way I like to
+
+00:07:25.640 --> 00:07:28.160
+memoization, which is the way I like to think about it. But if you prefer,
+
+00:07:28.160 --> 00:07:29.600
+think about it. But if you prefer, you can
+
+00:07:29.600 --> 00:07:32.960
+you can follow the bottom-up approach.
+
+00:07:32.960 --> 00:07:35.120
+follow the bottom-up approach. And usually, that's called
+
+00:07:35.120 --> 00:07:40.790
+And usually, that's called building a table.
+
+00:07:42.230 --> 00:07:44.000
+And that was basically to turn our recursion and memoization, which is kind
+
+00:07:44.000 --> 00:07:47.440
+recursion and memoization, which is kind of fancy, into a bunch of for loops,
+
+00:07:47.440 --> 00:07:49.080
+of fancy, into a bunch of for loops, which is pretty simple. And this is
+
+00:07:49.080 --> 00:07:50.480
+which is pretty simple. And this is going to be prac- more practical,
+
+00:07:50.480 --> 00:07:53.600
+going to be prac- more practical, faster, and so on. And depending on your
+
+00:07:53.600 --> 00:07:54.840
+faster, and so on. And depending on your preference, one of them is more
+
+00:07:54.840 --> 00:07:56.560
+preference, one of them is more intuitive than the other. But it doesn't
+
+00:07:56.560 --> 00:08:00.750
+intuitive than the other. But it doesn't matter. They have the same running time.
+
+00:08:02.590 --> 00:08:06.270
+More or less. In the worst case. Um
+
+00:08:07.710 --> 00:08:09.360
+Okay. Then the fifth step
+
+00:08:09.360 --> 00:08:19.030
+Then the fifth step is to solve the original problem.
+
+00:08:20.190 --> 00:08:22.640
+All right. So, we've sort of seen this before. In
+
+00:08:22.640 --> 00:08:25.360
+So, we've sort of seen this before. In fact, I have over here a convenient
+
+00:08:25.360 --> 00:08:28.230
+fact, I have over here a convenient table.
+
+00:08:30.430 --> 00:08:31.840
+It's called cheating. The two problems we saw last time,
+
+00:08:31.840 --> 00:08:34.840
+The two problems we saw last time, Fibonacci numbers and shortest paths.
+
+00:08:34.840 --> 00:08:37.400
+Fibonacci numbers and shortest paths. And I've got steps 1 2 3 4. I ran out of
+
+00:08:37.400 --> 00:08:39.360
+And I've got steps 1 2 3 4. I ran out of room, so I didn't write five yet. But
+
+00:08:39.360 --> 00:08:40.520
+room, so I didn't write five yet. But we'll get there.
+
+00:08:40.520 --> 00:08:43.840
+we'll get there. So, what are our subproblems? Well, uh
+
+00:08:43.840 --> 00:08:47.360
+So, what are our subproblems? Well, uh for Fibonacci, they were F1 through Fn.
+
+00:08:47.360 --> 00:08:49.200
+for Fibonacci, they were F1 through Fn. So, there were n different subproblems.
+
+00:08:49.200 --> 00:08:52.920
+So, there were n different subproblems. And in general, because of this formula,
+
+00:08:52.920 --> 00:08:55.240
+And in general, because of this formula, we want to count how many subproblems
+
+00:08:55.240 --> 00:08:57.240
+we want to count how many subproblems are there.
+
+00:08:57.240 --> 00:09:05.790
+are there. So,
+
+00:09:08.070 --> 00:09:10.640
+number of subproblems is This is sort of what we need to do algorithmically, and
+
+00:09:10.640 --> 00:09:13.000
+what we need to do algorithmically, and then for analysis, we want to count
+
+00:09:13.000 --> 00:09:15.680
+then for analysis, we want to count number of subproblems for step one. And
+
+00:09:15.680 --> 00:09:17.560
+number of subproblems for step one. And so, for Fibonacci, there were n of them.
+
+00:09:17.560 --> 00:09:20.600
+so, for Fibonacci, there were n of them. For shortest paths, we had we defined
+
+00:09:20.600 --> 00:09:23.520
+For shortest paths, we had we defined this delta sub k
+
+00:09:23.520 --> 00:09:26.160
+this delta sub k of sv. This was the shortest path from s
+
+00:09:26.160 --> 00:09:29.440
+of sv. This was the shortest path from s to v that uses at most k edges. That was
+
+00:09:29.440 --> 00:09:31.760
+to v that uses at most k edges. That was sort of what Bellman-Ford was doing.
+
+00:09:31.760 --> 00:09:34.040
+sort of what Bellman-Ford was doing. And uh the number of different
+
+00:09:34.040 --> 00:09:36.320
+And uh the number of different subproblems here was v squared, because
+
+00:09:36.320 --> 00:09:39.000
+subproblems here was v squared, because we had to do this for every vertex v,
+
+00:09:39.000 --> 00:09:40.720
+we had to do this for every vertex v, and we had to do it for every value of k
+
+00:09:40.720 --> 00:09:43.920
+and we had to do it for every value of k between 0 and v minus 1. V minus 1 was
+
+00:09:43.920 --> 00:09:45.240
+between 0 and v minus 1. V minus 1 was the number of rounds we need in
+
+00:09:45.240 --> 00:09:46.880
+the number of rounds we need in Bellman-Ford.
+
+00:09:46.880 --> 00:09:49.360
+Bellman-Ford. So, it's it's v times v different
+
+00:09:49.360 --> 00:09:52.320
+So, it's it's v times v different subproblems. V squared of them.
+
+00:09:52.320 --> 00:09:54.840
+subproblems. V squared of them. Okay, second thing was we wanted to
+
+00:09:54.840 --> 00:09:56.440
+Okay, second thing was we wanted to solve our problem,
+
+00:09:56.440 --> 00:09:59.440
+solve our problem, and we do that
+
+00:09:59.440 --> 00:10:00.680
+and we do that by guessing some feature of the
+
+00:10:00.680 --> 00:10:02.240
+by guessing some feature of the solution. In Fibonacci, there was no
+
+00:10:02.240 --> 00:10:04.240
+solution. In Fibonacci, there was no guessing. So, the number of different
+
+00:10:04.240 --> 00:10:06.440
+guessing. So, the number of different choices for your guess is one. There's
+
+00:10:06.440 --> 00:10:08.720
+choices for your guess is one. There's nothing There's only one choice,
+
+00:10:08.720 --> 00:10:10.360
+nothing There's only one choice, which is to do nothing.
+
+00:10:10.360 --> 00:10:12.880
+which is to do nothing. Um and for shortest paths, what we
+
+00:10:12.880 --> 00:10:16.280
+Um and for shortest paths, what we guessed was Well, we we we know we're
+
+00:10:16.280 --> 00:10:18.400
+guessed was Well, we we we know we're looking for some path from S to V. Let's
+
+00:10:18.400 --> 00:10:21.160
+looking for some path from S to V. Let's guess what the last edge is.
+
+00:10:21.160 --> 00:10:23.120
+guess what the last edge is. There's some last edge
+
+00:10:23.120 --> 00:10:25.040
+There's some last edge from U to V,
+
+00:10:25.040 --> 00:10:26.840
+from U to V, assuming the path has more than one edge
+
+00:10:26.840 --> 00:10:28.800
+assuming the path has more than one edge or more than zero edges.
+
+00:10:28.800 --> 00:10:31.160
+or more than zero edges. Uh what could that edge possibly be?
+
+00:10:31.160 --> 00:10:33.880
+Uh what could that edge possibly be? Well, it's some incoming edge to V.
+
+00:10:33.880 --> 00:10:35.560
+Well, it's some incoming edge to V. So, there's going to be in degree of V
+
+00:10:35.560 --> 00:10:37.720
+So, there's going to be in degree of V different choices for that.
+
+00:10:37.720 --> 00:10:39.200
+different choices for that. And to account for the case that that's
+
+00:10:39.200 --> 00:10:41.680
+And to account for the case that that's zero, we do a plus one. But it's not a
+
+00:10:41.680 --> 00:10:43.680
+zero, we do a plus one. But it's not a big deal.
+
+00:10:43.680 --> 00:10:45.800
+big deal. So, um
+
+00:10:45.800 --> 00:10:47.040
+So, um that was the number of different
+
+00:10:47.040 --> 00:10:48.480
+that was the number of different choices. In general, if we're going to
+
+00:10:48.480 --> 00:10:51.040
+choices. In general, if we're going to guess something, we need to write down
+
+00:10:51.040 --> 00:10:53.320
+guess something, we need to write down the number of
+
+00:10:53.320 --> 00:10:55.640
+the number of choices
+
+00:10:55.640 --> 00:10:58.000
+choices for the guess.
+
+00:10:58.000 --> 00:10:59.400
+for the guess. How many different possibilities are
+
+00:10:59.400 --> 00:11:01.200
+How many different possibilities are there?
+
+00:11:01.200 --> 00:11:04.560
+there? That's our analysis.
+
+00:11:04.560 --> 00:11:09.120
+That's our analysis. Okay. The next thing is the recurrence.
+
+00:11:09.120 --> 00:11:12.120
+Okay. The next thing is the recurrence. That's step three. We want to relate all
+
+00:11:12.120 --> 00:11:14.280
+That's step three. We want to relate all the sub problem solutions to each other.
+
+00:11:14.280 --> 00:11:15.880
+the sub problem solutions to each other. For Fibonacci, that's the definition of
+
+00:11:15.880 --> 00:11:18.800
+For Fibonacci, that's the definition of Fibonacci number, so it's really easy.
+
+00:11:18.800 --> 00:11:21.200
+Fibonacci number, so it's really easy. Uh for shortest paths,
+
+00:11:21.200 --> 00:11:23.160
+Uh for shortest paths, we wrote this min.
+
+00:11:23.160 --> 00:11:24.680
+we wrote this min. In general, typically it's a min or a
+
+00:11:24.680 --> 00:11:26.480
+In general, typically it's a min or a max, whatever you're trying to solve.
+
+00:11:26.480 --> 00:11:28.760
+max, whatever you're trying to solve. Here we're doing shortest paths.
+
+00:11:28.760 --> 00:11:30.160
+Here we're doing shortest paths. You could do longest paths in the same
+
+00:11:30.160 --> 00:11:31.320
+You could do longest paths in the same way.
+
+00:11:31.320 --> 00:11:35.520
+way. Uh so, you compute a min of delta sub SK
+
+00:11:35.520 --> 00:11:37.600
+Uh so, you compute a min of delta sub SK minus one of SU. The idea is we want to
+
+00:11:37.600 --> 00:11:39.480
+minus one of SU. The idea is we want to compute this part
+
+00:11:39.480 --> 00:11:40.880
+compute this part of the path,
+
+00:11:40.880 --> 00:11:43.440
+of the path, the S to U part, and we know that has
+
+00:11:43.440 --> 00:11:45.120
+the S to U part, and we know that has one fewer edge because we just guessed
+
+00:11:45.120 --> 00:11:47.280
+one fewer edge because we just guessed what the last edge was.
+
+00:11:47.280 --> 00:11:48.360
+what the last edge was. Except we don't really know what the
+
+00:11:48.360 --> 00:11:49.800
+Except we don't really know what the last edge was, so we have to try them
+
+00:11:49.800 --> 00:11:51.880
+last edge was, so we have to try them all. We try all the incoming edges into
+
+00:11:51.880 --> 00:11:52.920
+all. We try all the incoming edges into V.
+
+00:11:52.920 --> 00:11:54.360
+V. That's this part.
+
+00:11:54.360 --> 00:11:56.800
+That's this part. And for each of them we compute uh I
+
+00:11:56.800 --> 00:11:58.880
+And for each of them we compute uh I forgot something here. This should This
+
+00:11:58.880 --> 00:12:00.440
+forgot something here. This should This is the cost of the first part of the
+
+00:12:00.440 --> 00:12:02.839
+is the cost of the first part of the path. Then I also need to do plus the
+
+00:12:02.839 --> 00:12:05.440
+path. Then I also need to do plus the weight of the UV edge.
+
+00:12:05.440 --> 00:12:07.360
+weight of the UV edge. That will be the total
+
+00:12:07.360 --> 00:12:10.440
+That will be the total cost of that path. You add those up. You
+
+00:12:10.440 --> 00:12:12.600
+cost of that path. You add those up. You do it for every incoming edge. That is
+
+00:12:12.600 --> 00:12:14.400
+do it for every incoming edge. That is in some sense considering all possible
+
+00:12:14.400 --> 00:12:16.200
+in some sense considering all possible paths.
+
+00:12:16.200 --> 00:12:17.640
+paths. Assuming you find the shortest path from
+
+00:12:17.640 --> 00:12:19.240
+Assuming you find the shortest path from S to U, that's going to be the best way
+
+00:12:19.240 --> 00:12:21.520
+S to U, that's going to be the best way to get there. And then you some edge
+
+00:12:21.520 --> 00:12:22.880
+to get there. And then you some edge from U to V.
+
+00:12:22.880 --> 00:12:25.480
+from U to V. Uh you know, for some choice of U, this
+
+00:12:25.480 --> 00:12:26.720
+Uh you know, for some choice of U, this will try all of them. So, it's really
+
+00:12:26.720 --> 00:12:28.080
+will try all of them. So, it's really trying all the possibilities. So, it's
+
+00:12:28.080 --> 00:12:30.920
+trying all the possibilities. So, it's pretty clear this is correct
+
+00:12:30.920 --> 00:12:32.200
+pretty clear this is correct if there are no negative weight cycles.
+
+00:12:32.200 --> 00:12:33.400
+if there are no negative weight cycles. You have to prove some things. We've
+
+00:12:33.400 --> 00:12:35.839
+You have to prove some things. We've already proved them.
+
+00:12:35.839 --> 00:12:37.120
+already proved them. It's just slow,
+
+00:12:37.120 --> 00:12:38.480
+It's just slow, but once you add memorization, it's
+
+00:12:38.480 --> 00:12:39.839
+but once you add memorization, it's fast.
+
+00:12:39.839 --> 00:12:41.839
+fast. Um now, how long does it take to
+
+00:12:41.839 --> 00:12:45.080
+Um now, how long does it take to evaluate this recurrence? Constant time
+
+00:12:45.080 --> 00:12:47.080
+evaluate this recurrence? Constant time if you don't count the recursive calls
+
+00:12:47.080 --> 00:12:49.480
+if you don't count the recursive calls or count them as constant. Over here,
+
+00:12:49.480 --> 00:12:52.160
+or count them as constant. Over here, we're taking a min over in degree of V
+
+00:12:52.160 --> 00:12:54.360
+we're taking a min over in degree of V things, so we have to pay in degree of V
+
+00:12:54.360 --> 00:12:56.120
+things, so we have to pay in degree of V time.
+
+00:12:56.120 --> 00:12:57.920
+time. Again, counting the recursions as free,
+
+00:12:57.920 --> 00:12:59.360
+Again, counting the recursions as free, but for each one of them we have to do
+
+00:12:59.360 --> 00:13:02.960
+but for each one of them we have to do an addition. So, it's constant work per
+
+00:13:02.960 --> 00:13:04.480
+an addition. So, it's constant work per per guess.
+
+00:13:04.480 --> 00:13:05.960
+per guess. And this is quite common. Often the
+
+00:13:05.960 --> 00:13:08.960
+And this is quite common. Often the number of guesses and the running time
+
+00:13:08.960 --> 00:13:10.800
+number of guesses and the running time per sub problem are the same up to
+
+00:13:10.800 --> 00:13:12.240
+per sub problem are the same up to constant factors. Sometimes they're
+
+00:13:12.240 --> 00:13:13.600
+constant factors. Sometimes they're different. We'll see some examples
+
+00:13:13.600 --> 00:13:15.800
+different. We'll see some examples today.
+
+00:13:15.800 --> 00:13:19.320
+today. Okay, step four.
+
+00:13:19.320 --> 00:13:21.839
+Okay, step four. Uh let's see. So, here we evaluate the
+
+00:13:21.839 --> 00:13:23.160
+Uh let's see. So, here we evaluate the time
+
+00:13:23.160 --> 00:13:25.080
+time per sub problem. That's Once you have
+
+00:13:25.080 --> 00:13:27.240
+per sub problem. That's Once you have the recurrence, that becomes clear. You
+
+00:13:27.240 --> 00:13:29.000
+the recurrence, that becomes clear. You want to make sure that's polynomial.
+
+00:13:29.000 --> 00:13:33.870
+want to make sure that's polynomial. Often these are the same.
+
+00:13:35.829 --> 00:13:37.560
+And then we either recurse and memoize or build a
+
+00:13:37.560 --> 00:13:39.160
+we either recurse and memoize or build a DP table. I'm not going to write those.
+
+00:13:39.160 --> 00:13:40.680
+DP table. I'm not going to write those. We did it for Fibonacci last time.
+
+00:13:40.680 --> 00:13:42.960
+We did it for Fibonacci last time. Shortest paths pretty easy.
+
+00:13:42.960 --> 00:13:45.120
+Shortest paths pretty easy. Um and
+
+00:13:45.120 --> 00:13:49.430
+Um and in general, what we need to check here
+
+00:13:52.310 --> 00:13:54.320
+is that the sub problem uh recurrence
+
+00:13:54.320 --> 00:14:04.710
+uh recurrence is acyclic.
+
+00:14:06.030 --> 00:14:08.160
+In other words, that it has a topological order.
+
+00:14:08.160 --> 00:14:11.400
+topological order. So, we can use topological sort.
+
+00:14:11.400 --> 00:14:12.800
+So, we can use topological sort. We don't actually use topological sort
+
+00:14:12.800 --> 00:14:14.600
+We don't actually use topological sort algorithm usually. You can just think
+
+00:14:14.600 --> 00:14:16.000
+algorithm usually. You can just think about it.
+
+00:14:16.000 --> 00:14:17.520
+about it. Uh in the case of Fibonacci numbers,
+
+00:14:17.520 --> 00:14:18.680
+Uh in the case of Fibonacci numbers, it's clear you want to start with the
+
+00:14:18.680 --> 00:14:20.200
+it's clear you want to start with the smallest one and end up with the biggest
+
+00:14:20.200 --> 00:14:22.079
+smallest one and end up with the biggest one. You can't do the reverse cuz then
+
+00:14:22.079 --> 00:14:23.200
+one. You can't do the reverse cuz then when you're trying to compute the nth,
+
+00:14:23.200 --> 00:14:24.800
+when you're trying to compute the nth, you don't have the ones you need, n
+
+00:14:24.800 --> 00:14:26.760
+you don't have the ones you need, n minus one and n minus two.
+
+00:14:26.760 --> 00:14:27.839
+minus one and n minus two. But if you do it in this order, you
+
+00:14:27.839 --> 00:14:29.520
+But if you do it in this order, you always have the one you need by the time
+
+00:14:29.520 --> 00:14:33.079
+always have the one you need by the time you get there. In general, there's a DAG
+
+00:14:33.079 --> 00:14:39.670
+you get there. In general, there's a DAG there, and for Fibonacci, it was
+
+00:14:41.470 --> 00:14:44.600
+like this. Every node depends on the previous and the second previous.
+
+00:14:44.600 --> 00:14:46.440
+previous and the second previous. But you just choose a topological order,
+
+00:14:46.440 --> 00:14:49.240
+But you just choose a topological order, which is here left to right, and you're
+
+00:14:49.240 --> 00:14:50.920
+which is here left to right, and you're golden.
+
+00:14:50.920 --> 00:14:52.240
+golden. And these are actually the for loops you
+
+00:14:52.240 --> 00:14:54.640
+And these are actually the for loops you get in the bottom-up DP.
+
+00:14:54.640 --> 00:14:55.920
+get in the bottom-up DP. For shortest paths, you have to think a
+
+00:14:55.920 --> 00:14:58.040
+For shortest paths, you have to think a little bit. You have to do the for loop
+
+00:14:58.040 --> 00:15:00.760
+little bit. You have to do the for loop over K on the outside, the for loop over
+
+00:15:00.760 --> 00:15:02.480
+over K on the outside, the for loop over V on the inside. The reverse does not
+
+00:15:02.480 --> 00:15:04.240
+V on the inside. The reverse does not work.
+
+00:15:04.240 --> 00:15:05.240
+work. Okay, I won't go through that, but we
+
+00:15:05.240 --> 00:15:07.360
+Okay, I won't go through that, but we drew the DAG last time.
+
+00:15:07.360 --> 00:15:08.760
+drew the DAG last time. And
+
+00:15:08.760 --> 00:15:09.839
+And that's the main thing you need to do
+
+00:15:09.839 --> 00:15:11.560
+that's the main thing you need to do here. And then, of course, you use this
+
+00:15:11.560 --> 00:15:12.880
+here. And then, of course, you use this formula
+
+00:15:12.880 --> 00:15:14.760
+formula to compute the overall running time,
+
+00:15:14.760 --> 00:15:16.720
+to compute the overall running time, which is just multiplying
+
+00:15:16.720 --> 00:15:18.280
+which is just multiplying this quantity
+
+00:15:18.280 --> 00:15:25.110
+this quantity with this quantity.
+
+00:15:30.630 --> 00:15:32.280
+Uh then there's this one last step that usually isn't that big a deal, but you
+
+00:15:32.280 --> 00:15:33.480
+usually isn't that big a deal, but you have to think about it. You need to make
+
+00:15:33.480 --> 00:15:35.000
+have to think about it. You need to make sure that the problem you actually cared
+
+00:15:35.000 --> 00:15:37.800
+sure that the problem you actually cared about solving gets solved.
+
+00:15:37.800 --> 00:15:39.839
+about solving gets solved. In the case of Fibonacci and shortest
+
+00:15:39.839 --> 00:15:41.640
+In the case of Fibonacci and shortest paths, this is pretty clear.
+
+00:15:41.640 --> 00:15:46.430
+paths, this is pretty clear. I didn't write it.
+
+00:15:48.110 --> 00:15:49.640
+We can go down here. Uh
+
+00:15:49.640 --> 00:15:54.310
+Uh solve the original problem.
+
+00:15:56.630 --> 00:15:58.000
+Fibonacci, it is Fn, and this is one of our sub problems. So, if we solve all of
+
+00:15:58.000 --> 00:16:00.520
+our sub problems. So, if we solve all of them, we're done. For shortest paths,
+
+00:16:00.520 --> 00:16:03.959
+them, we're done. For shortest paths, it's basically delta sub
+
+00:16:03.959 --> 00:16:07.640
+it's basically delta sub V minus one of SV
+
+00:16:07.640 --> 00:16:09.560
+V minus one of SV for all
+
+00:16:09.560 --> 00:16:12.079
+for all V. That's single source shortest paths,
+
+00:16:12.079 --> 00:16:14.079
+V. That's single source shortest paths, and by our Bellman-Ford analysis, that
+
+00:16:14.079 --> 00:16:15.760
+and by our Bellman-Ford analysis, that gives us the right shortest paths if
+
+00:16:15.760 --> 00:16:17.760
+gives us the right shortest paths if there are no negative weight cycles. And
+
+00:16:17.760 --> 00:16:22.360
+there are no negative weight cycles. And sometimes this requires extra time
+
+00:16:22.360 --> 00:16:24.440
+sometimes this requires extra time to combine your solutions to get the
+
+00:16:24.440 --> 00:16:26.520
+to combine your solutions to get the real thing. Here, of course, we just
+
+00:16:26.520 --> 00:16:28.200
+real thing. Here, of course, we just have the answers,
+
+00:16:28.200 --> 00:16:29.880
+have the answers, so writing them down does not take very
+
+00:16:29.880 --> 00:16:31.800
+so writing them down does not take very long.
+
+00:16:31.800 --> 00:16:34.280
+long. So, the the dominant running time,
+
+00:16:34.280 --> 00:16:35.560
+So, the the dominant running time, which I didn't write, should should have
+
+00:16:35.560 --> 00:16:37.880
+which I didn't write, should should have written it under four here.
+
+00:16:37.880 --> 00:16:40.560
+written it under four here. This ends up being n.
+
+00:16:40.560 --> 00:16:45.310
+This ends up being n. This ends up being VE.
+
+00:16:46.710 --> 00:17:07.310
+Okay, I don't want to spend more time on those examples. Let's go to new things.
+
+00:17:09.710 --> 00:17:11.760
+So, first problem we're going to look at today is text
+
+00:17:11.760 --> 00:17:21.150
+we're going to look at today is text justification.
+
+00:17:22.550 --> 00:17:23.920
+And the informal statement of this problem
+
+00:17:23.920 --> 00:17:26.199
+problem is you get You're given some text, which
+
+00:17:26.199 --> 00:17:27.240
+is you get You're given some text, which means a string, a whole bunch of
+
+00:17:27.240 --> 00:17:28.720
+means a string, a whole bunch of characters.
+
+00:17:28.720 --> 00:17:30.160
+characters. Uh
+
+00:17:30.160 --> 00:17:32.800
+Uh And we want to split them into good
+
+00:17:32.800 --> 00:17:35.870
+And we want to split them into good lines.
+
+00:17:38.510 --> 00:17:40.320
+Okay, the rules of the game here are we're going to like in the early
+
+00:17:40.320 --> 00:17:42.120
+we're going to like in the early lectures of document distance, we have
+
+00:17:42.120 --> 00:17:44.760
+lectures of document distance, we have some definition of splitting a document
+
+00:17:44.760 --> 00:17:48.760
+some definition of splitting a document into words separated by spaces.
+
+00:17:48.760 --> 00:17:52.120
+into words separated by spaces. And what we want to do is cut We can
+
+00:17:52.120 --> 00:17:54.840
+And what we want to do is cut We can only cut between word boundaries.
+
+00:17:54.840 --> 00:17:56.760
+only cut between word boundaries. And we want to
+
+00:17:56.760 --> 00:17:58.679
+And we want to uh you know, write some text. It can
+
+00:17:58.679 --> 00:18:00.520
+uh you know, write some text. It can have some spaces in it. Then there's a
+
+00:18:00.520 --> 00:18:03.350
+have some spaces in it. Then there's a new line.
+
+00:18:05.230 --> 00:18:06.679
+Something like that. We'd like to avoid And we want to
+
+00:18:06.679 --> 00:18:09.560
+We'd like to avoid And we want to justify our text on the right here.
+
+00:18:09.560 --> 00:18:11.200
+justify our text on the right here. And so, we'd like to avoid big gaps like
+
+00:18:11.200 --> 00:18:15.240
+And so, we'd like to avoid big gaps like this cuz they look ugly. Hard to read.
+
+00:18:15.240 --> 00:18:17.320
+this cuz they look ugly. Hard to read. Now, if you use
+
+00:18:17.320 --> 00:18:19.400
+Now, if you use uh Microsoft Word,
+
+00:18:19.400 --> 00:18:22.120
+uh Microsoft Word, at least before the latest versions,
+
+00:18:22.120 --> 00:18:23.880
+at least before the latest versions, they follow a greedy strategy, which is
+
+00:18:23.880 --> 00:18:25.679
+they follow a greedy strategy, which is very simple. You pack as many words as
+
+00:18:25.679 --> 00:18:27.240
+very simple. You pack as many words as you can on the first line, then you go
+
+00:18:27.240 --> 00:18:28.720
+you can on the first line, then you go to the next line, pack as many words as
+
+00:18:28.720 --> 00:18:30.679
+to the next line, pack as many words as you can on the second line, keep going
+
+00:18:30.679 --> 00:18:33.440
+you can on the second line, keep going like that. And that strategy is not
+
+00:18:33.440 --> 00:18:34.840
+like that. And that strategy is not optimal.
+
+00:18:34.840 --> 00:18:36.360
+optimal. If you use
+
+00:18:36.360 --> 00:18:38.480
+If you use uh LaTeX, as some of you have been doing
+
+00:18:38.480 --> 00:18:40.640
+uh LaTeX, as some of you have been doing on problem sets, and I think also new
+
+00:18:40.640 --> 00:18:42.800
+on problem sets, and I think also new versions of Word, but I'm not sure,
+
+00:18:42.800 --> 00:18:45.000
+versions of Word, but I'm not sure, then uh it uses dynamic programming to
+
+00:18:45.000 --> 00:18:46.360
+then uh it uses dynamic programming to solve this problem. And that's what
+
+00:18:46.360 --> 00:18:48.679
+solve this problem. And that's what we're going to do here. So, let me
+
+00:18:48.679 --> 00:18:50.640
+we're going to do here. So, let me specify a little bit more about what we
+
+00:18:50.640 --> 00:18:52.200
+specify a little bit more about what we mean here.
+
+00:18:52.200 --> 00:18:53.520
+mean here. Uh
+
+00:18:53.520 --> 00:18:55.400
+Uh So, the text
+
+00:18:55.400 --> 00:18:56.679
+So, the text we're going to think of as a list of
+
+00:18:56.679 --> 00:19:00.950
+we're going to think of as a list of words.
+
+00:19:04.830 --> 00:19:08.550
+And we're going to define a quantity badness.
+
+00:19:10.390 --> 00:19:12.480
+And this is a an aesthetic quantity, if you will.
+
+00:19:12.480 --> 00:19:15.120
+an aesthetic quantity, if you will. I'm going to tell you what LaTeX uses.
+
+00:19:15.120 --> 00:19:17.040
+I'm going to tell you what LaTeX uses. But um
+
+00:19:17.040 --> 00:19:19.919
+But um this is sort of the how bad it is
+
+00:19:19.919 --> 00:19:21.240
+this is sort of the how bad it is to
+
+00:19:21.240 --> 00:19:22.640
+to use
+
+00:19:22.640 --> 00:19:27.070
+use or let's say uh yeah.
+
+00:19:30.270 --> 00:19:36.230
+Words I through J as a line.
+
+00:19:37.830 --> 00:19:39.960
+So, this is Python notation. So, it starts at I and ends at J minus one.
+
+00:19:39.960 --> 00:19:41.640
+starts at I and ends at J minus one. That'll be convenient.
+
+00:19:41.640 --> 00:19:44.000
+That'll be convenient. Um so, I have this list of words, and if
+
+00:19:44.000 --> 00:19:46.360
+Um so, I have this list of words, and if I look at words I through J minus one,
+
+00:19:46.360 --> 00:19:48.440
+I look at words I through J minus one, and I think of what happens if I pack
+
+00:19:48.440 --> 00:19:49.960
+and I think of what happens if I pack them in a line,
+
+00:19:49.960 --> 00:19:51.800
+them in a line, uh well, they may fit or they may not
+
+00:19:51.800 --> 00:19:53.360
+uh well, they may fit or they may not fit.
+
+00:19:53.360 --> 00:19:56.320
+fit. Okay, so there's going to be two cases.
+
+00:19:56.320 --> 00:19:58.160
+Okay, so there's going to be two cases. Uh, if they don't fit, I'm going to
+
+00:19:58.160 --> 00:19:59.880
+Uh, if they don't fit, I'm going to write infinity.
+
+00:19:59.880 --> 00:20:07.870
+write infinity. Cuz that's really bad.
+
+00:20:10.910 --> 00:20:12.040
+So, I have some notion of how wide my uh,
+
+00:20:12.040 --> 00:20:14.160
+uh, line can be. And if the sum of the
+
+00:20:14.160 --> 00:20:15.720
+line can be. And if the sum of the lengths of those words plus the sum of
+
+00:20:15.720 --> 00:20:17.640
+lengths of those words plus the sum of the lengths of the spaces is small as
+
+00:20:17.640 --> 00:20:18.840
+the lengths of the spaces is small as possible,
+
+00:20:18.840 --> 00:20:21.680
+possible, is bigger than the width of my
+
+00:20:21.680 --> 00:20:24.440
+is bigger than the width of my uh, screen or page, I guess, then I say
+
+00:20:24.440 --> 00:20:26.200
+uh, screen or page, I guess, then I say they don't fit. And then I define
+
+00:20:26.200 --> 00:20:27.720
+they don't fit. And then I define badness to be infinity, meaning I never
+
+00:20:27.720 --> 00:20:29.880
+badness to be infinity, meaning I never want to do that.
+
+00:20:29.880 --> 00:20:32.200
+want to do that. Uh, that's This is actually LaTeX sloppy
+
+00:20:32.200 --> 00:20:34.480
+Uh, that's This is actually LaTeX sloppy mode, if you want to be technical.
+
+00:20:34.480 --> 00:20:36.880
+mode, if you want to be technical. Um, otherwise,
+
+00:20:36.880 --> 00:20:39.360
+Um, otherwise, it's going to be
+
+00:20:39.360 --> 00:20:42.910
+it's going to be page width
+
+00:20:54.710 --> 00:20:56.880
+Why cubed? Who knows. This is the LaTeX rule.
+
+00:20:56.880 --> 00:20:59.200
+This is the LaTeX rule. Um, and squared would probably also be
+
+00:20:59.200 --> 00:21:01.560
+Um, and squared would probably also be fine.
+
+00:21:01.560 --> 00:21:03.400
+fine. So, this is the width of the page minus
+
+00:21:03.400 --> 00:21:05.800
+So, this is the width of the page minus the total width of those words,
+
+00:21:05.800 --> 00:21:06.840
+the total width of those words, which you also have to include the
+
+00:21:06.840 --> 00:21:08.240
+which you also have to include the spaces here.
+
+00:21:08.240 --> 00:21:10.040
+spaces here. You take the difference, you cube it.
+
+00:21:10.040 --> 00:21:12.200
+You take the difference, you cube it. And so, when this is small,
+
+00:21:12.200 --> 00:21:14.280
+And so, when this is small, I mean, when these are very close, then
+
+00:21:14.280 --> 00:21:16.480
+I mean, when these are very close, then this is going to be close to zero.
+
+00:21:16.480 --> 00:21:18.600
+this is going to be close to zero. That's good. That means you use most of
+
+00:21:18.600 --> 00:21:20.480
+That's good. That means you use most of the line. When the total width is much
+
+00:21:20.480 --> 00:21:21.840
+the line. When the total width is much smaller than the page width, then this
+
+00:21:21.840 --> 00:21:23.200
+smaller than the page width, then this will be a large value. You cube it, it
+
+00:21:23.200 --> 00:21:24.720
+will be a large value. You cube it, it will be even larger. So, this will
+
+00:21:24.720 --> 00:21:27.880
+will be even larger. So, this will highly discourage big gaps like this.
+
+00:21:27.880 --> 00:21:29.840
+highly discourage big gaps like this. And it will very much discourage not
+
+00:21:29.840 --> 00:21:31.040
+And it will very much discourage not fitting.
+
+00:21:31.040 --> 00:21:33.040
+fitting. So, there's a trade-off, of course. And
+
+00:21:33.040 --> 00:21:34.960
+So, there's a trade-off, of course. And the idea is you might, in the greedy
+
+00:21:34.960 --> 00:21:36.560
+the idea is you might, in the greedy algorithm, you make the first line as
+
+00:21:36.560 --> 00:21:38.320
+algorithm, you make the first line as good as you can.
+
+00:21:38.320 --> 00:21:40.240
+good as you can. Uh, but it might actually be better to
+
+00:21:40.240 --> 00:21:41.760
+Uh, but it might actually be better to leave out some of the words that would
+
+00:21:41.760 --> 00:21:43.440
+leave out some of the words that would fit here in order to make the next line
+
+00:21:43.440 --> 00:21:45.240
+fit here in order to make the next line better. And in general, it's hard to
+
+00:21:45.240 --> 00:21:48.280
+better. And in general, it's hard to tell where should I cut the lines
+
+00:21:48.280 --> 00:21:50.520
+tell where should I cut the lines uh, in order to get the best overall
+
+00:21:50.520 --> 00:21:52.920
+uh, in order to get the best overall strategy. What I'd like is the sum of
+
+00:21:52.920 --> 00:21:55.280
+strategy. What I'd like is the sum of the badnesses of the lines.
+
+00:21:55.280 --> 00:21:57.000
+the badnesses of the lines. So, it's a sum of cubes, and that's
+
+00:21:57.000 --> 00:21:59.800
+So, it's a sum of cubes, and that's really hard to think about.
+
+00:21:59.800 --> 00:22:01.040
+really hard to think about. But that's what dynamic programming is
+
+00:22:01.040 --> 00:22:02.800
+But that's what dynamic programming is for. You don't have to think. It's
+
+00:22:02.800 --> 00:22:05.960
+for. You don't have to think. It's great. Cuz it's brute force.
+
+00:22:05.960 --> 00:22:08.679
+great. Cuz it's brute force. Okay, so
+
+00:22:08.679 --> 00:22:10.640
+Okay, so the first thing we need to do is define
+
+00:22:10.640 --> 00:22:12.560
+the first thing we need to do is define sub problems.
+
+00:22:12.560 --> 00:22:14.960
+sub problems. This is in some sense the hard part.
+
+00:22:14.960 --> 00:22:18.160
+This is in some sense the hard part. The rest will follow easily.
+
+00:22:18.160 --> 00:22:20.200
+The rest will follow easily. So,
+
+00:22:20.200 --> 00:22:21.480
+So, I think actually it might be easier to
+
+00:22:21.480 --> 00:22:24.040
+I think actually it might be easier to think about, uh, for this problem, what
+
+00:22:24.040 --> 00:22:26.280
+think about, uh, for this problem, what would be the brute force strategy? How
+
+00:22:26.280 --> 00:22:27.760
+would be the brute force strategy? How would you try all possibilities?
+
+00:22:27.760 --> 00:22:29.400
+would you try all possibilities? Exponential time.
+
+00:22:29.400 --> 00:22:40.510
+Exponential time. Suggestions?
+
+00:22:46.870 --> 00:22:48.960
+Try all partitions of the word. So, of the string of words.
+
+00:22:48.960 --> 00:22:51.280
+the string of words. So, I mean, it could be I It all fits in
+
+00:22:51.280 --> 00:22:52.960
+So, I mean, it could be I It all fits in one line. I could be it's split into two
+
+00:22:52.960 --> 00:22:55.240
+one line. I could be it's split into two lines. I try all possible splits there.
+
+00:22:55.240 --> 00:22:57.360
+lines. I try all possible splits there. In general, I'm guessing for every word,
+
+00:22:57.360 --> 00:22:59.800
+In general, I'm guessing for every word, does this start a line or not?
+
+00:22:59.800 --> 00:23:01.840
+does this start a line or not? That would be always. And so, there are
+
+00:23:01.840 --> 00:23:04.000
+That would be always. And so, there are two to the N. If I have N words, there's
+
+00:23:04.000 --> 00:23:05.520
+two to the N. If I have N words, there's two to the N different splits. For every
+
+00:23:05.520 --> 00:23:07.280
+two to the N different splits. For every word, I say yes or no, does this begin a
+
+00:23:07.280 --> 00:23:08.600
+word, I say yes or no, does this begin a line?
+
+00:23:08.600 --> 00:23:09.840
+line? So, what I'd like to figure out is where
+
+00:23:09.840 --> 00:23:11.800
+So, what I'd like to figure out is where those lines begin. That's That was the
+
+00:23:11.800 --> 00:23:14.560
+those lines begin. That's That was the point of that exercise.
+
+00:23:14.560 --> 00:23:15.840
+point of that exercise. Uh,
+
+00:23:15.840 --> 00:23:17.560
+Uh, so any suggestions? Maybe it's actually
+
+00:23:17.560 --> 00:23:19.400
+so any suggestions? Maybe it's actually easier to jump ahead and think, what
+
+00:23:19.400 --> 00:23:21.080
+easier to jump ahead and think, what would I guess
+
+00:23:21.080 --> 00:23:22.840
+would I guess in my solution? If I have this big
+
+00:23:22.840 --> 00:23:25.400
+in my solution? If I have this big string of words,
+
+00:23:25.400 --> 00:23:34.150
+string of words, what's the natural first thing to guess?
+
+00:23:38.710 --> 00:23:40.120
+Guess how long the first line is. Yeah. We know that the first word begins a
+
+00:23:40.120 --> 00:23:42.120
+We know that the first word begins a line, but where where does the second
+
+00:23:42.120 --> 00:23:44.520
+line, but where where does the second line begin?
+
+00:23:44.520 --> 00:23:46.240
+line begin? So, I'd like to guess where the second
+
+00:23:46.240 --> 00:23:48.040
+So, I'd like to guess where the second line begins. That's
+
+00:23:48.040 --> 00:23:49.880
+line begins. That's So, you know, I have a beginning of line
+
+00:23:49.880 --> 00:23:50.960
+So, you know, I have a beginning of line here,
+
+00:23:50.960 --> 00:23:52.320
+here, and then I have a beginning of line here
+
+00:23:52.320 --> 00:23:55.750
+and then I have a beginning of line here at the fourth word.
+
+00:23:57.750 --> 00:23:59.880
+Where does the the second line begin? I don't know. Guess. So, I'm going to try
+
+00:23:59.880 --> 00:24:01.880
+don't know. Guess. So, I'm going to try all the possible words after the first
+
+00:24:01.880 --> 00:24:02.960
+all the possible words after the first word,
+
+00:24:02.960 --> 00:24:04.640
+word, and say, well, what if I started my
+
+00:24:04.640 --> 00:24:06.760
+and say, well, what if I started my second line here? At some point, I'm
+
+00:24:06.760 --> 00:24:08.160
+second line here? At some point, I'm going to be packing too much into the
+
+00:24:08.160 --> 00:24:10.520
+going to be packing too much into the first line, and so I I abort.
+
+00:24:10.520 --> 00:24:13.870
+first line, and so I I abort. But, uh,
+
+00:24:16.230 --> 00:24:18.000
+you know, I'll try them all. Why not? Okay, that's good.
+
+00:24:18.000 --> 00:24:19.600
+Okay, that's good. The issue is that once I've chosen where
+
+00:24:19.600 --> 00:24:21.080
+The issue is that once I've chosen where the second line is, of course, the next
+
+00:24:21.080 --> 00:24:22.440
+the second line is, of course, the next thing I want to guess is where the third
+
+00:24:22.440 --> 00:24:23.840
+thing I want to guess is where the third line begins, and then I want to guess
+
+00:24:23.840 --> 00:24:26.080
+line begins, and then I want to guess where the fourth line begins, and so on.
+
+00:24:26.080 --> 00:24:27.640
+where the fourth line begins, and so on. In general, I need to set up my sub
+
+00:24:27.640 --> 00:24:29.520
+In general, I need to set up my sub problems so that after I do the first
+
+00:24:29.520 --> 00:24:31.080
+problems so that after I do the first guess,
+
+00:24:31.080 --> 00:24:34.480
+guess, I have a problem of the original type.
+
+00:24:34.480 --> 00:24:36.120
+I have a problem of the original type. Okay, so originally, I have all the
+
+00:24:36.120 --> 00:24:37.480
+Okay, so originally, I have all the words.
+
+00:24:37.480 --> 00:24:40.000
+words. But after I guess where the second line
+
+00:24:40.000 --> 00:24:42.520
+But after I guess where the second line begins, I have
+
+00:24:42.520 --> 00:24:45.790
+begins, I have the remaining words.
+
+00:24:48.230 --> 00:24:50.920
+What's a good word for the remaining words? If I give you a list of words,
+
+00:24:50.920 --> 00:24:55.230
+words? If I give you a list of words, and I want from here on, it's called
+
+00:24:59.470 --> 00:25:01.920
+A sub problem. Yes, that's what we want to define.
+
+00:25:01.920 --> 00:25:05.120
+to define. Uh, it's called a suffix of the array.
+
+00:25:05.120 --> 00:25:06.160
+Uh, it's called a suffix of the array. It's the word I was looking for. It's
+
+00:25:06.160 --> 00:25:07.640
+It's the word I was looking for. It's tough when I I only have one word
+
+00:25:07.640 --> 00:25:09.120
+tough when I I only have one word answers.
+
+00:25:09.120 --> 00:25:10.880
+answers. So, my sub problems are going to be
+
+00:25:10.880 --> 00:25:15.990
+So, my sub problems are going to be suffixes,
+
+00:25:20.510 --> 00:25:24.790
+which is, in Python notation, I colon. They call it splices.
+
+00:25:37.550 --> 00:25:40.590
+Sorry? Two to the N?
+
+00:25:41.990 --> 00:25:43.640
+That would be That would be a problem if it was two to the N.
+
+00:25:43.640 --> 00:25:49.870
+it was two to the N. I hope it's only N.
+
+00:25:51.270 --> 00:25:52.720
+Originally, we said, okay, we're going to for every word, we're going to say,
+
+00:25:52.720 --> 00:25:54.800
+to for every word, we're going to say, is this in or out? Is this the beginning
+
+00:25:54.800 --> 00:25:56.760
+is this in or out? Is this the beginning or not? That's two to the N.
+
+00:25:56.760 --> 00:25:58.600
+or not? That's two to the N. But here, the idea is we're we're only
+
+00:25:58.600 --> 00:26:00.040
+But here, the idea is we're we're only thinking about, well, what are the words
+
+00:26:00.040 --> 00:26:01.600
+thinking about, well, what are the words that remain? And it could be you've
+
+00:26:01.600 --> 00:26:03.040
+that remain? And it could be you've dealt with the first 100 words, and then
+
+00:26:03.040 --> 00:26:04.640
+dealt with the first 100 words, and then you've got N minus 100 left, or it could
+
+00:26:04.640 --> 00:26:05.800
+you've got N minus 100 left, or it could be you've dealt with the first 1,000
+
+00:26:05.800 --> 00:26:07.040
+be you've dealt with the first 1,000 words, and you've got N minus 1,000.
+
+00:26:07.040 --> 00:26:09.320
+words, and you've got N minus 1,000. There's only N choices
+
+00:26:09.320 --> 00:26:12.000
+There's only N choices for for that. We're only remembering one
+
+00:26:12.000 --> 00:26:13.760
+for for that. We're only remembering one line. This is the key.
+
+00:26:13.760 --> 00:26:16.200
+line. This is the key. Even though we may have already guessed
+
+00:26:16.200 --> 00:26:17.640
+Even though we may have already guessed several lines, we're just going to
+
+00:26:17.640 --> 00:26:19.520
+several lines, we're just going to remember, well, okay, this is what we
+
+00:26:19.520 --> 00:26:21.520
+remember, well, okay, this is what we have left to do. So, let's forget about
+
+00:26:21.520 --> 00:26:22.840
+have left to do. So, let's forget about the past.
+
+00:26:22.840 --> 00:26:24.200
+the past. This is what make makes dynamic
+
+00:26:24.200 --> 00:26:25.920
+This is what make makes dynamic programming efficient.
+
+00:26:25.920 --> 00:26:27.720
+programming efficient. And just going to solve it,
+
+00:26:27.720 --> 00:26:29.480
+And just going to solve it, uh, solve these sub problems, forgetting
+
+00:26:29.480 --> 00:26:30.880
+uh, solve these sub problems, forgetting about the past.
+
+00:26:30.880 --> 00:26:32.480
+about the past. So, the sub problem, I I'm not going to
+
+00:26:32.480 --> 00:26:34.440
+So, the sub problem, I I'm not going to write it here, is, if I give you these
+
+00:26:34.440 --> 00:26:37.040
+write it here, is, if I give you these words, never mind the other words, how
+
+00:26:37.040 --> 00:26:38.560
+words, never mind the other words, how do I pack them optimally into a
+
+00:26:38.560 --> 00:26:40.240
+do I pack them optimally into a paragraph?
+
+00:26:40.240 --> 00:26:41.800
+paragraph? I don't care about the other words, just
+
+00:26:41.800 --> 00:26:44.120
+I don't care about the other words, just the these words. So, this is a different
+
+00:26:44.120 --> 00:26:45.800
+the these words. So, this is a different version of the same problem. Initially,
+
+00:26:45.800 --> 00:26:47.280
+version of the same problem. Initially, we have N words to do, now I have N
+
+00:26:47.280 --> 00:26:50.240
+we have N words to do, now I have N minus I words to do. But it's again text
+
+00:26:50.240 --> 00:26:51.560
+minus I words to do. But it's again text justification. I want to solve this
+
+00:26:51.560 --> 00:26:52.800
+justification. I want to solve this problem
+
+00:26:52.800 --> 00:26:55.080
+problem on those words. That's just how I'm
+
+00:26:55.080 --> 00:26:57.120
+on those words. That's just how I'm going to define it. This will work if I
+
+00:26:57.120 --> 00:27:00.720
+going to define it. This will work if I can specify a recurrence relation.
+
+00:27:00.720 --> 00:27:02.400
+can specify a recurrence relation. Okay, as we said,
+
+00:27:02.400 --> 00:27:04.280
+Okay, as we said, what we guess
+
+00:27:04.280 --> 00:27:05.440
+what we guess is,
+
+00:27:05.440 --> 00:27:07.520
+is, uh, where to break the first line, where
+
+00:27:07.520 --> 00:27:08.640
+uh, where to break the first line, where to
+
+00:27:08.640 --> 00:27:13.830
+to uh, start the second line.
+
+00:27:16.790 --> 00:27:20.950
+For those words. Okay, so this is, um,
+
+00:27:22.510 --> 00:27:24.200
+it could be the I plus first line, it could be the I
+
+00:27:24.200 --> 00:27:27.120
+the I plus first line, it could be the I plus second line, or sorry, word. Some
+
+00:27:27.120 --> 00:27:29.440
+plus second line, or sorry, word. Some word after I
+
+00:27:29.440 --> 00:27:30.360
+word after I is where we
+
+00:27:30.360 --> 00:27:32.480
+is where we uh, guess the second word. The number of
+
+00:27:32.480 --> 00:27:36.190
+uh, guess the second word. The number of of choices for the guess
+
+00:27:38.070 --> 00:27:40.040
+is at most N minus I. I'm just going to think of
+
+00:27:40.040 --> 00:27:42.950
+N minus I. I'm just going to think of that as order N.
+
+00:27:45.150 --> 00:27:47.280
+It won't matter. The third part is we need a recurrence
+
+00:27:47.280 --> 00:27:53.470
+The third part is we need a recurrence relation.
+
+00:27:56.350 --> 00:27:58.840
+I claim this is very easy. I'm going to
+
+00:27:58.840 --> 00:28:02.120
+I'm going to uh, I didn't give this problem a name.
+
+00:28:02.120 --> 00:28:05.040
+uh, I didn't give this problem a name. So, I'm just going to write it as
+
+00:28:05.040 --> 00:28:06.920
+So, I'm just going to write it as DP
+
+00:28:06.920 --> 00:28:09.560
+DP of I.
+
+00:28:09.560 --> 00:28:10.600
+of I. So,
+
+00:28:10.600 --> 00:28:12.240
+So, this is going to be the solution to that
+
+00:28:12.240 --> 00:28:17.950
+this is going to be the solution to that suffix, words from I onward.
+
+00:28:20.590 --> 00:28:22.200
+And I'd like to What I want to do is consider all
+
+00:28:22.200 --> 00:28:24.480
+What I want to do is consider all possible guesses.
+
+00:28:24.480 --> 00:28:25.679
+possible guesses. So, I mean, this is going to be pretty
+
+00:28:25.679 --> 00:28:27.400
+So, I mean, this is going to be pretty formulaic at this point. After I've set
+
+00:28:27.400 --> 00:28:29.400
+formulaic at this point. After I've set up these ideas, there's pretty much only
+
+00:28:29.400 --> 00:28:31.800
+up these ideas, there's pretty much only one thing I can write here, which is I
+
+00:28:31.800 --> 00:28:33.200
+one thing I can write here, which is I want to
+
+00:28:33.200 --> 00:28:36.240
+want to do a
+
+00:28:36.240 --> 00:28:46.950
+do a for loop.
+
+00:28:49.590 --> 00:28:52.600
+Uh, I think that would be the for loop of where the second line can start. I
+
+00:28:52.600 --> 00:28:54.159
+of where the second line can start. I can't start at I, because that's where
+
+00:28:54.159 --> 00:28:55.800
+can't start at I, because that's where the first line starts. But it could
+
+00:28:55.800 --> 00:28:57.520
+the first line starts. But it could start at I plus one.
+
+00:28:57.520 --> 00:29:01.480
+start at I plus one. It could And uh, this special value of N
+
+00:29:01.480 --> 00:29:03.880
+It could And uh, this special value of N will mean that, uh, there is no second
+
+00:29:03.880 --> 00:29:05.919
+will mean that, uh, there is no second line.
+
+00:29:05.919 --> 00:29:06.800
+line. Okay?
+
+00:29:06.800 --> 00:29:09.040
+Okay? So, DP of I, now I want to do this for
+
+00:29:09.040 --> 00:29:10.800
+So, DP of I, now I want to do this for loop in order to try all the possible
+
+00:29:10.800 --> 00:29:12.880
+loop in order to try all the possible guesses. J will be the word where the
+
+00:29:12.880 --> 00:29:15.000
+guesses. J will be the word where the next thing starts. So, then what do I
+
+00:29:15.000 --> 00:29:18.830
+next thing starts. So, then what do I write up here?
+
+00:29:24.470 --> 00:29:28.240
+All right, so I have word I is the first word of the first
+
+00:29:28.240 --> 00:29:29.640
+word I is the first word of the first line,
+
+00:29:29.640 --> 00:29:31.800
+line, and then word J is the first word of the
+
+00:29:31.800 --> 00:29:35.149
+and then word J is the first word of the second line.
+
+00:29:36.310 --> 00:29:38.919
+Okay, and then there's more stuff down below. I don't know what that is.
+
+00:29:38.919 --> 00:29:40.320
+below. I don't know what that is. But, uh,
+
+00:29:40.320 --> 00:29:42.480
+But, uh, what How can I
+
+00:29:42.480 --> 00:29:49.390
+what How can I use recursion to specify this?
+
+00:29:51.630 --> 00:29:55.590
+DP of J. Exactly.
+
+00:29:57.430 --> 00:29:59.600
+I guess uh if I'm doing recursion, I should use parentheses
+
+00:29:59.600 --> 00:30:01.360
+should use parentheses instead of brackets, but
+
+00:30:01.360 --> 00:30:02.400
+instead of brackets, but if you're doing it bottom-up, it would
+
+00:30:02.400 --> 00:30:05.710
+if you're doing it bottom-up, it would be square brackets.
+
+00:30:08.870 --> 00:30:10.920
+So, that's just DP of J. That's the cost of
+
+00:30:10.920 --> 00:30:12.760
+of the rest of the problem. And I can
+
+00:30:12.760 --> 00:30:15.240
+the rest of the problem. And I can assume that that's free to compute. This
+
+00:30:15.240 --> 00:30:17.640
+assume that that's free to compute. This is the magic of dynamic programming.
+
+00:30:17.640 --> 00:30:19.920
+is the magic of dynamic programming. But then I also have to think about
+
+00:30:19.920 --> 00:30:21.960
+But then I also have to think about well, what about the first line? How
+
+00:30:21.960 --> 00:30:24.080
+well, what about the first line? How much does that cost?
+
+00:30:24.080 --> 00:30:26.960
+much does that cost? Well, that's just badness of IJ.
+
+00:30:26.960 --> 00:30:28.120
+Well, that's just badness of IJ. And we've already defined that, we
+
+00:30:28.120 --> 00:30:30.000
+And we've already defined that, we compute it in constant time.
+
+00:30:30.000 --> 00:30:31.520
+compute it in constant time. Dynamic programming doesn't really care
+
+00:30:31.520 --> 00:30:33.440
+Dynamic programming doesn't really care what this is, it could be anything. As
+
+00:30:33.440 --> 00:30:34.520
+what this is, it could be anything. As long as you're trying to minimize the
+
+00:30:34.520 --> 00:30:36.840
+long as you're trying to minimize the sum of the badnesses, whatever function
+
+00:30:36.840 --> 00:30:40.320
+sum of the badnesses, whatever function is in here, we just compute it here.
+
+00:30:40.320 --> 00:30:41.760
+is in here, we just compute it here. That's the power of dynamic programming.
+
+00:30:41.760 --> 00:30:43.440
+That's the power of dynamic programming. It works for all variations of this
+
+00:30:43.440 --> 00:30:45.880
+It works for all variations of this problem, however you define badness.
+
+00:30:45.880 --> 00:30:46.880
+problem, however you define badness. So, you might say, "Oh, that's a weird
+
+00:30:46.880 --> 00:30:48.320
+So, you might say, "Oh, that's a weird definition. I want to use something else
+
+00:30:48.320 --> 00:30:49.880
+definition. I want to use something else instead." That's fine, as long as you
+
+00:30:49.880 --> 00:30:52.200
+instead." That's fine, as long as you can compute it in terms of just I and J,
+
+00:30:52.200 --> 00:30:55.400
+can compute it in terms of just I and J, and you know, looking at those words.
+
+00:30:55.400 --> 00:30:57.600
+and you know, looking at those words. Okay, now I need to do uh a min over the
+
+00:30:57.600 --> 00:30:59.640
+Okay, now I need to do uh a min over the whole thing, cuz I want to minimize the
+
+00:30:59.640 --> 00:31:03.190
+whole thing, cuz I want to minimize the sum of the badnesses.
+
+00:31:05.950 --> 00:31:07.240
+So, I compute for every guess of J, I compute the cost of the rest of the
+
+00:31:07.240 --> 00:31:09.120
+compute the cost of the rest of the problem plus the cost of that first
+
+00:31:09.120 --> 00:31:10.520
+problem plus the cost of that first line.
+
+00:31:10.520 --> 00:31:12.160
+line. And this is in some sense checking all
+
+00:31:12.160 --> 00:31:13.840
+And this is in some sense checking all possible solutions
+
+00:31:13.840 --> 00:31:17.070
+possible solutions magically.
+
+00:31:18.230 --> 00:31:20.000
+Okay. That's the recurrence.
+
+00:31:20.000 --> 00:31:23.280
+That's the recurrence. Uh we need to check some things.
+
+00:31:23.280 --> 00:31:24.520
+Uh we need to check some things. I guess right now we just want to
+
+00:31:24.520 --> 00:31:28.040
+I guess right now we just want to compute how much time does this cost?
+
+00:31:28.040 --> 00:31:34.920
+compute how much time does this cost? Time per sub problem
+
+00:31:34.920 --> 00:31:36.920
+is I have to do this for loop. Basically, I
+
+00:31:36.920 --> 00:31:38.560
+I have to do this for loop. Basically, I do constant work, all of this is
+
+00:31:38.560 --> 00:31:40.880
+do constant work, all of this is constant work, for each choice. I said
+
+00:31:40.880 --> 00:31:42.800
+constant work, for each choice. I said there's order N choices.
+
+00:31:42.800 --> 00:31:51.710
+there's order N choices. So, this is order N.
+
+00:31:53.070 --> 00:31:59.030
+Now, we have to check that there's a topological order
+
+00:32:00.630 --> 00:32:02.840
+for this problem or for these sub problems.
+
+00:32:02.840 --> 00:32:06.120
+or for these sub problems. And this is easy, but a little different
+
+00:32:06.120 --> 00:32:08.480
+And this is easy, but a little different from what we've done before because we
+
+00:32:08.480 --> 00:32:10.240
+from what we've done before because we have to actually work from the end
+
+00:32:10.240 --> 00:32:11.920
+have to actually work from the end backwards
+
+00:32:11.920 --> 00:32:14.120
+backwards cuz we're expressing DP of I in terms of
+
+00:32:14.120 --> 00:32:16.760
+cuz we're expressing DP of I in terms of DP of larger values of I. J is always
+
+00:32:16.760 --> 00:32:18.520
+DP of larger values of I. J is always bigger than I.
+
+00:32:18.520 --> 00:32:19.800
+bigger than I. And so, we have to do it from the right
+
+00:32:19.800 --> 00:32:26.950
+And so, we have to do it from the right end back to the beginning.
+
+00:32:29.510 --> 00:32:32.080
+N N minus 1 down to 0. I didn't actually define DP
+
+00:32:32.080 --> 00:32:34.640
+down to 0. I didn't actually define DP of N. There's a base case here,
+
+00:32:34.640 --> 00:32:37.520
+of N. There's a base case here, which is
+
+00:32:37.520 --> 00:32:39.080
+which is DP
+
+00:32:39.080 --> 00:32:40.760
+DP of N
+
+00:32:40.760 --> 00:32:42.800
+of N equals 0.
+
+00:32:42.800 --> 00:32:44.320
+equals 0. Cuz the meaning of DP of N is I have
+
+00:32:44.320 --> 00:32:46.840
+Cuz the meaning of DP of N is I have zero words, the nth word onward. There
+
+00:32:46.840 --> 00:32:48.560
+zero words, the nth word onward. There are There is no nth word, it's 0 to N
+
+00:32:48.560 --> 00:32:50.840
+are There is no nth word, it's 0 to N minus 1 in this notation.
+
+00:32:50.840 --> 00:32:52.880
+minus 1 in this notation. So, I don't pay anything for the a blank
+
+00:32:52.880 --> 00:32:55.910
+So, I don't pay anything for the a blank line.
+
+00:32:58.030 --> 00:32:59.800
+Okay, so that's uh our topological order. This one, of
+
+00:32:59.800 --> 00:33:02.240
+our topological order. This one, of course, is instantaneous. And then we
+
+00:33:02.240 --> 00:33:04.000
+course, is instantaneous. And then we work backwards, and always whenever we
+
+00:33:04.000 --> 00:33:05.880
+work backwards, and always whenever we need to compute something, we already
+
+00:33:05.880 --> 00:33:08.160
+need to compute something, we already have the value.
+
+00:33:08.160 --> 00:33:13.710
+have the value. Uh the total time we get
+
+00:33:15.270 --> 00:33:18.240
+is going to be the number of sub problems, which is N, times the running
+
+00:33:18.240 --> 00:33:21.880
+problems, which is N, times the running time per sub problem, which is order N,
+
+00:33:21.880 --> 00:33:23.400
+time per sub problem, which is order N, which is order N squared. And in the
+
+00:33:23.400 --> 00:33:25.120
+which is order N squared. And in the worst case, it is indeed theta N
+
+00:33:25.120 --> 00:33:27.240
+worst case, it is indeed theta N squared.
+
+00:33:27.240 --> 00:33:28.440
+squared. Although in practice, it's going to work
+
+00:33:28.440 --> 00:33:31.920
+Although in practice, it's going to work better because lines can't be too long.
+
+00:33:31.920 --> 00:33:33.800
+better because lines can't be too long. Uh so, that's the running time. Then
+
+00:33:33.800 --> 00:33:35.160
+Uh so, that's the running time. Then finally, we have to check that the
+
+00:33:35.160 --> 00:33:36.560
+finally, we have to check that the original problem it actually gets
+
+00:33:36.560 --> 00:33:38.080
+original problem it actually gets solved.
+
+00:33:38.080 --> 00:33:39.920
+solved. And in this case, the original problem
+
+00:33:39.920 --> 00:33:41.880
+And in this case, the original problem we need to solve is
+
+00:33:41.880 --> 00:33:44.760
+we need to solve is DP of 0.
+
+00:33:44.760 --> 00:33:46.880
+DP of 0. Because DP of 0 means I take words from
+
+00:33:46.880 --> 00:33:49.520
+Because DP of 0 means I take words from 0 onwards. That's everybody.
+
+00:33:49.520 --> 00:33:51.200
+0 onwards. That's everybody. So, that's that's the actual problem I
+
+00:33:51.200 --> 00:33:52.360
+So, that's that's the actual problem I want to solve.
+
+00:33:52.360 --> 00:33:53.640
+want to solve. So, we work backwards, we solve all
+
+00:33:53.640 --> 00:33:54.560
+So, we work backwards, we solve all these sub problems that we don't
+
+00:33:54.560 --> 00:33:56.040
+these sub problems that we don't directly care about, but then the first
+
+00:33:56.040 --> 00:33:58.560
+directly care about, but then the first one is the one we want, and we're done.
+
+00:33:58.560 --> 00:34:00.760
+one is the one we want, and we're done. So, in quadratic time, we can find the
+
+00:34:00.760 --> 00:34:03.080
+So, in quadratic time, we can find the best way to pack lines
+
+00:34:03.080 --> 00:34:05.080
+best way to pack lines uh pack words into lines.
+
+00:34:05.080 --> 00:34:09.630
+uh pack words into lines. Question?
+
+00:34:12.349 --> 00:34:14.440
+DP of J is returning It's like this. So, DP of This is a recursive definition.
+
+00:34:14.440 --> 00:34:16.560
+DP of This is a recursive definition. Imagine this is a recursive function. I
+
+00:34:16.560 --> 00:34:19.280
+Imagine this is a recursive function. I wrote equals, which is uh Haskell
+
+00:34:19.280 --> 00:34:21.640
+wrote equals, which is uh Haskell notation, if you will. But normally, you
+
+00:34:21.640 --> 00:34:24.359
+notation, if you will. But normally, you think of this is like def DP of I is
+
+00:34:24.359 --> 00:34:27.919
+think of this is like def DP of I is return min of this. This is Python.
+
+00:34:27.919 --> 00:34:30.640
+return min of this. This is Python. So, uh it's just It's returning the
+
+00:34:30.640 --> 00:34:33.480
+So, uh it's just It's returning the cost. What was the best way to pack
+
+00:34:33.480 --> 00:34:35.879
+cost. What was the best way to pack those lines from J onwards? That's what
+
+00:34:35.879 --> 00:34:38.720
+those lines from J onwards? That's what DP of J returns, so it's a number.
+
+00:34:38.720 --> 00:34:40.399
+DP of J returns, so it's a number. It's going to be a sum of badness
+
+00:34:40.399 --> 00:34:42.879
+It's going to be a sum of badness values. Then we add on one new badness
+
+00:34:42.879 --> 00:34:44.120
+values. Then we add on one new badness value, it's still a sum of badness
+
+00:34:44.120 --> 00:34:45.679
+value, it's still a sum of badness values. We return the best one that we
+
+00:34:45.679 --> 00:34:47.159
+values. We return the best one that we find.
+
+00:34:47.159 --> 00:34:48.560
+find. Now, this does not actually pack the
+
+00:34:48.560 --> 00:34:51.000
+Now, this does not actually pack the words. That's a good maybe your implicit
+
+00:34:51.000 --> 00:34:52.359
+words. That's a good maybe your implicit question. It's not telling you how to
+
+00:34:52.359 --> 00:34:53.960
+question. It's not telling you how to pack the words, it's telling you how
+
+00:34:53.960 --> 00:34:56.000
+pack the words, it's telling you how much it costs to pack the words. This is
+
+00:34:56.000 --> 00:34:58.120
+much it costs to pack the words. This is a lot like shortest paths, where we
+
+00:34:58.120 --> 00:34:59.640
+a lot like shortest paths, where we didn't It was annoying to actually
+
+00:34:59.640 --> 00:35:02.120
+didn't It was annoying to actually figure out what the shortest path was.
+
+00:35:02.120 --> 00:35:03.640
+figure out what the shortest path was. Uh not that annoying, but that's not
+
+00:35:03.640 --> 00:35:04.920
+Uh not that annoying, but that's not what we were usually aiming to do. We
+
+00:35:04.920 --> 00:35:06.000
+what we were usually aiming to do. We were just trying to figure out the
+
+00:35:06.000 --> 00:35:08.400
+were just trying to figure out the shortest path weight.
+
+00:35:08.400 --> 00:35:09.920
+shortest path weight. And then, once we knew the shortest path
+
+00:35:09.920 --> 00:35:11.000
+And then, once we knew the shortest path weight, it was pretty easy to
+
+00:35:11.000 --> 00:35:13.240
+weight, it was pretty easy to reconstruct the paths.
+
+00:35:13.240 --> 00:35:15.160
+reconstruct the paths. So, maybe I'll
+
+00:35:15.160 --> 00:35:17.640
+So, maybe I'll take a little diversion to that
+
+00:35:17.640 --> 00:35:26.470
+take a little diversion to that and talk about parent pointers.
+
+00:35:28.310 --> 00:35:33.550
+The idea with parent pointers is just remember
+
+00:35:44.150 --> 00:35:45.880
+It's a very simple idea, but it applies to all dynamic programs and lets you
+
+00:35:45.880 --> 00:35:47.680
+to all dynamic programs and lets you find the actual solution, not just the
+
+00:35:47.680 --> 00:35:49.520
+find the actual solution, not just the cost of the solution.
+
+00:35:49.520 --> 00:35:50.760
+cost of the solution. We did the same thing with shortest
+
+00:35:50.760 --> 00:35:53.280
+We did the same thing with shortest paths. We even called them parent.
+
+00:35:53.280 --> 00:35:56.880
+paths. We even called them parent. Uh so, when we compute this min,
+
+00:35:56.880 --> 00:35:59.320
+Uh so, when we compute this min, we're trying all choices of J. One of
+
+00:35:59.320 --> 00:36:00.880
+we're trying all choices of J. One of them, or maybe more than one, but at
+
+00:36:00.880 --> 00:36:02.600
+them, or maybe more than one, but at least one of them actually gave you the
+
+00:36:02.600 --> 00:36:05.040
+least one of them actually gave you the min. That's usually called the argmin in
+
+00:36:05.040 --> 00:36:07.120
+min. That's usually called the argmin in mathematics. It's What was the value of
+
+00:36:07.120 --> 00:36:09.200
+mathematics. It's What was the value of J that gave you the minimum value of
+
+00:36:09.200 --> 00:36:11.040
+J that gave you the minimum value of this thing?
+
+00:36:11.040 --> 00:36:12.840
+this thing? So, I mean, when you compute the min,
+
+00:36:12.840 --> 00:36:14.840
+So, I mean, when you compute the min, you're iterating over every single one.
+
+00:36:14.840 --> 00:36:16.160
+you're iterating over every single one. Just keep track of which one was the
+
+00:36:16.160 --> 00:36:17.720
+Just keep track of which one was the best.
+
+00:36:17.720 --> 00:36:21.830
+best. That's it. Call that the parent pointer.
+
+00:36:23.790 --> 00:36:28.150
+Uh do I need to write that? I mean, here, parent
+
+00:36:29.710 --> 00:36:33.160
+parent of I is going to be argmin
+
+00:36:33.160 --> 00:36:34.840
+is going to be argmin of that same thing.
+
+00:36:34.840 --> 00:36:38.200
+of that same thing. So, it's It's a J value.
+
+00:36:38.200 --> 00:36:41.200
+So, it's It's a J value. It's the best J value for I.
+
+00:36:41.200 --> 00:36:43.240
+It's the best J value for I. And so, we store that for each I. It
+
+00:36:43.240 --> 00:36:44.760
+And so, we store that for each I. It costs no more work just a constant
+
+00:36:44.760 --> 00:36:47.120
+costs no more work just a constant factor more work than computing the min.
+
+00:36:47.120 --> 00:36:49.280
+factor more work than computing the min. We also write down the argmin.
+
+00:36:49.280 --> 00:36:50.600
+We also write down the argmin. So, we're already storing the min in the
+
+00:36:50.600 --> 00:36:52.000
+So, we're already storing the min in the DP table.
+
+00:36:52.000 --> 00:36:53.920
+DP table. DP of I would would get stored to be
+
+00:36:53.920 --> 00:36:56.440
+DP of I would would get stored to be that. We also store parent of I. And
+
+00:36:56.440 --> 00:36:58.320
+that. We also store parent of I. And then once we're done,
+
+00:36:58.320 --> 00:37:00.080
+then once we're done, uh we start with our original problem,
+
+00:37:00.080 --> 00:37:01.920
+uh we start with our original problem, and we follow parent pointers to figure
+
+00:37:01.920 --> 00:37:03.960
+and we follow parent pointers to figure out what the best choices were.
+
+00:37:03.960 --> 00:37:06.400
+out what the best choices were. So, we start at 0 because we know word 0
+
+00:37:06.400 --> 00:37:08.320
+So, we start at 0 because we know word 0 begins a line.
+
+00:37:08.320 --> 00:37:12.000
+begins a line. And then, so 0 will be the first line.
+
+00:37:12.000 --> 00:37:15.000
+And then, so 0 will be the first line. Then we go to parent of 0.
+
+00:37:15.000 --> 00:37:16.680
+Then we go to parent of 0. That will be where the second line
+
+00:37:16.680 --> 00:37:18.040
+That will be where the second line begins.
+
+00:37:18.040 --> 00:37:20.880
+begins. Then we go to parent of parent of 0.
+
+00:37:20.880 --> 00:37:22.080
+Then we go to parent of parent of 0. That will be where the third line
+
+00:37:22.080 --> 00:37:24.870
+That will be where the third line begins.
+
+00:37:26.190 --> 00:37:27.840
+Okay? Because these were the best choices for where the second line
+
+00:37:27.840 --> 00:37:29.760
+choices for where the second line begins. This was where the best place
+
+00:37:29.760 --> 00:37:31.840
+begins. This was where the best place where the second line begins given that
+
+00:37:31.840 --> 00:37:33.400
+where the second line begins given that this is the first line. This is the best
+
+00:37:33.400 --> 00:37:35.240
+this is the first line. This is the best line where the second line begins given
+
+00:37:35.240 --> 00:37:36.600
+line where the second line begins given that this was the first line. So, that's
+
+00:37:36.600 --> 00:37:38.160
+that this was the first line. So, that's really the third line given this is the
+
+00:37:38.160 --> 00:37:39.359
+really the third line given this is the second line.
+
+00:37:39.359 --> 00:37:41.120
+second line. Little confusing. But you just do a
+
+00:37:41.120 --> 00:37:43.200
+Little confusing. But you just do a simple for loop. You start with 0
+
+00:37:43.200 --> 00:37:44.960
+simple for loop. You start with 0 because that's our original problem. You
+
+00:37:44.960 --> 00:37:46.520
+because that's our original problem. You keep calling parent of the thing you
+
+00:37:46.520 --> 00:37:48.800
+keep calling parent of the thing you currently have, and linear time you will
+
+00:37:48.800 --> 00:37:51.560
+currently have, and linear time you will reconstruct where the lines break.
+
+00:37:51.560 --> 00:37:53.560
+reconstruct where the lines break. So, you can use this technique in any
+
+00:37:53.560 --> 00:37:56.760
+So, you can use this technique in any DP. It's very simple. It's totally
+
+00:37:56.760 --> 00:38:00.280
+DP. It's very simple. It's totally automatic. Just like memorization
+
+00:38:00.280 --> 00:38:01.720
+automatic. Just like memorization is a technique that you can apply
+
+00:38:01.720 --> 00:38:03.440
+is a technique that you can apply without thinking. You could even write a
+
+00:38:03.440 --> 00:38:05.240
+without thinking. You could even write a program to give it a recurse given a
+
+00:38:05.240 --> 00:38:06.960
+program to give it a recurse given a recursive algorithm, would turn into a
+
+00:38:06.960 --> 00:38:08.400
+recursive algorithm, would turn into a memoized recursive algorithm. It's
+
+00:38:08.400 --> 00:38:10.480
+memoized recursive algorithm. It's totally automated.
+
+00:38:10.480 --> 00:38:12.400
+totally automated. Same thing with the bottom-up DP table.
+
+00:38:12.400 --> 00:38:14.600
+Same thing with the bottom-up DP table. As long as you know what the
+
+00:38:14.600 --> 00:38:15.600
+As long as you know what the uh
+
+00:38:15.600 --> 00:38:17.760
+uh what the topological order is, just make
+
+00:38:17.760 --> 00:38:19.560
+what the topological order is, just make those for loops, then put exactly the
+
+00:38:19.560 --> 00:38:21.080
+those for loops, then put exactly the recursive call, but turn it into an
+
+00:38:21.080 --> 00:38:23.080
+recursive call, but turn it into an array call. Boom, you've got a bottom-up
+
+00:38:23.080 --> 00:38:24.440
+array call. Boom, you've got a bottom-up algorithm. Totally automatic, no
+
+00:38:24.440 --> 00:38:26.080
+algorithm. Totally automatic, no thinking required.
+
+00:38:26.080 --> 00:38:27.840
+thinking required. Parent pointers also no thinking
+
+00:38:27.840 --> 00:38:29.359
+Parent pointers also no thinking required. As long as you're following
+
+00:38:29.359 --> 00:38:31.480
+required. As long as you're following the structure of trial guesses, compute
+
+00:38:31.480 --> 00:38:33.400
+the structure of trial guesses, compute some value, just remember what the guess
+
+00:38:33.400 --> 00:38:36.600
+some value, just remember what the guess was, you reconstruct your solution.
+
+00:38:36.600 --> 00:38:37.840
+was, you reconstruct your solution. And that's the great thing about dynamic
+
+00:38:37.840 --> 00:38:39.120
+And that's the great thing about dynamic programming is how much of it is
+
+00:38:39.120 --> 00:38:41.440
+programming is how much of it is automatic. The hard part is figuring out
+
+00:38:41.440 --> 00:38:43.359
+automatic. The hard part is figuring out what to guess, and then what your sub
+
+00:38:43.359 --> 00:38:45.560
+what to guess, and then what your sub problems are, or the other order.
+
+00:38:45.560 --> 00:38:48.200
+problems are, or the other order. Whatever works.
+
+00:38:48.200 --> 00:38:52.190
+Whatever works. Any other questions about text?
+
+00:38:55.510 --> 00:38:58.040
+I would like to move on to blackjack. Okay. Now, I brought some cards cuz some
+
+00:38:58.040 --> 00:38:59.640
+Okay. Now, I brought some cards cuz some of you may not know the rules to
+
+00:38:59.640 --> 00:39:01.200
+of you may not know the rules to blackjack. How many people know
+
+00:39:01.200 --> 00:39:02.560
+blackjack. How many people know blackjack?
+
+00:39:02.560 --> 00:39:04.280
+blackjack? Okay, how many people do not? Willing to
+
+00:39:04.280 --> 00:39:06.080
+Okay, how many people do not? Willing to admit it? A few. All right, so this is
+
+00:39:06.080 --> 00:39:08.200
+admit it? A few. All right, so this is for you and for fun entertainment. So,
+
+00:39:08.200 --> 00:39:10.280
+for you and for fun entertainment. So, I'm going to bring Victor up to help
+
+00:39:10.280 --> 00:39:13.120
+I'm going to bring Victor up to help demonstrate the rules of blackjack.
+
+00:39:13.120 --> 00:39:14.880
+demonstrate the rules of blackjack. We're going to play standard casino
+
+00:39:14.880 --> 00:39:17.000
+We're going to play standard casino blackjack as in the movie 21 or
+
+00:39:17.000 --> 00:39:18.240
+blackjack as in the movie 21 or whatever.
+
+00:39:18.240 --> 00:39:20.280
+whatever. Uh so, I'm going to just do a random cut
+
+00:39:20.280 --> 00:39:24.000
+Uh so, I'm going to just do a random cut here, so I can't cheat. Um and you have
+
+00:39:24.000 --> 00:39:26.040
+here, so I can't cheat. Um and you have a tablet. That's That's scary.
+
+00:39:26.040 --> 00:39:27.040
+a tablet. That's That's scary. Okay,
+
+00:39:27.040 --> 00:39:29.359
+Okay, look up strategy. Anything special? All
+
+00:39:29.359 --> 00:39:30.960
+look up strategy. Anything special? All right. Uh hopefully you do not have
+
+00:39:30.960 --> 00:39:33.520
+right. Uh hopefully you do not have X-ray vision. Um so, the way it works is
+
+00:39:33.520 --> 00:39:36.000
+X-ray vision. Um so, the way it works is we There's a dealer, player, and the and
+
+00:39:36.000 --> 00:39:37.320
+we There's a dealer, player, and the and one or more players. We're just going to
+
+00:39:37.320 --> 00:39:39.280
+one or more players. We're just going to do it with one player to keep it simple.
+
+00:39:39.280 --> 00:39:40.560
+do it with one player to keep it simple. I'm going to be the dealer, so my
+
+00:39:40.560 --> 00:39:41.920
+I'm going to be the dealer, so my strategy is actually totally
+
+00:39:41.920 --> 00:39:43.080
+strategy is actually totally deterministic. There's nothing
+
+00:39:43.080 --> 00:39:45.600
+deterministic. There's nothing interesting. Victor has the hard part of
+
+00:39:45.600 --> 00:39:48.320
+interesting. Victor has the hard part of winning. So, to start out, I believe we
+
+00:39:48.320 --> 00:39:53.280
+winning. So, to start out, I believe we deal to you first, then to me, then to
+
+00:39:53.280 --> 00:39:55.760
+deal to you first, then to me, then to you, then to me. So, let's hold up these
+
+00:39:55.760 --> 00:39:57.960
+you, then to me. So, let's hold up these cards, Victor, so people can see them.
+
+00:39:57.960 --> 00:39:59.400
+cards, Victor, so people can see them. Uh you don't get to see one of my cards.
+
+00:39:59.400 --> 00:40:02.880
+Uh you don't get to see one of my cards. That's some peculiarity of the rule. And
+
+00:40:02.880 --> 00:40:05.760
+That's some peculiarity of the rule. And if the sum of our cards goes over 21, we
+
+00:40:05.760 --> 00:40:08.920
+if the sum of our cards goes over 21, we lose the game. Uh Victor first. Uh I I
+
+00:40:08.920 --> 00:40:12.080
+lose the game. Uh Victor first. Uh I I cannot have a value more than 21 in this
+
+00:40:12.080 --> 00:40:13.640
+cannot have a value more than 21 in this these hands cuz I only have two two
+
+00:40:13.640 --> 00:40:17.000
+these hands cuz I only have two two cards. You have a value of ace, great.
+
+00:40:17.000 --> 00:40:18.720
+cards. You have a value of ace, great. An ace can be a one or an 11. That's the
+
+00:40:18.720 --> 00:40:21.160
+An ace can be a one or an 11. That's the fun rule. So, this is either an eight or
+
+00:40:21.160 --> 00:40:22.760
+fun rule. So, this is either an eight or an 18.
+
+00:40:22.760 --> 00:40:23.960
+an 18. And so, Victor has a choice of whether
+
+00:40:23.960 --> 00:40:25.640
+And so, Victor has a choice of whether to take another card or not. What would
+
+00:40:25.640 --> 00:40:28.000
+to take another card or not. What would you like to do? The Bender strategy says
+
+00:40:28.000 --> 00:40:30.840
+you like to do? The Bender strategy says stand. He stands, so he's going to stick
+
+00:40:30.840 --> 00:40:32.000
+stand. He stands, so he's going to stick to that.
+
+00:40:32.000 --> 00:40:34.880
+to that. At this point, uh my cards flip over. I
+
+00:40:34.880 --> 00:40:36.680
+At this point, uh my cards flip over. I have 17,
+
+00:40:36.680 --> 00:40:37.760
+have 17, which is the same as you, which I
+
+00:40:37.760 --> 00:40:40.200
+which is the same as you, which I believe means I forget about tie rules.
+
+00:40:40.200 --> 00:40:41.720
+believe means I forget about tie rules. You have 18. All right.
+
+00:40:41.720 --> 00:40:44.200
+You have 18. All right. works. So, that's good. I'm going to hit
+
+00:40:44.200 --> 00:40:45.680
+works. So, that's good. I'm going to hit in the hope that I have a small card
+
+00:40:45.680 --> 00:40:47.680
+in the hope that I have a small card that will push me right above you.
+
+00:40:47.680 --> 00:40:50.280
+that will push me right above you. Uh but I do not. I lose. I'm sad.
+
+00:40:50.280 --> 00:40:52.320
+Uh but I do not. I lose. I'm sad. is to stand on 17. Oh, always stand on
+
+00:40:52.320 --> 00:40:54.560
+is to stand on 17. Oh, always stand on 17. Uh all right, never mind. You still
+
+00:40:54.560 --> 00:40:57.160
+17. Uh all right, never mind. You still lose, but Thanks. Yeah, I still lose.
+
+00:40:57.160 --> 00:40:59.720
+lose, but Thanks. Yeah, I still lose. Game is over. My strategy is always
+
+00:40:59.720 --> 00:41:01.880
+Game is over. My strategy is always stand on a value
+
+00:41:01.880 --> 00:41:02.920
+stand on a value Stand on 17.
+
+00:41:02.920 --> 00:41:06.680
+Stand on 17. less 17 or higher. And if I have a value
+
+00:41:06.680 --> 00:41:08.240
+less 17 or higher. And if I have a value less than 17, I always take another
+
+00:41:08.240 --> 00:41:10.160
+less than 17, I always take another card. So, let's do it one more time. Get
+
+00:41:10.160 --> 00:41:12.400
+card. So, let's do it one more time. Get it right. So, I'm going to deal to you,
+
+00:41:12.400 --> 00:41:13.840
+it right. So, I'm going to deal to you, deal to me,
+
+00:41:13.840 --> 00:41:15.800
+deal to me, deal to you.
+
+00:41:15.800 --> 00:41:19.080
+deal to you. Deal to me. So, hold up your cards.
+
+00:41:19.080 --> 00:41:22.360
+Deal to me. So, hold up your cards. Uh you have 18 again.
+
+00:41:22.360 --> 00:41:25.510
+Uh you have 18 again. Are you cheating?
+
+00:41:26.590 --> 00:41:28.760
+All right. I still have to stand. You still stand
+
+00:41:28.760 --> 00:41:31.080
+I still have to stand. You still stand according to tablet.
+
+00:41:31.080 --> 00:41:33.920
+according to tablet. So, I in this case have a 20, and so in
+
+00:41:33.920 --> 00:41:35.960
+So, I in this case have a 20, and so in this case, I win. All right, so you get
+
+00:41:35.960 --> 00:41:38.040
+this case, I win. All right, so you get the idea. Each Let's say in each case
+
+00:41:38.040 --> 00:41:39.400
+the idea. Each Let's say in each case we're betting a dollar. So, at this
+
+00:41:39.400 --> 00:41:43.000
+we're betting a dollar. So, at this point we'd be even. He won $1, I won $1.
+
+00:41:43.000 --> 00:41:44.680
+point we'd be even. He won $1, I won $1. Uh but in general,
+
+00:41:44.680 --> 00:41:48.320
+Uh but in general, uh slight I think it's balanced. For
+
+00:41:48.320 --> 00:41:50.800
+uh slight I think it's balanced. For these rules, there's a 1% advantage for
+
+00:41:50.800 --> 00:41:53.040
+these rules, there's a 1% advantage for the house. 1% advantage for the house.
+
+00:41:53.040 --> 00:41:54.640
+the house. 1% advantage for the house. Interesting. All right. Well, that's
+
+00:41:54.640 --> 00:41:56.320
+Interesting. All right. Well, that's beyond this class.
+
+00:41:56.320 --> 00:41:57.480
+beyond this class. Uh what we're going to see is how to
+
+00:41:57.480 --> 00:41:59.240
+Uh what we're going to see is how to cheat in blackjack.
+
+00:41:59.240 --> 00:42:00.240
+cheat in blackjack. Okay?
+
+00:42:00.240 --> 00:42:03.760
+Okay? So, this is going to be
+
+00:42:03.760 --> 00:42:05.000
+So, this is going to be I encourage you to try this out at
+
+00:42:05.000 --> 00:42:10.710
+I encourage you to try this out at casinos. Just kidding.
+
+00:42:12.070 --> 00:42:13.840
+This is a little bit difficult to actually
+
+00:42:13.840 --> 00:42:16.320
+actually do in a casino unless you have an inside
+
+00:42:16.320 --> 00:42:17.520
+do in a casino unless you have an inside man.
+
+00:42:17.520 --> 00:42:19.360
+man. So, if you have an inside man, go for
+
+00:42:19.360 --> 00:42:21.120
+So, if you have an inside man, go for it. Uh
+
+00:42:21.120 --> 00:42:23.440
+it. Uh it's guaranteed to win you lots of money
+
+00:42:23.440 --> 00:42:25.320
+it's guaranteed to win you lots of money cuz it's going to play optimally. In
+
+00:42:25.320 --> 00:42:27.880
+cuz it's going to play optimally. In perfect information blackjack, I suppose
+
+00:42:27.880 --> 00:42:31.200
+perfect information blackjack, I suppose that I already know the entire deck.
+
+00:42:31.200 --> 00:42:33.160
+that I already know the entire deck. Suppose somehow either I get to put the
+
+00:42:33.160 --> 00:42:35.920
+Suppose somehow either I get to put the deck there or I have some x-ray vision,
+
+00:42:35.920 --> 00:42:37.520
+deck there or I have some x-ray vision, I get to see the entire deck ahead of
+
+00:42:37.520 --> 00:42:39.480
+I get to see the entire deck ahead of time. And then somebody's going to play
+
+00:42:39.480 --> 00:42:42.160
+time. And then somebody's going to play through a game over and over with me,
+
+00:42:42.160 --> 00:42:43.560
+through a game over and over with me, or not over and over, but until the deck
+
+00:42:43.560 --> 00:42:45.120
+or not over and over, but until the deck is depleted.
+
+00:42:45.120 --> 00:42:46.640
+is depleted. And I want to know in each case, should
+
+00:42:46.640 --> 00:42:49.720
+And I want to know in each case, should I hit or should I stand?
+
+00:42:49.720 --> 00:42:51.080
+I hit or should I stand? And I claim with dynamic programming,
+
+00:42:51.080 --> 00:42:53.080
+And I claim with dynamic programming, you can figure that out.
+
+00:42:53.080 --> 00:42:54.960
+you can figure that out. Using exactly the same strategy as text,
+
+00:42:54.960 --> 00:42:57.080
+Using exactly the same strategy as text, actually. It's really for each word,
+
+00:42:57.080 --> 00:42:59.920
+actually. It's really for each word, should I start a new line or not?
+
+00:42:59.920 --> 00:43:01.920
+should I start a new line or not? Same same problem here.
+
+00:43:01.920 --> 00:43:03.640
+Same same problem here. Okay, it's slightly more complicated to
+
+00:43:03.640 --> 00:43:05.080
+Okay, it's slightly more complicated to write down,
+
+00:43:05.080 --> 00:43:06.480
+write down, but
+
+00:43:06.480 --> 00:43:08.320
+but um
+
+00:43:08.320 --> 00:43:10.520
+um So, let's say the deck
+
+00:43:10.520 --> 00:43:12.040
+So, let's say the deck is a sequence of cards, and I'm going to
+
+00:43:12.040 --> 00:43:16.920
+is a sequence of cards, and I'm going to call it C0, C1 up to Cn - 1. It's n
+
+00:43:16.920 --> 00:43:18.960
+call it C0, C1 up to Cn - 1. It's n cards.
+
+00:43:18.960 --> 00:43:23.070
+cards. And you are one player
+
+00:43:25.710 --> 00:43:26.880
+versus the dealer. I don't know how to solve this for two
+
+00:43:26.880 --> 00:43:28.560
+I don't know how to solve this for two prob- two players. It's an interesting
+
+00:43:28.560 --> 00:43:31.080
+prob- two players. It's an interesting open problem. But for one player,
+
+00:43:31.080 --> 00:43:31.680
+open problem. But for one player, uh
+
+00:43:31.680 --> 00:43:33.960
+uh I can do it.
+
+00:43:33.960 --> 00:43:35.920
+I can do it. Uh let's say
+
+00:43:35.920 --> 00:43:37.920
+Uh let's say $1 bet
+
+00:43:37.920 --> 00:43:39.640
+$1 bet per hand, I think they're called. I
+
+00:43:39.640 --> 00:43:41.920
+per hand, I think they're called. I don't I'm not sure. Per play,
+
+00:43:41.920 --> 00:43:43.880
+don't I'm not sure. Per play, per box, whatever.
+
+00:43:43.880 --> 00:43:45.120
+per box, whatever. Um you're not allowed to double, you're
+
+00:43:45.120 --> 00:43:46.520
+Um you're not allowed to double, you're not allowed to split. All these fancy
+
+00:43:46.520 --> 00:43:48.440
+not allowed to split. All these fancy rules uh are hard to think about,
+
+00:43:48.440 --> 00:43:49.640
+rules uh are hard to think about, although you might be able to solve them
+
+00:43:49.640 --> 00:43:52.310
+although you might be able to solve them as well.
+
+00:43:55.190 --> 00:43:56.720
+So, the idea is I have some cards. Should I hit or should I stand? I don't
+
+00:43:56.720 --> 00:43:58.480
+Should I hit or should I stand? I don't know. I'll guess.
+
+00:43:58.480 --> 00:44:00.400
+know. I'll guess. So, our guessing
+
+00:44:00.400 --> 00:44:05.270
+So, our guessing Let's jump ahead to the guessing part.
+
+00:44:07.430 --> 00:44:08.920
+is whether we want to hit or stand given a card.
+
+00:44:08.920 --> 00:44:09.960
+a card. Um
+
+00:44:09.960 --> 00:44:12.080
+Um Actually, it's cuz it's a It'd be easier
+
+00:44:12.080 --> 00:44:14.080
+Actually, it's cuz it's a It'd be easier to think about an entire play, an entire
+
+00:44:14.080 --> 00:44:16.280
+to think about an entire play, an entire hand. We're going to guess how many
+
+00:44:16.280 --> 00:44:25.590
+hand. We're going to guess how many times should I hit?
+
+00:44:28.349 --> 00:44:30.840
+in the first play. So, initially, four cards are dealt. I
+
+00:44:30.840 --> 00:44:32.560
+So, initially, four cards are dealt. I look at my hand.
+
+00:44:32.560 --> 00:44:33.680
+look at my hand. Uh actually, I don't really look at my
+
+00:44:33.680 --> 00:44:35.160
+Uh actually, I don't really look at my hand. I'm just going to guess ahead of
+
+00:44:35.160 --> 00:44:37.640
+hand. I'm just going to guess ahead of time. Mm, I think I'll hit five times
+
+00:44:37.640 --> 00:44:39.640
+time. Mm, I think I'll hit five times this time. Uh I think I'll hit zero
+
+00:44:39.640 --> 00:44:41.120
+this time. Uh I think I'll hit zero times this time. I mean, I'm going to
+
+00:44:41.120 --> 00:44:43.200
+times this time. I mean, I'm going to just going to try them all. So, I don't
+
+00:44:43.200 --> 00:44:45.040
+just going to try them all. So, I don't really have to be intelligent here.
+
+00:44:45.040 --> 00:44:46.160
+really have to be intelligent here. Okay?
+
+00:44:46.160 --> 00:44:48.520
+Okay? It's kind of crazy, but
+
+00:44:48.520 --> 00:44:50.600
+It's kind of crazy, but it works.
+
+00:44:50.600 --> 00:44:53.240
+it works. Our subproblems,
+
+00:44:53.240 --> 00:44:54.560
+Our subproblems, anyone tell me what our subproblems
+
+00:44:54.560 --> 00:44:55.760
+anyone tell me what our subproblems would be?
+
+00:44:55.760 --> 00:44:58.960
+would be? In one word or less?
+
+00:44:58.960 --> 00:45:02.910
+In one word or less? Less would be impressive.
+
+00:45:04.830 --> 00:45:06.280
+Yeah. Where do you start the hand? Where do you start the new hand? Yeah. So,
+
+00:45:06.280 --> 00:45:08.960
+do you start the new hand? Yeah. So, it's going to be suffixes of the cards.
+
+00:45:08.960 --> 00:45:10.240
+it's going to be suffixes of the cards. So, at some point, you know, we do a
+
+00:45:10.240 --> 00:45:12.080
+So, at some point, you know, we do a play, and then we get to the ith card,
+
+00:45:12.080 --> 00:45:13.200
+play, and then we get to the ith card, and then the rest of the game will be
+
+00:45:13.200 --> 00:45:15.040
+and then the rest of the game will be from the ith card on.
+
+00:45:15.040 --> 00:45:18.280
+from the ith card on. So, it's going to be suffix
+
+00:45:18.280 --> 00:45:21.320
+So, it's going to be suffix C I colon, I guess it would be the
+
+00:45:21.320 --> 00:45:24.120
+C I colon, I guess it would be the notation here. It's a bit awkward.
+
+00:45:24.120 --> 00:45:25.920
+notation here. It's a bit awkward. These are the cards that remain. And so,
+
+00:45:25.920 --> 00:45:28.080
+These are the cards that remain. And so, the subproblem is what is the best play?
+
+00:45:28.080 --> 00:45:30.320
+the subproblem is what is the best play? What's the What's the best outcome given
+
+00:45:30.320 --> 00:45:32.960
+What's the What's the best outcome given $1 bets? How much money can I make?
+
+00:45:32.960 --> 00:45:34.920
+$1 bets? How much money can I make? Maximize my winnings, say,
+
+00:45:34.920 --> 00:45:37.200
+Maximize my winnings, say, given these cards onward. Who knows what
+
+00:45:37.200 --> 00:45:39.480
+given these cards onward. Who knows what happened to the earlier cards, but just
+
+00:45:39.480 --> 00:45:41.680
+happened to the earlier cards, but just these are the cards I'm left with.
+
+00:45:41.680 --> 00:45:52.990
+these are the cards I'm left with. Okay? Number of subproblems is
+
+00:46:01.750 --> 00:46:03.320
+n How many choices of I are there? n
+
+00:46:03.320 --> 00:46:05.000
+How many choices of I are there? n choices.
+
+00:46:05.000 --> 00:46:06.880
+choices. Okay, this is really important. It's
+
+00:46:06.880 --> 00:46:09.400
+Okay, this is really important. It's really useful that we're thinking about
+
+00:46:09.400 --> 00:46:11.240
+really useful that we're thinking about suffixes. It's not that some subset of
+
+00:46:11.240 --> 00:46:13.160
+suffixes. It's not that some subset of the cards have been played. That would
+
+00:46:13.160 --> 00:46:14.720
+the cards have been played. That would be really hard cuz there's exponentially
+
+00:46:14.720 --> 00:46:16.080
+be really hard cuz there's exponentially many different subsets that could be
+
+00:46:16.080 --> 00:46:18.359
+many different subsets that could be left. It's always a prefix that gets
+
+00:46:18.359 --> 00:46:19.960
+left. It's always a prefix that gets played, and therefore a suffix is left.
+
+00:46:19.960 --> 00:46:21.960
+played, and therefore a suffix is left. And there's only n suffixes. Remember
+
+00:46:21.960 --> 00:46:23.960
+And there's only n suffixes. Remember that. Going to use it over and over in
+
+00:46:23.960 --> 00:46:25.800
+that. Going to use it over and over in dynamic programming.
+
+00:46:25.800 --> 00:46:27.600
+dynamic programming. So, now uh we need to solve the
+
+00:46:27.600 --> 00:46:29.800
+So, now uh we need to solve the subproblem starting from CI, what's the
+
+00:46:29.800 --> 00:46:31.600
+subproblem starting from CI, what's the best way to play? Well, the first four
+
+00:46:31.600 --> 00:46:34.280
+best way to play? Well, the first four cards are fixed, and then we guess how
+
+00:46:34.280 --> 00:46:36.359
+cards are fixed, and then we guess how many hits are left. Uh so, it's going to
+
+00:46:36.359 --> 00:46:39.840
+many hits are left. Uh so, it's going to be something like n - i - four different
+
+00:46:39.840 --> 00:46:41.680
+be something like n - i - four different possibilities for I mean, that would be
+
+00:46:41.680 --> 00:46:43.359
+possibilities for I mean, that would be the maximum number of hits I could take
+
+00:46:43.359 --> 00:46:46.200
+the maximum number of hits I could take all the remaining cards. That would be
+
+00:46:46.200 --> 00:46:47.400
+all the remaining cards. That would be the
+
+00:46:47.400 --> 00:46:51.000
+the the most. Um and let's see. So, the
+
+00:46:51.000 --> 00:46:52.880
+the most. Um and let's see. So, the number of choices,
+
+00:46:52.880 --> 00:46:54.640
+number of choices, I'll just say it's at most n. I don't
+
+00:46:54.640 --> 00:46:58.070
+I'll just say it's at most n. I don't have to be fancy here.
+
+00:47:01.430 --> 00:47:08.790
+Okay. Now, we go to uh the recurrence.
+
+00:47:10.950 --> 00:47:14.920
+So, I'm going to call this uh blackjack of I is going to be the solution. I want
+
+00:47:14.920 --> 00:47:17.480
+of I is going to be the solution. I want to solve this subproblem.
+
+00:47:17.480 --> 00:47:20.800
+to solve this subproblem. From I onwards, what's the best play?
+
+00:47:20.800 --> 00:47:23.680
+From I onwards, what's the best play? And I guess it's going to be a max if
+
+00:47:23.680 --> 00:47:26.800
+And I guess it's going to be a max if I'm measuring winnings.
+
+00:47:26.800 --> 00:47:28.960
+I'm measuring winnings. And what's the winnings if I decide to
+
+00:47:28.960 --> 00:47:30.840
+And what's the winnings if I decide to hit this many times? It's a little bit
+
+00:47:30.840 --> 00:47:33.400
+hit this many times? It's a little bit hard to write down the exact formula.
+
+00:47:33.400 --> 00:47:36.960
+hard to write down the exact formula. I'm going to write a rough version,
+
+00:47:36.960 --> 00:47:40.400
+I'm going to write a rough version, which is the outcome of that first play.
+
+00:47:40.400 --> 00:47:43.320
+which is the outcome of that first play. It's going to be either I lose a dollar,
+
+00:47:43.320 --> 00:47:44.920
+It's going to be either I lose a dollar, we tie,
+
+00:47:44.920 --> 00:47:47.359
+we tie, or I win a dollar.
+
+00:47:47.359 --> 00:47:48.640
+or I win a dollar. So, if we if we end up with the same
+
+00:47:48.640 --> 00:47:50.480
+So, if we if we end up with the same value, you actually use in most
+
+00:47:50.480 --> 00:47:52.200
+value, you actually use in most versions, you get your money back.
+
+00:47:52.200 --> 00:47:55.200
+versions, you get your money back. Nothing changes. The bet is nullified.
+
+00:47:55.200 --> 00:47:57.080
+Nothing changes. The bet is nullified. So, that's a zero outcome.
+
+00:47:57.080 --> 00:47:58.359
+So, that's a zero outcome. But if I'm only betting a dollar, these
+
+00:47:58.359 --> 00:48:00.040
+But if I'm only betting a dollar, these are the three possible outcomes. You can
+
+00:48:00.040 --> 00:48:02.000
+are the three possible outcomes. You can compute this, right? If I told you how
+
+00:48:02.000 --> 00:48:04.000
+compute this, right? If I told you how many times you hit, then you just
+
+00:48:04.000 --> 00:48:06.520
+many times you hit, then you just execute that those through those cards,
+
+00:48:06.520 --> 00:48:08.800
+execute that those through those cards, and you compute the values of my hand of
+
+00:48:08.800 --> 00:48:11.000
+and you compute the values of my hand of your hand versus the dealer's hand. You
+
+00:48:11.000 --> 00:48:13.240
+your hand versus the dealer's hand. You see, you know, did anyone bust? If so,
+
+00:48:13.240 --> 00:48:14.840
+see, you know, did anyone bust? If so, they lose. Otherwise, you compare the
+
+00:48:14.840 --> 00:48:17.520
+they lose. Otherwise, you compare the values, and you see which is bigger or
+
+00:48:17.520 --> 00:48:19.160
+values, and you see which is bigger or smaller.
+
+00:48:19.160 --> 00:48:22.120
+smaller. Okay, this is easy to do in linear time.
+
+00:48:22.120 --> 00:48:24.080
+Okay, this is easy to do in linear time. No biggie. Uh what's useful here is that
+
+00:48:24.080 --> 00:48:25.800
+No biggie. Uh what's useful here is that the dealer strategy is deterministic.
+
+00:48:25.800 --> 00:48:27.520
+the dealer strategy is deterministic. So, after you know how many cards you
+
+00:48:27.520 --> 00:48:29.680
+So, after you know how many cards you take, what the dealer does is forced
+
+00:48:29.680 --> 00:48:31.800
+take, what the dealer does is forced because it just looks, do I have 17 or
+
+00:48:31.800 --> 00:48:33.920
+because it just looks, do I have 17 or greater? If not, take another card, and
+
+00:48:33.920 --> 00:48:35.800
+greater? If not, take another card, and keep repeating that.
+
+00:48:35.800 --> 00:48:37.160
+keep repeating that. So, it's a deterministic strategy in
+
+00:48:37.160 --> 00:48:38.480
+So, it's a deterministic strategy in linear time you can figure out what the
+
+00:48:38.480 --> 00:48:39.840
+linear time you can figure out what the outcome is.
+
+00:48:39.840 --> 00:48:42.160
+outcome is. Then you also have to add the outcome of
+
+00:48:42.160 --> 00:48:43.640
+Then you also have to add the outcome of all the remaining cards, which is just
+
+00:48:43.640 --> 00:48:47.880
+all the remaining cards, which is just BG of J. This is recursion. Super easy.
+
+00:48:47.880 --> 00:48:53.270
+BG of J. This is recursion. Super easy. We do this for all choices of J.
+
+00:48:56.550 --> 00:49:02.950
+Uh it's like, you know, range of I + 4 up to n, I think.
+
+00:49:08.070 --> 00:49:10.720
+Sure, that'll work. I should probably put in an if here, which is if it's a
+
+00:49:10.720 --> 00:49:14.110
+put in an if here, which is if it's a valid play.
+
+00:49:15.310 --> 00:49:17.280
+Okay, there are some constraints here. If I've already busted, I can't hit
+
+00:49:17.280 --> 00:49:18.600
+If I've already busted, I can't hit again.
+
+00:49:18.600 --> 00:49:19.920
+again. So, in fact, what you have to do in this
+
+00:49:19.920 --> 00:49:21.640
+So, in fact, what you have to do in this for loop is say, well, maybe I take
+
+00:49:21.640 --> 00:49:22.920
+for loop is say, well, maybe I take another hit. Maybe I take another hit.
+
+00:49:22.920 --> 00:49:25.120
+another hit. Maybe I take another hit. At some point, I go over 21, and then
+
+00:49:25.120 --> 00:49:27.000
+At some point, I go over 21, and then you have to stop the for loop. So, I'm
+
+00:49:27.000 --> 00:49:28.400
+you have to stop the for loop. So, I'm writing that as an if. You can also do
+
+00:49:28.400 --> 00:49:30.840
+writing that as an if. You can also do it with a break, however you want. But
+
+00:49:30.840 --> 00:49:32.320
+it with a break, however you want. But that's uh
+
+00:49:32.320 --> 00:49:35.040
+that's uh You consider all possible options, all
+
+00:49:35.040 --> 00:49:37.000
+You consider all possible options, all valid options of play. For each of them,
+
+00:49:37.000 --> 00:49:38.720
+valid options of play. For each of them, you see what the outcome was after the
+
+00:49:38.720 --> 00:49:40.680
+you see what the outcome was after the dealer takes some more cards.
+
+00:49:40.680 --> 00:49:44.080
+dealer takes some more cards. Uh this is actually a little bit funny.
+
+00:49:44.080 --> 00:49:46.080
+Uh this is actually a little bit funny. Hm, sorry. This should really be the
+
+00:49:46.080 --> 00:49:48.480
+Hm, sorry. This should really be the number of hits
+
+00:49:48.480 --> 00:49:51.880
+number of hits and range from let's say zero to n.
+
+00:49:51.880 --> 00:49:53.520
+and range from let's say zero to n. Maybe you don't hit at all.
+
+00:49:53.520 --> 00:49:55.640
+Maybe you don't hit at all. And then J is a little bit tricky cuz
+
+00:49:55.640 --> 00:49:58.960
+And then J is a little bit tricky cuz this is actually I plus four plus the
+
+00:49:58.960 --> 00:50:01.080
+this is actually I plus four plus the number of hits
+
+00:50:01.080 --> 00:50:05.550
+number of hits plus the number of dealer hits.
+
+00:50:07.630 --> 00:50:09.840
+Okay, so you have to run this algorithm to compute what happened, which computes
+
+00:50:09.840 --> 00:50:11.880
+to compute what happened, which computes how many times the dealer took a card.
+
+00:50:11.880 --> 00:50:14.720
+how many times the dealer took a card. That's how many cards got consumed and
+
+00:50:14.720 --> 00:50:16.920
+That's how many cards got consumed and so that's uh if you do I plus four plus
+
+00:50:16.920 --> 00:50:18.480
+so that's uh if you do I plus four plus that plus that, that's how many cards
+
+00:50:18.480 --> 00:50:21.400
+that plus that, that's how many cards are left or where the cards resume.
+
+00:50:21.400 --> 00:50:23.480
+are left or where the cards resume. And then you call BG on that. So we're
+
+00:50:23.480 --> 00:50:25.920
+And then you call BG on that. So we're in general from BG of I
+
+00:50:25.920 --> 00:50:28.440
+in general from BG of I if we think of the DAG
+
+00:50:28.440 --> 00:50:31.720
+if we think of the DAG in this sum position maybe I plus four
+
+00:50:31.720 --> 00:50:33.240
+in this sum position maybe I plus four happens, maybe it doesn't happen. It
+
+00:50:33.240 --> 00:50:35.840
+happens, maybe it doesn't happen. It depends on um what the dealer does.
+
+00:50:35.840 --> 00:50:36.400
+depends on um what the dealer does. Uh
+
+00:50:36.400 --> 00:50:38.880
+Uh we're going to depend on I plus six, I
+
+00:50:38.880 --> 00:50:41.320
+we're going to depend on I plus six, I plus five maybe. It's going to be all of
+
+00:50:41.320 --> 00:50:44.000
+plus five maybe. It's going to be all of these possibilities. These are all
+
+00:50:44.000 --> 00:50:46.320
+these possibilities. These are all different plays.
+
+00:50:46.320 --> 00:50:47.560
+different plays. And then on each of these edges we're
+
+00:50:47.560 --> 00:50:49.760
+And then on each of these edges we're going to have plus one, zero or minus
+
+00:50:49.760 --> 00:50:52.560
+going to have plus one, zero or minus one. Those are the outcomes.
+
+00:50:52.560 --> 00:50:55.160
+one. Those are the outcomes. Whether I won or lost or tied.
+
+00:50:55.160 --> 00:50:57.080
+Whether I won or lost or tied. And then we're just computing
+
+00:50:57.080 --> 00:50:59.200
+And then we're just computing a shortest path in this DAG.
+
+00:50:59.200 --> 00:51:01.040
+a shortest path in this DAG. It's actually really easy
+
+00:51:01.040 --> 00:51:02.840
+It's actually really easy if you think of it that way. This is
+
+00:51:02.840 --> 00:51:05.080
+if you think of it that way. This is just how many cards are left. From that
+
+00:51:05.080 --> 00:51:06.360
+just how many cards are left. From that position you just see what are all the
+
+00:51:06.360 --> 00:51:07.880
+position you just see what are all the possibilities, what are all the edges
+
+00:51:07.880 --> 00:51:09.560
+possibilities, what are all the edges that could I could go to? Where could I
+
+00:51:09.560 --> 00:51:11.520
+that could I could go to? Where could I What states could I go to next? How many
+
+00:51:11.520 --> 00:51:13.200
+What states could I go to next? How many cards are remaining? How much did it
+
+00:51:13.200 --> 00:51:15.280
+cards are remaining? How much did it cost me or win me?
+
+00:51:15.280 --> 00:51:17.400
+cost me or win me? And then take uh longest paths in that
+
+00:51:17.400 --> 00:51:18.600
+And then take uh longest paths in that DAG.
+
+00:51:18.600 --> 00:51:19.760
+DAG. That will give you the exact same
+
+00:51:19.760 --> 00:51:20.840
+That will give you the exact same answer. That's what this dynamic
+
+00:51:20.840 --> 00:51:23.080
+answer. That's what this dynamic programming is doing. In the lecture
+
+00:51:23.080 --> 00:51:24.960
+programming is doing. In the lecture notes there's more details where I
+
+00:51:24.960 --> 00:51:26.240
+notes there's more details where I actually tried to write out this
+
+00:51:26.240 --> 00:51:28.320
+actually tried to write out this function this recurrence as an
+
+00:51:28.320 --> 00:51:30.600
+function this recurrence as an algorithm. And you can do it
+
+00:51:30.600 --> 00:51:31.840
+algorithm. And you can do it assuming I got everything right. It's
+
+00:51:31.840 --> 00:51:33.320
+assuming I got everything right. It's not that hard.
+
+00:51:33.320 --> 00:51:35.000
+not that hard. Uh the order here is just the same as
+
+00:51:35.000 --> 00:51:36.680
+Uh the order here is just the same as the order we did before. The running
+
+00:51:36.680 --> 00:51:38.520
+the order we did before. The running time is going to be cubic in the worst
+
+00:51:38.520 --> 00:51:41.080
+time is going to be cubic in the worst case because we have uh it's a little
+
+00:51:41.080 --> 00:51:43.400
+case because we have uh it's a little non-obvious but we have n subproblems.
+
+00:51:43.400 --> 00:51:45.400
+non-obvious but we have n subproblems. For each of them we have n choices and
+
+00:51:45.400 --> 00:51:48.000
+For each of them we have n choices and for each choice we have to run the
+
+00:51:48.000 --> 00:51:49.680
+for each choice we have to run the dealer strategy.
+
+00:51:49.680 --> 00:51:51.160
+dealer strategy. And so that conceivably could take
+
+00:51:51.160 --> 00:51:52.760
+And so that conceivably could take linear time. Here I'm assuming a general
+
+00:51:52.760 --> 00:51:55.280
+linear time. Here I'm assuming a general value of 21. If 21 is actually constant,
+
+00:51:55.280 --> 00:51:57.160
+value of 21. If 21 is actually constant, it'll only be constant time to play out
+
+00:51:57.160 --> 00:51:59.000
+it'll only be constant time to play out a single hand and then it's quadratic
+
+00:51:59.000 --> 00:52:01.080
+a single hand and then it's quadratic time. So it depends on your model of
+
+00:52:01.080 --> 00:52:03.160
+time. So it depends on your model of generalized Blackjack.
+
+00:52:03.160 --> 00:52:05.440
+generalized Blackjack. Uh but that's it and you get some flavor
+
+00:52:05.440 --> 00:52:06.880
+Uh but that's it and you get some flavor of the power of dynamic programming.
+
+00:52:06.880 --> 00:52:08.080
+of the power of dynamic programming. We're going to see it's even more
+
+00:52:08.080 --> 00:52:09.760
+We're going to see it's even more powerful than this in the next two
+
+00:52:09.760 --> 00:52:12.400
+powerful than this in the next two lectures.

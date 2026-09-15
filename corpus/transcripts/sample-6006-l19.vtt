@@ -1,0 +1,3502 @@
+WEBVTT
+
+00:00:01.870 --> 00:00:04.640
+The following content is provided under a Creative Commons license. Your support
+
+00:00:04.640 --> 00:00:06.920
+a Creative Commons license. Your support will help MIT OpenCourseware continue to
+
+00:00:06.920 --> 00:00:09.280
+will help MIT OpenCourseware continue to offer high-quality educational resources
+
+00:00:09.280 --> 00:00:10.560
+offer high-quality educational resources for free.
+
+00:00:10.560 --> 00:00:12.720
+for free. To make a donation or view additional
+
+00:00:12.720 --> 00:00:15.360
+To make a donation or view additional materials from hundreds of MIT courses,
+
+00:00:15.360 --> 00:00:21.270
+materials from hundreds of MIT courses, visit MIT OpenCourseware at ocw.mit.edu.
+
+00:00:23.510 --> 00:00:25.680
+We start a brand new exciting topic, dynamic programming.
+
+00:00:25.680 --> 00:00:28.960
+dynamic programming. Yeah. So exciting. Actually, I'm really
+
+00:00:28.960 --> 00:00:30.680
+Yeah. So exciting. Actually, I'm really excited because dynamic programming is
+
+00:00:30.680 --> 00:00:32.400
+excited because dynamic programming is my favorite thing in the world in
+
+00:00:32.400 --> 00:00:34.880
+my favorite thing in the world in algorithms. And uh
+
+00:00:34.880 --> 00:00:36.880
+algorithms. And uh it's going to be the next four lectures.
+
+00:00:36.880 --> 00:00:39.360
+it's going to be the next four lectures. It's so exciting. Uh it has lots of
+
+00:00:39.360 --> 00:00:42.080
+It's so exciting. Uh it has lots of different facets. It's a very general,
+
+00:00:42.080 --> 00:00:45.200
+different facets. It's a very general, powerful design technique. We don't talk
+
+00:00:45.200 --> 00:00:46.840
+powerful design technique. We don't talk a lot about algorithm design in this
+
+00:00:46.840 --> 00:00:48.640
+a lot about algorithm design in this class, but dynamic programming is one
+
+00:00:48.640 --> 00:00:50.640
+class, but dynamic programming is one that's so important and also takes a
+
+00:00:50.640 --> 00:00:53.400
+that's so important and also takes a little while to settle in. We We like to
+
+00:00:53.400 --> 00:00:57.440
+little while to settle in. We We like to inject it into you now in 006.
+
+00:00:57.440 --> 00:00:59.680
+inject it into you now in 006. So in general,
+
+00:00:59.680 --> 00:01:01.240
+So in general, our motivation is designing new
+
+00:01:01.240 --> 00:01:05.750
+our motivation is designing new algorithms.
+
+00:01:08.110 --> 00:01:10.520
+And dynamic programming, also called DP,
+
+00:01:10.520 --> 00:01:11.720
+also called DP, is
+
+00:01:11.720 --> 00:01:14.000
+is a great way
+
+00:01:14.000 --> 00:01:17.200
+a great way a very general,
+
+00:01:17.200 --> 00:01:33.230
+a very general, powerful way to do this.
+
+00:01:36.630 --> 00:01:38.280
+Um it's especially good and intended for optimization problems, things like
+
+00:01:38.280 --> 00:01:39.640
+optimization problems, things like shortest paths. You want to find the
+
+00:01:39.640 --> 00:01:41.720
+shortest paths. You want to find the best way to do something. Shortest
+
+00:01:41.720 --> 00:01:43.040
+best way to do something. Shortest paths, you want to find the shortest
+
+00:01:43.040 --> 00:01:46.520
+paths, you want to find the shortest path, the minimum length path.
+
+00:01:46.520 --> 00:01:48.000
+path, the minimum length path. You want to minimize, maximize
+
+00:01:48.000 --> 00:01:49.240
+You want to minimize, maximize something, that's an optimization
+
+00:01:49.240 --> 00:01:51.800
+something, that's an optimization problem. And typically, good algorithms
+
+00:01:51.800 --> 00:01:53.080
+problem. And typically, good algorithms to solve them involve dynamic
+
+00:01:53.080 --> 00:01:54.920
+to solve them involve dynamic programming. It's a bit of a broad
+
+00:01:54.920 --> 00:01:57.200
+programming. It's a bit of a broad statement. Uh you can also think of
+
+00:01:57.200 --> 00:01:58.920
+statement. Uh you can also think of dynamic programming as a kind of
+
+00:01:58.920 --> 00:02:00.880
+dynamic programming as a kind of exhaustive search.
+
+00:02:00.880 --> 00:02:03.160
+exhaustive search. Uh which is usually a bad thing to do
+
+00:02:03.160 --> 00:02:05.120
+Uh which is usually a bad thing to do because it leads to exponential time.
+
+00:02:05.120 --> 00:02:07.920
+because it leads to exponential time. But if you do it in a clever way,
+
+00:02:07.920 --> 00:02:10.119
+But if you do it in a clever way, by dynamic programming, you typically
+
+00:02:10.119 --> 00:02:13.600
+by dynamic programming, you typically get polynomial polynomial time.
+
+00:02:13.600 --> 00:02:16.840
+get polynomial polynomial time. So one perspective is that dynamic
+
+00:02:16.840 --> 00:02:19.120
+So one perspective is that dynamic programming is approximately
+
+00:02:19.120 --> 00:02:20.080
+programming is approximately uh
+
+00:02:20.080 --> 00:02:21.760
+uh careful
+
+00:02:21.760 --> 00:02:23.240
+careful brute force.
+
+00:02:23.240 --> 00:02:26.400
+brute force. It's kind of a funny combination.
+
+00:02:26.400 --> 00:02:29.630
+It's kind of a funny combination. A bit of an oxymoron.
+
+00:02:31.110 --> 00:02:34.080
+But let's take the idea of brute force, which is try all possibilities,
+
+00:02:34.080 --> 00:02:36.200
+which is try all possibilities, and you do it carefully, and you get it
+
+00:02:36.200 --> 00:02:37.600
+and you do it carefully, and you get it to polynomial time. There are a lot of
+
+00:02:37.600 --> 00:02:39.360
+to polynomial time. There are a lot of problems where essentially the only
+
+00:02:39.360 --> 00:02:41.760
+problems where essentially the only known polynomial time algorithm is via
+
+00:02:41.760 --> 00:02:43.120
+known polynomial time algorithm is via dynamic programming. It doesn't always
+
+00:02:43.120 --> 00:02:44.600
+dynamic programming. It doesn't always work. There are some problems where we
+
+00:02:44.600 --> 00:02:46.160
+work. There are some problems where we don't think there are polynomial time
+
+00:02:46.160 --> 00:02:48.720
+don't think there are polynomial time algorithms, but
+
+00:02:48.720 --> 00:02:50.680
+algorithms, but when it's possible, DP is a nice sort of
+
+00:02:50.680 --> 00:02:52.960
+when it's possible, DP is a nice sort of general approach to it.
+
+00:02:52.960 --> 00:02:54.200
+general approach to it. Um
+
+00:02:54.200 --> 00:02:55.400
+Um and we're going to be talking a lot
+
+00:02:55.400 --> 00:02:56.920
+and we're going to be talking a lot about dynamic programming. It has a lot
+
+00:02:56.920 --> 00:02:58.200
+about dynamic programming. It has a lot of different There's a lot of different
+
+00:02:58.200 --> 00:02:59.760
+of different There's a lot of different ways to think about it.
+
+00:02:59.760 --> 00:03:01.200
+ways to think about it. We'll look at a few
+
+00:03:01.200 --> 00:03:02.600
+We'll look at a few today.
+
+00:03:02.600 --> 00:03:04.560
+today. We're going to warm up today with some
+
+00:03:04.560 --> 00:03:06.280
+We're going to warm up today with some fairly easy problems that we already
+
+00:03:06.280 --> 00:03:08.320
+fairly easy problems that we already know how to solve, namely computing
+
+00:03:08.320 --> 00:03:11.120
+know how to solve, namely computing Fibonacci numbers, which is pretty easy,
+
+00:03:11.120 --> 00:03:13.440
+Fibonacci numbers, which is pretty easy, and computing shortest paths. And then
+
+00:03:13.440 --> 00:03:14.720
+and computing shortest paths. And then in the next three lectures, we're going
+
+00:03:14.720 --> 00:03:16.440
+in the next three lectures, we're going to get to more interesting examples
+
+00:03:16.440 --> 00:03:17.920
+to get to more interesting examples where
+
+00:03:17.920 --> 00:03:19.920
+where uh it's pretty surprising that you can
+
+00:03:19.920 --> 00:03:21.680
+uh it's pretty surprising that you can even solve the problem in polynomial
+
+00:03:21.680 --> 00:03:24.080
+even solve the problem in polynomial time.
+
+00:03:24.080 --> 00:03:25.960
+time. Probably the first burning question on
+
+00:03:25.960 --> 00:03:28.040
+Probably the first burning question on your mind, though, is why is it called
+
+00:03:28.040 --> 00:03:29.960
+your mind, though, is why is it called dynamic programming? What does that even
+
+00:03:29.960 --> 00:03:31.160
+dynamic programming? What does that even mean?
+
+00:03:31.160 --> 00:03:34.040
+mean? And I used to have this spiel about uh
+
+00:03:34.040 --> 00:03:36.320
+And I used to have this spiel about uh well, you know, programming refers to
+
+00:03:36.320 --> 00:03:38.640
+well, you know, programming refers to the I think it's the British notion of
+
+00:03:38.640 --> 00:03:41.920
+the I think it's the British notion of the word, where it's about optimization.
+
+00:03:41.920 --> 00:03:44.280
+the word, where it's about optimization. Optimization in American English is
+
+00:03:44.280 --> 00:03:46.640
+Optimization in American English is something like programming in British
+
+00:03:46.640 --> 00:03:49.320
+something like programming in British English, where uh you know, you want to
+
+00:03:49.320 --> 00:03:51.080
+English, where uh you know, you want to set up the program, the schedule for
+
+00:03:51.080 --> 00:03:52.720
+set up the program, the schedule for your trains or something. I think is
+
+00:03:52.720 --> 00:03:54.760
+your trains or something. I think is where programming comes from originally.
+
+00:03:54.760 --> 00:03:57.520
+where programming comes from originally. But I looked up the actual history of
+
+00:03:57.520 --> 00:04:00.560
+But I looked up the actual history of why is it called dynamic programming. Um
+
+00:04:00.560 --> 00:04:02.240
+why is it called dynamic programming. Um Dynamic programming is invented by a guy
+
+00:04:02.240 --> 00:04:03.320
+Dynamic programming is invented by a guy named uh
+
+00:04:03.320 --> 00:04:05.600
+named uh Richard Bellman. You may have heard of
+
+00:04:05.600 --> 00:04:07.760
+Richard Bellman. You may have heard of Bellman in the Bellman-Ford algorithm.
+
+00:04:07.760 --> 00:04:09.480
+Bellman in the Bellman-Ford algorithm. So this is actually the precursor to
+
+00:04:09.480 --> 00:04:11.040
+So this is actually the precursor to Bellman-Ford. And we're going to see
+
+00:04:11.040 --> 00:04:13.440
+Bellman-Ford. And we're going to see Bellman-Ford come up naturally in this
+
+00:04:13.440 --> 00:04:14.640
+Bellman-Ford come up naturally in this setting.
+
+00:04:14.640 --> 00:04:15.440
+setting. Um
+
+00:04:15.440 --> 00:04:17.440
+Um So here's Here's a quote about him.
+
+00:04:17.440 --> 00:04:19.200
+So here's Here's a quote about him. Says, "Bellman explained that he
+
+00:04:19.200 --> 00:04:21.280
+Says, "Bellman explained that he invented the name dynamic programming to
+
+00:04:21.280 --> 00:04:22.760
+invented the name dynamic programming to hide the fact that he was doing
+
+00:04:22.760 --> 00:04:24.840
+hide the fact that he was doing mathematical research."
+
+00:04:24.840 --> 00:04:25.720
+mathematical research." At
+
+00:04:25.720 --> 00:04:27.000
+At He was working at this place called
+
+00:04:27.000 --> 00:04:29.880
+He was working at this place called RAND, and uh under a Secretary of
+
+00:04:29.880 --> 00:04:32.000
+RAND, and uh under a Secretary of Defense who had a pathological fear and
+
+00:04:32.000 --> 00:04:34.600
+Defense who had a pathological fear and hatred for the term research.
+
+00:04:34.600 --> 00:04:36.440
+hatred for the term research. Uh so he settled on the term dynamic
+
+00:04:36.440 --> 00:04:38.080
+Uh so he settled on the term dynamic programming because it would yield it
+
+00:04:38.080 --> 00:04:40.200
+programming because it would yield it would be difficult to give a pejorative
+
+00:04:40.200 --> 00:04:42.960
+would be difficult to give a pejorative meaning to it, and because it was
+
+00:04:42.960 --> 00:04:44.840
+meaning to it, and because it was something not even a congressman could
+
+00:04:44.840 --> 00:04:47.720
+something not even a congressman could object to. Basically, it sounded cool.
+
+00:04:47.720 --> 00:04:49.320
+object to. Basically, it sounded cool. And
+
+00:04:49.320 --> 00:04:51.560
+And So uh that's that's the origin of the
+
+00:04:51.560 --> 00:04:52.880
+So uh that's that's the origin of the name dynamic programming. So why is it
+
+00:04:52.880 --> 00:04:55.360
+name dynamic programming. So why is it called that? Who knows? Uh
+
+00:04:55.360 --> 00:04:58.600
+called that? Who knows? Uh I mean, now you know, but it's not it's
+
+00:04:58.600 --> 00:05:00.240
+I mean, now you know, but it's not it's a weird term. Just take it for what it
+
+00:05:00.240 --> 00:05:04.030
+a weird term. Just take it for what it is.
+
+00:05:05.910 --> 00:05:07.040
+It may make sense, some kind of sense, but
+
+00:05:07.040 --> 00:05:13.310
+but All right. So we are going to start
+
+00:05:15.030 --> 00:05:17.800
+with this example of how to compute Fibonacci numbers. And maybe before we
+
+00:05:17.800 --> 00:05:20.560
+Fibonacci numbers. And maybe before we actually start, I'm going to give you a
+
+00:05:20.560 --> 00:05:22.280
+actually start, I'm going to give you a a sneak peek
+
+00:05:22.280 --> 00:05:24.040
+a sneak peek of what you can think of dynamic
+
+00:05:24.040 --> 00:05:26.400
+of what you can think of dynamic programming as. Uh
+
+00:05:26.400 --> 00:05:34.550
+programming as. Uh and
+
+00:05:35.950 --> 00:05:39.680
+this this equation, so to speak, is going to
+
+00:05:39.680 --> 00:05:42.680
+equation, so to speak, is going to change throughout today's lecture. In
+
+00:05:42.680 --> 00:05:44.720
+change throughout today's lecture. In the end, we'll settle on a sort of more
+
+00:05:44.720 --> 00:05:46.640
+the end, we'll settle on a sort of more accurate perspective.
+
+00:05:46.640 --> 00:05:49.160
+accurate perspective. The basic idea of dynamic programming is
+
+00:05:49.160 --> 00:05:50.960
+The basic idea of dynamic programming is to take a problem,
+
+00:05:50.960 --> 00:05:53.600
+to take a problem, split it into subproblems, solve those
+
+00:05:53.600 --> 00:05:56.000
+split it into subproblems, solve those subproblems, and reuse the solutions to
+
+00:05:56.000 --> 00:05:57.280
+subproblems, and reuse the solutions to your subproblems. It's It's like a
+
+00:05:57.280 --> 00:05:59.080
+your subproblems. It's It's like a lesson in recycling.
+
+00:05:59.080 --> 00:06:01.520
+lesson in recycling. Okay. So we'll see that uh
+
+00:06:01.520 --> 00:06:03.760
+Okay. So we'll see that uh in Fibonacci numbers. So you remember
+
+00:06:03.760 --> 00:06:06.600
+in Fibonacci numbers. So you remember Fibonacci numbers, right?
+
+00:06:06.600 --> 00:06:09.000
+Fibonacci numbers, right? Number of rabbits you have on day n if
+
+00:06:09.000 --> 00:06:09.920
+Number of rabbits you have on day n if they
+
+00:06:09.920 --> 00:06:14.910
+they reproduce.
+
+00:06:17.230 --> 00:06:19.560
+We've We've mentioned them before. We were talking about AVL trees, I think.
+
+00:06:19.560 --> 00:06:22.680
+were talking about AVL trees, I think. Uh so this is a the usual
+
+00:06:22.680 --> 00:06:24.040
+Uh so this is a the usual uh you can think of it as a recursive
+
+00:06:24.040 --> 00:06:26.600
+uh you can think of it as a recursive definition or recurrence on Fibonacci
+
+00:06:26.600 --> 00:06:27.680
+definition or recurrence on Fibonacci numbers.
+
+00:06:27.680 --> 00:06:29.400
+numbers. It's the definition of what the nth
+
+00:06:29.400 --> 00:06:31.520
+It's the definition of what the nth Fibonacci number is. So let's suppose
+
+00:06:31.520 --> 00:06:32.960
+Fibonacci number is. So let's suppose our goal,
+
+00:06:32.960 --> 00:06:35.320
+our goal, uh an algorithmic problem is compute the
+
+00:06:35.320 --> 00:06:39.150
+uh an algorithmic problem is compute the nth Fibonacci number.
+
+00:06:41.350 --> 00:06:43.840
+And I'm going to assume here that that fits in a word, and so basic
+
+00:06:43.840 --> 00:06:45.320
+that fits in a word, and so basic arithmetic, addition, whatever is
+
+00:06:45.320 --> 00:06:48.000
+arithmetic, addition, whatever is constant time operation.
+
+00:06:48.000 --> 00:06:49.480
+constant time operation. So
+
+00:06:49.480 --> 00:06:51.440
+So how do we do it? You all know how to do
+
+00:06:51.440 --> 00:06:55.280
+how do we do it? You all know how to do it anyways, but I'm going to give you
+
+00:06:55.280 --> 00:06:57.360
+it anyways, but I'm going to give you the dynamic programming perspective on
+
+00:06:57.360 --> 00:06:59.320
+the dynamic programming perspective on things. So this will seem
+
+00:06:59.320 --> 00:07:01.880
+things. So this will seem kind of obvious, but it is a it's We're
+
+00:07:01.880 --> 00:07:03.080
+kind of obvious, but it is a it's We're going to apply exactly the same
+
+00:07:03.080 --> 00:07:04.600
+going to apply exactly the same principles that we will apply over and
+
+00:07:04.600 --> 00:07:06.880
+principles that we will apply over and over in dynamic programming, but here
+
+00:07:06.880 --> 00:07:09.600
+over in dynamic programming, but here it's in a very familiar
+
+00:07:09.600 --> 00:07:11.720
+it's in a very familiar setting.
+
+00:07:11.720 --> 00:07:15.400
+setting. So we're going to start with the naive
+
+00:07:15.400 --> 00:07:24.750
+So we're going to start with the naive recursive algorithm.
+
+00:07:27.270 --> 00:07:28.560
+And that is if you want to compute the fib nth
+
+00:07:28.560 --> 00:07:30.120
+if you want to compute the fib nth Fibonacci number,
+
+00:07:30.120 --> 00:07:31.440
+Fibonacci number, you check whether you're in the base
+
+00:07:31.440 --> 00:07:35.710
+you check whether you're in the base case.
+
+00:07:37.630 --> 00:07:55.110
+I'm going to write it this way.
+
+00:07:57.390 --> 00:07:59.360
+So F is just our return value. You'll see why I write it this way in a moment.
+
+00:07:59.360 --> 00:08:01.800
+see why I write it this way in a moment. Then you return F. Uh in the base case,
+
+00:08:01.800 --> 00:08:03.760
+Then you return F. Uh in the base case, it's one. Otherwise, you recursively
+
+00:08:03.760 --> 00:08:05.840
+it's one. Otherwise, you recursively call Fibonacci of n minus one. You
+
+00:08:05.840 --> 00:08:07.600
+call Fibonacci of n minus one. You recursively call Fibonacci of n minus
+
+00:08:07.600 --> 00:08:10.520
+recursively call Fibonacci of n minus two. Add them together. Return that.
+
+00:08:10.520 --> 00:08:13.000
+two. Add them together. Return that. This is a correct algorithm.
+
+00:08:13.000 --> 00:08:14.960
+This is a correct algorithm. Is it a good algorithm?
+
+00:08:14.960 --> 00:08:16.480
+Is it a good algorithm? No.
+
+00:08:16.480 --> 00:08:23.390
+No. It's very bad. Exponential time.
+
+00:08:25.310 --> 00:08:28.000
+How do we know it's exponential time, other than from experience? Uh well, we
+
+00:08:28.000 --> 00:08:29.440
+other than from experience? Uh well, we can write the running time as
+
+00:08:29.440 --> 00:08:31.800
+can write the running time as recurrence.
+
+00:08:31.800 --> 00:08:34.080
+recurrence. T of n represents the time to compute
+
+00:08:34.080 --> 00:08:36.120
+T of n represents the time to compute the nth Fibonacci number. How can I
+
+00:08:36.120 --> 00:08:39.310
+the nth Fibonacci number. How can I write the recurrence?
+
+00:08:41.110 --> 00:08:48.390
+Good throwback to the early lectures, divide and conquer.
+
+00:08:50.710 --> 00:08:55.190
+I hear whispers. Yeah?
+
+00:08:57.030 --> 00:08:59.240
+Yeah. T of n minus one
+
+00:08:59.240 --> 00:09:01.800
+T of n minus one plus T of n minus two
+
+00:09:01.800 --> 00:09:02.840
+plus T of n minus two plus
+
+00:09:02.840 --> 00:09:05.830
+plus constant.
+
+00:09:07.550 --> 00:09:11.190
+coefficient. I don't know how many you have by now.
+
+00:09:12.350 --> 00:09:13.720
+So To compute the nth Fibonacci number, we
+
+00:09:13.720 --> 00:09:14.920
+To compute the nth Fibonacci number, we have to compute the n minus first
+
+00:09:14.920 --> 00:09:16.520
+have to compute the n minus first Fibonacci number and the n minus second
+
+00:09:16.520 --> 00:09:18.360
+Fibonacci number and the n minus second Fibonacci number. That's these two
+
+00:09:18.360 --> 00:09:20.840
+Fibonacci number. That's these two recursions. Uh and then we take constant
+
+00:09:20.840 --> 00:09:22.560
+recursions. Uh and then we take constant time. Otherwise, we do constant number
+
+00:09:22.560 --> 00:09:24.800
+time. Otherwise, we do constant number of additions, comparisons, you know,
+
+00:09:24.800 --> 00:09:26.440
+of additions, comparisons, you know, return. All these operations take
+
+00:09:26.440 --> 00:09:27.840
+return. All these operations take constant time.
+
+00:09:27.840 --> 00:09:29.480
+constant time. So that's the recurrence.
+
+00:09:29.480 --> 00:09:31.520
+So that's the recurrence. How do we solve this recurrence? Well,
+
+00:09:31.520 --> 00:09:34.480
+How do we solve this recurrence? Well, one way is to see this is
+
+00:09:34.480 --> 00:09:36.560
+one way is to see this is Fibonacci recurrence. So it's the same
+
+00:09:36.560 --> 00:09:39.040
+Fibonacci recurrence. So it's the same thing. There's this plus whatever, but
+
+00:09:39.040 --> 00:09:40.400
+thing. There's this plus whatever, but in particular, this is at least the nth
+
+00:09:40.400 --> 00:09:42.080
+in particular, this is at least the nth Fibonacci number. And if you know
+
+00:09:42.080 --> 00:09:45.240
+Fibonacci number. And if you know Fibonacci stuff, that's about uh
+
+00:09:45.240 --> 00:09:48.360
+Fibonacci stuff, that's about uh the golden ratio to the nth power,
+
+00:09:48.360 --> 00:09:49.560
+the golden ratio to the nth power, which is bad.
+
+00:09:49.560 --> 00:09:50.560
+which is bad. Uh
+
+00:09:50.560 --> 00:09:52.120
+Uh We had a similar recurrence in AVL
+
+00:09:52.120 --> 00:09:55.680
+We had a similar recurrence in AVL trees. And so another way to solve it,
+
+00:09:55.680 --> 00:09:57.240
+trees. And so another way to solve it, it's just good review,
+
+00:09:57.240 --> 00:10:00.400
+it's just good review, say, oh well, uh that's at least
+
+00:10:00.400 --> 00:10:02.160
+say, oh well, uh that's at least two times
+
+00:10:02.160 --> 00:10:04.400
+two times T of N minus two. It's going to be
+
+00:10:04.400 --> 00:10:06.160
+T of N minus two. It's going to be monotone. The bigger N is the more work
+
+00:10:06.160 --> 00:10:07.400
+monotone. The bigger N is the more work you have to do
+
+00:10:07.400 --> 00:10:08.960
+you have to do because to do the N thing you have to do
+
+00:10:08.960 --> 00:10:10.720
+because to do the N thing you have to do the N minus first thing.
+
+00:10:10.720 --> 00:10:12.880
+the N minus first thing. So we could just reduce N minus T of N
+
+00:10:12.880 --> 00:10:14.480
+So we could just reduce N minus T of N minus one to T of N minus two. That will
+
+00:10:14.480 --> 00:10:16.520
+minus one to T of N minus two. That will give us a lower bound.
+
+00:10:16.520 --> 00:10:18.920
+give us a lower bound. And now these two terms now this is sort
+
+00:10:18.920 --> 00:10:20.120
+And now these two terms now this is sort of an easy thing. You see that you're
+
+00:10:20.120 --> 00:10:22.840
+of an easy thing. You see that you're multiplying by two each time.
+
+00:10:22.840 --> 00:10:24.600
+multiplying by two each time. You're subtracting two from N each time.
+
+00:10:24.600 --> 00:10:26.240
+You're subtracting two from N each time. How many times can I subtract two from
+
+00:10:26.240 --> 00:10:27.160
+How many times can I subtract two from N?
+
+00:10:27.160 --> 00:10:29.360
+N? N over two times before I get down to a
+
+00:10:29.360 --> 00:10:32.440
+N over two times before I get down to a constant. And so this is equal to two to
+
+00:10:32.440 --> 00:10:34.200
+constant. And so this is equal to two to the
+
+00:10:34.200 --> 00:10:37.680
+the N over two.
+
+00:10:37.680 --> 00:10:39.640
+N over two. I mean times some constant which is what
+
+00:10:39.640 --> 00:10:41.720
+I mean times some constant which is what you get in the base case.
+
+00:10:41.720 --> 00:10:43.520
+you get in the base case. So I guess I should say
+
+00:10:43.520 --> 00:10:45.880
+So I guess I should say theta.
+
+00:10:45.880 --> 00:10:49.160
+theta. This thing is theta that.
+
+00:10:49.160 --> 00:10:51.760
+This thing is theta that. Okay, so it's at least that big and the
+
+00:10:51.760 --> 00:10:56.600
+Okay, so it's at least that big and the right constant is fee. In
+
+00:10:56.600 --> 00:10:58.760
+right constant is fee. In the base of the exponent.
+
+00:10:58.760 --> 00:11:00.360
+the base of the exponent. Okay, so that's a bad algorithm. We all
+
+00:11:00.360 --> 00:11:03.550
+Okay, so that's a bad algorithm. We all know it's a bad algorithm.
+
+00:11:05.710 --> 00:11:07.480
+But I'm going to give you a general approach for making bad algorithms like
+
+00:11:07.480 --> 00:11:10.320
+approach for making bad algorithms like this good. And that general approach is
+
+00:11:10.320 --> 00:11:16.110
+this good. And that general approach is called memoization.
+
+00:11:21.390 --> 00:11:25.000
+And this is a technique of dynamic programming. I'm
+
+00:11:25.000 --> 00:11:27.839
+programming. I'm going to call this the memoized dynamic
+
+00:11:27.839 --> 00:11:36.670
+going to call this the memoized dynamic programming algorithm.
+
+00:11:44.430 --> 00:11:48.430
+I settle on using memo in the notes. Yeah.
+
+00:11:50.390 --> 00:11:52.760
+The idea is simple. Whenever we compute a Fibonacci number,
+
+00:11:52.760 --> 00:11:54.760
+Whenever we compute a Fibonacci number, we put it in a dictionary.
+
+00:11:54.760 --> 00:11:56.520
+we put it in a dictionary. If and then when we need to compute the
+
+00:11:56.520 --> 00:11:58.080
+If and then when we need to compute the N Fibonacci number, we check is it
+
+00:11:58.080 --> 00:11:59.160
+N Fibonacci number, we check is it already in the dictionary? Did we
+
+00:11:59.160 --> 00:12:01.160
+already in the dictionary? Did we already solve this problem? If so,
+
+00:12:01.160 --> 00:12:02.920
+already solve this problem? If so, return that answer.
+
+00:12:02.920 --> 00:12:04.880
+return that answer. Otherwise, compute it.
+
+00:12:04.880 --> 00:12:06.280
+Otherwise, compute it. Okay, you'll see the transformation is
+
+00:12:06.280 --> 00:12:58.920
+Okay, you'll see the transformation is very simple.
+
+00:12:58.920 --> 00:13:02.040
+Okay, these two lines are identical
+
+00:13:02.040 --> 00:13:04.360
+these two lines are identical to these two lines.
+
+00:13:04.360 --> 00:13:05.520
+to these two lines. Okay, so you can see how the
+
+00:13:05.520 --> 00:13:07.839
+Okay, so you can see how the transformation works in general. You can
+
+00:13:07.839 --> 00:13:11.040
+transformation works in general. You can do this with any recursive algorithm.
+
+00:13:11.040 --> 00:13:13.360
+do this with any recursive algorithm. The memoization transformation on that
+
+00:13:13.360 --> 00:13:14.520
+The memoization transformation on that algorithm
+
+00:13:14.520 --> 00:13:17.080
+algorithm is we initially make an empty dictionary
+
+00:13:17.080 --> 00:13:18.920
+is we initially make an empty dictionary called memo.
+
+00:13:18.920 --> 00:13:20.240
+called memo. And
+
+00:13:20.240 --> 00:13:22.520
+And before we actually do the computation,
+
+00:13:22.520 --> 00:13:24.839
+before we actually do the computation, we say well, check whether this
+
+00:13:24.839 --> 00:13:26.640
+we say well, check whether this this version of the Fibonacci problem
+
+00:13:26.640 --> 00:13:29.080
+this version of the Fibonacci problem computing F of N
+
+00:13:29.080 --> 00:13:31.720
+computing F of N is already in our dictionary.
+
+00:13:31.720 --> 00:13:32.800
+is already in our dictionary. So if that key is already in the
+
+00:13:32.800 --> 00:13:34.480
+So if that key is already in the dictionary, we return the corresponding
+
+00:13:34.480 --> 00:13:37.640
+dictionary, we return the corresponding value in the dictionary.
+
+00:13:37.640 --> 00:13:38.880
+value in the dictionary. So
+
+00:13:38.880 --> 00:13:40.640
+So and then once we've computed the N
+
+00:13:40.640 --> 00:13:42.440
+and then once we've computed the N Fibonacci number, if we bothered to do
+
+00:13:42.440 --> 00:13:44.960
+Fibonacci number, if we bothered to do this, if this didn't apply, then we
+
+00:13:44.960 --> 00:13:47.920
+this, if this didn't apply, then we store it in the memo table. So we store
+
+00:13:47.920 --> 00:13:49.560
+store it in the memo table. So we store we say well, if you ever need to compute
+
+00:13:49.560 --> 00:13:52.280
+we say well, if you ever need to compute F of N again, here it is.
+
+00:13:52.280 --> 00:13:54.560
+F of N again, here it is. And then we return that value.
+
+00:13:54.560 --> 00:13:57.480
+And then we return that value. Okay, so this is a general procedure.
+
+00:13:57.480 --> 00:14:00.320
+Okay, so this is a general procedure. Apply to any recursive algorithm
+
+00:14:00.320 --> 00:14:02.800
+Apply to any recursive algorithm with no side effects, I guess,
+
+00:14:02.800 --> 00:14:04.800
+with no side effects, I guess, technically.
+
+00:14:04.800 --> 00:14:06.440
+technically. And turns out this makes the algorithm
+
+00:14:06.440 --> 00:14:07.720
+And turns out this makes the algorithm efficient.
+
+00:14:07.720 --> 00:14:09.400
+efficient. Now there's a lot of ways to see why
+
+00:14:09.400 --> 00:14:11.280
+Now there's a lot of ways to see why it's efficient.
+
+00:14:11.280 --> 00:14:12.520
+it's efficient. Um
+
+00:14:12.520 --> 00:14:14.320
+Um In general, maybe it's helpful to think
+
+00:14:14.320 --> 00:14:16.160
+In general, maybe it's helpful to think about the recursion tree.
+
+00:14:16.160 --> 00:14:18.600
+about the recursion tree. So if you want to compute FN, in the old
+
+00:14:18.600 --> 00:14:21.640
+So if you want to compute FN, in the old algorithm, we compute FN minus one and
+
+00:14:21.640 --> 00:14:23.959
+algorithm, we compute FN minus one and FN minus two completely separately. To
+
+00:14:23.959 --> 00:14:26.520
+FN minus two completely separately. To compute FN minus one, we compute FN
+
+00:14:26.520 --> 00:14:29.800
+compute FN minus one, we compute FN minus two and FN minus three.
+
+00:14:29.800 --> 00:14:31.560
+minus two and FN minus three. To compute FN minus two, we compute FN
+
+00:14:31.560 --> 00:14:34.600
+To compute FN minus two, we compute FN minus three and FN minus four.
+
+00:14:34.600 --> 00:14:36.760
+minus three and FN minus four. And so on. And you can sort of see why
+
+00:14:36.760 --> 00:14:38.720
+And so on. And you can sort of see why that's exponential
+
+00:14:38.720 --> 00:14:41.160
+that's exponential in N because we're only decrementing N
+
+00:14:41.160 --> 00:14:44.079
+in N because we're only decrementing N by one or two each time.
+
+00:14:44.079 --> 00:14:46.680
+by one or two each time. But then you observe, hey, these FN
+
+00:14:46.680 --> 00:14:48.360
+But then you observe, hey, these FN minus threes are the same. I should
+
+00:14:48.360 --> 00:14:51.200
+minus threes are the same. I should really only have to compute them once.
+
+00:14:51.200 --> 00:14:52.320
+really only have to compute them once. And that's what we're doing here. The
+
+00:14:52.320 --> 00:14:54.520
+And that's what we're doing here. The first time you call FN minus three, you
+
+00:14:54.520 --> 00:14:57.560
+first time you call FN minus three, you do work. But once it's done and you go
+
+00:14:57.560 --> 00:14:59.640
+do work. But once it's done and you go over to this other recursive call, this
+
+00:14:59.640 --> 00:15:01.320
+over to this other recursive call, this will just get cut off. There's no tree
+
+00:15:01.320 --> 00:15:03.200
+will just get cut off. There's no tree here. Here we might have some recursive
+
+00:15:03.200 --> 00:15:05.320
+here. Here we might have some recursive calling. Here we won't because it's
+
+00:15:05.320 --> 00:15:08.400
+calling. Here we won't because it's already in the memo table.
+
+00:15:08.400 --> 00:15:10.400
+already in the memo table. Okay, in fact this already happens FN
+
+00:15:10.400 --> 00:15:12.920
+Okay, in fact this already happens FN minus two. This whole this whole tree
+
+00:15:12.920 --> 00:15:14.440
+minus two. This whole this whole tree disappears
+
+00:15:14.440 --> 00:15:16.160
+disappears because FN minus two has already been
+
+00:15:16.160 --> 00:15:17.720
+because FN minus two has already been done.
+
+00:15:17.720 --> 00:15:19.200
+done. Okay, so it's clear why it improves
+
+00:15:19.200 --> 00:15:21.040
+Okay, so it's clear why it improves things.
+
+00:15:21.040 --> 00:15:23.040
+things. So in fact you can you can argue that
+
+00:15:23.040 --> 00:15:25.040
+So in fact you can you can argue that this call will be free because you
+
+00:15:25.040 --> 00:15:27.440
+this call will be free because you already did the work in here.
+
+00:15:27.440 --> 00:15:28.320
+already did the work in here. But I
+
+00:15:28.320 --> 00:15:29.800
+But I want to give you a very particular way
+
+00:15:29.800 --> 00:15:35.550
+want to give you a very particular way of thinking about why this is efficient.
+
+00:15:37.510 --> 00:15:39.560
+Which is
+
+00:15:39.560 --> 00:16:06.390
+is following.
+
+00:16:07.790 --> 00:16:09.360
+So you could write down a recurrence for
+
+00:16:09.360 --> 00:16:11.400
+you could write down a recurrence for the running time here, but in some sense
+
+00:16:11.400 --> 00:16:12.920
+the running time here, but in some sense recurrences aren't quite the right way
+
+00:16:12.920 --> 00:16:15.320
+recurrences aren't quite the right way of thinking about this because recursion
+
+00:16:15.320 --> 00:16:17.440
+of thinking about this because recursion is kind of a rare thing. If you're
+
+00:16:17.440 --> 00:16:20.760
+is kind of a rare thing. If you're calling Fibonacci of some value K,
+
+00:16:20.760 --> 00:16:22.480
+calling Fibonacci of some value K, you're only going to make recursive
+
+00:16:22.480 --> 00:16:24.480
+you're only going to make recursive calls the first time you call Fibonacci
+
+00:16:24.480 --> 00:16:27.720
+calls the first time you call Fibonacci of K because henceforth it's been the
+
+00:16:27.720 --> 00:16:29.040
+of K because henceforth it's been the you've put it in the memo table, you
+
+00:16:29.040 --> 00:16:30.720
+you've put it in the memo table, you will not recurse.
+
+00:16:30.720 --> 00:16:33.839
+will not recurse. So you can think of
+
+00:16:33.839 --> 00:16:35.880
+So you can think of there being two versions of calling
+
+00:16:35.880 --> 00:16:37.520
+there being two versions of calling Fibonacci of K. There's the first time
+
+00:16:37.520 --> 00:16:40.800
+Fibonacci of K. There's the first time which is the non-memoized version. That
+
+00:16:40.800 --> 00:16:43.280
+which is the non-memoized version. That does recursion, does some work. And then
+
+00:16:43.280 --> 00:16:45.959
+does recursion, does some work. And then every time henceforth you're you're
+
+00:16:45.959 --> 00:16:47.839
+every time henceforth you're you're doing memoized calls of Fibonacci of K
+
+00:16:47.839 --> 00:16:51.520
+doing memoized calls of Fibonacci of K and those cost constant time.
+
+00:16:51.520 --> 00:16:55.350
+and those cost constant time. So the memoized
+
+00:17:00.390 --> 00:17:02.920
+cost constant time. So we can think of them as basically free.
+
+00:17:02.920 --> 00:17:05.920
+them as basically free. That when you call Fibonacci of N minus
+
+00:17:05.920 --> 00:17:08.679
+That when you call Fibonacci of N minus two because that's a memoized call, it's
+
+00:17:08.679 --> 00:17:10.640
+two because that's a memoized call, it's you really doesn't pay anything for it.
+
+00:17:10.640 --> 00:17:11.640
+you really doesn't pay anything for it. I mean you're already paying constant
+
+00:17:11.640 --> 00:17:14.040
+I mean you're already paying constant time to do addition and whatever.
+
+00:17:14.040 --> 00:17:15.160
+time to do addition and whatever. So you don't have to worry about the
+
+00:17:15.160 --> 00:17:18.679
+So you don't have to worry about the time. There's no recursion here.
+
+00:17:18.679 --> 00:17:20.400
+time. There's no recursion here. Okay, and then what we care about is
+
+00:17:20.400 --> 00:17:25.510
+Okay, and then what we care about is that the number of non-memoized calls
+
+00:17:27.590 --> 00:17:31.950
+which is the first time you call Fibonacci of K
+
+00:17:33.950 --> 00:17:36.080
+is N. No theta is even necessary. We are going
+
+00:17:36.080 --> 00:17:38.880
+No theta is even necessary. We are going to call Fibonacci of one
+
+00:17:38.880 --> 00:17:40.760
+to call Fibonacci of one at some point. We're going to call
+
+00:17:40.760 --> 00:17:43.360
+at some point. We're going to call Fibonacci of two at some point. And the
+
+00:17:43.360 --> 00:17:45.920
+Fibonacci of two at some point. And the original call is Fibonacci of N.
+
+00:17:45.920 --> 00:17:47.480
+original call is Fibonacci of N. All of those things will be called at
+
+00:17:47.480 --> 00:17:49.600
+All of those things will be called at some point. It's pretty easy to see. But
+
+00:17:49.600 --> 00:17:51.920
+some point. It's pretty easy to see. But in particular, certainly at most this.
+
+00:17:51.920 --> 00:17:53.920
+in particular, certainly at most this. We never call Fibonacci of N plus one to
+
+00:17:53.920 --> 00:17:55.720
+We never call Fibonacci of N plus one to compute Fibonacci of N.
+
+00:17:55.720 --> 00:17:57.960
+compute Fibonacci of N. So it's at most N calls. Indeed it will
+
+00:17:57.960 --> 00:18:00.160
+So it's at most N calls. Indeed it will be exactly N calls that are not
+
+00:18:00.160 --> 00:18:02.040
+be exactly N calls that are not memoized. Those ones we have to pay for.
+
+00:18:02.040 --> 00:18:04.640
+memoized. Those ones we have to pay for. How much do we have to pay? Well, if you
+
+00:18:04.640 --> 00:18:07.280
+How much do we have to pay? Well, if you don't count the recursion,
+
+00:18:07.280 --> 00:18:09.200
+don't count the recursion, which is what this recurrence does. If
+
+00:18:09.200 --> 00:18:11.080
+which is what this recurrence does. If you ignore recursion,
+
+00:18:11.080 --> 00:18:12.679
+you ignore recursion, then the total amount of work done here
+
+00:18:12.679 --> 00:18:15.669
+then the total amount of work done here is constant.
+
+00:18:17.150 --> 00:18:19.080
+Okay, so I will say the
+
+00:18:19.080 --> 00:18:25.510
+I will say the non-recursive work
+
+00:18:26.710 --> 00:18:28.320
+per call
+
+00:18:28.320 --> 00:18:30.480
+call is constant.
+
+00:18:30.480 --> 00:18:32.679
+is constant. And therefore I claim that the running
+
+00:18:32.679 --> 00:18:37.679
+And therefore I claim that the running time is constant. Oh, sorry, is linear.
+
+00:18:37.679 --> 00:18:41.230
+time is constant. Oh, sorry, is linear. Constant would be pretty amazing.
+
+00:18:42.990 --> 00:18:45.040
+This is actually not the best algorithm this an aside. The best algorithm for
+
+00:18:45.040 --> 00:18:47.040
+this an aside. The best algorithm for computing the N Fibonacci number uses
+
+00:18:47.040 --> 00:18:49.360
+computing the N Fibonacci number uses log N
+
+00:18:49.360 --> 00:18:50.919
+log N arithmetic operations. So you can do
+
+00:18:50.919 --> 00:18:52.480
+arithmetic operations. So you can do better, but if you want to see that, you
+
+00:18:52.480 --> 00:18:55.240
+better, but if you want to see that, you should take 6046.
+
+00:18:55.240 --> 00:18:56.960
+should take 6046. Okay, we're just going to get to linear
+
+00:18:56.960 --> 00:18:58.480
+Okay, we're just going to get to linear today which is a lot better than
+
+00:18:58.480 --> 00:19:00.240
+today which is a lot better than exponential.
+
+00:19:00.240 --> 00:19:02.760
+exponential. So
+
+00:19:02.760 --> 00:19:05.000
+So why linear? Because there's N
+
+00:19:05.000 --> 00:19:07.600
+why linear? Because there's N non-memoized calls and each of them
+
+00:19:07.600 --> 00:19:09.520
+non-memoized calls and each of them costs constant. So it's the product of
+
+00:19:09.520 --> 00:19:11.760
+costs constant. So it's the product of those two numbers.
+
+00:19:11.760 --> 00:19:14.080
+those two numbers. Okay, this is an important
+
+00:19:14.080 --> 00:19:17.840
+Okay, this is an important idea and so important I am going to
+
+00:19:17.840 --> 00:19:21.909
+idea and so important I am going to write it down again.
+
+00:19:25.149 --> 00:19:27.800
+In a slightly more general framework. In general,
+
+00:19:27.800 --> 00:19:37.230
+general, in dynamic programming,
+
+00:19:38.590 --> 00:19:40.400
+I didn't say why it's called memoization.
+
+00:19:40.400 --> 00:19:42.240
+memoization. The idea is you have this memo pad where
+
+00:19:42.240 --> 00:19:44.679
+The idea is you have this memo pad where you write down all your scratch work.
+
+00:19:44.679 --> 00:19:46.880
+you write down all your scratch work. That's this memo dictionary. And to
+
+00:19:46.880 --> 00:19:48.919
+That's this memo dictionary. And to memoize is to write down on your memo
+
+00:19:48.919 --> 00:19:51.000
+memoize is to write down on your memo pad. I didn't make it up. Another crazy
+
+00:19:51.000 --> 00:19:52.560
+pad. I didn't make it up. Another crazy term.
+
+00:19:52.560 --> 00:19:55.320
+term. It means remember.
+
+00:19:55.320 --> 00:19:58.040
+It means remember. And then you remember all the solutions
+
+00:19:58.040 --> 00:19:59.520
+And then you remember all the solutions that you've done.
+
+00:19:59.520 --> 00:20:02.240
+that you've done. And then you reuse those solutions.
+
+00:20:02.240 --> 00:20:03.840
+And then you reuse those solutions. Now, these solutions are not really a
+
+00:20:03.840 --> 00:20:06.120
+Now, these solutions are not really a solution to the problem that I care
+
+00:20:06.120 --> 00:20:07.440
+solution to the problem that I care about. The problem I care about is
+
+00:20:07.440 --> 00:20:10.000
+about. The problem I care about is computing the nth Fibonacci number.
+
+00:20:10.000 --> 00:20:11.600
+computing the nth Fibonacci number. To get there, I had to compute other
+
+00:20:11.600 --> 00:20:14.600
+To get there, I had to compute other Fibonacci numbers. Why?
+
+00:20:14.600 --> 00:20:16.000
+Fibonacci numbers. Why? Uh you know, cuz I had a recursive
+
+00:20:16.000 --> 00:20:17.600
+Uh you know, cuz I had a recursive formulation. This is not always the way
+
+00:20:17.600 --> 00:20:21.160
+formulation. This is not always the way to solve a problem. But uh
+
+00:20:21.160 --> 00:20:22.480
+to solve a problem. But uh usually when you're solving something,
+
+00:20:22.480 --> 00:20:24.120
+usually when you're solving something, you can split it into
+
+00:20:24.120 --> 00:20:27.920
+you can split it into parts, into subproblems, we call them.
+
+00:20:27.920 --> 00:20:29.800
+parts, into subproblems, we call them. They're not always of the same flavor as
+
+00:20:29.800 --> 00:20:31.280
+They're not always of the same flavor as your original goal problem, but they're
+
+00:20:31.280 --> 00:20:34.200
+your original goal problem, but they're some kind of related parts.
+
+00:20:34.200 --> 00:20:36.240
+some kind of related parts. And this is the the big challenge in
+
+00:20:36.240 --> 00:20:38.600
+And this is the the big challenge in designing a dynamic program is to figure
+
+00:20:38.600 --> 00:20:41.320
+designing a dynamic program is to figure out what are the subproblems.
+
+00:20:41.320 --> 00:20:42.960
+out what are the subproblems. Let's say always the first thing I want
+
+00:20:42.960 --> 00:20:44.640
+Let's say always the first thing I want to know about a dynamic program is what
+
+00:20:44.640 --> 00:20:47.400
+to know about a dynamic program is what are the subproblems.
+
+00:20:47.400 --> 00:20:50.480
+are the subproblems. Somehow they are designed to help solve
+
+00:20:50.480 --> 00:20:58.510
+Somehow they are designed to help solve your actual problem.
+
+00:21:00.390 --> 00:21:02.080
+And the idea of memoization is once you solve a subproblem, write down the
+
+00:21:02.080 --> 00:21:03.600
+solve a subproblem, write down the answer. If you ever need to solve that
+
+00:21:03.600 --> 00:21:05.960
+answer. If you ever need to solve that same subproblem again, you reuse the
+
+00:21:05.960 --> 00:21:07.320
+same subproblem again, you reuse the answer.
+
+00:21:07.320 --> 00:21:09.400
+answer. So, that is the core idea. And so, in
+
+00:21:09.400 --> 00:21:10.800
+So, that is the core idea. And so, in this sense, dynamic programming is
+
+00:21:10.800 --> 00:21:12.240
+this sense, dynamic programming is essentially
+
+00:21:12.240 --> 00:21:14.320
+essentially recursion
+
+00:21:14.320 --> 00:21:15.560
+recursion plus
+
+00:21:15.560 --> 00:21:23.310
+plus memoization.
+
+00:21:26.110 --> 00:21:27.920
+And so, in this case, these are the subproblems, Fibonacci of
+
+00:21:27.920 --> 00:21:29.840
+these are the subproblems, Fibonacci of 1 through Fibonacci of n.
+
+00:21:29.840 --> 00:21:32.160
+1 through Fibonacci of n. The one we care about is Fibonacci of n.
+
+00:21:32.160 --> 00:21:33.400
+The one we care about is Fibonacci of n. But to get there, we solve these other
+
+00:21:33.400 --> 00:21:35.600
+But to get there, we solve these other subproblems.
+
+00:21:35.600 --> 00:21:37.800
+subproblems. Uh in all cases, if this is the
+
+00:21:37.800 --> 00:21:39.920
+Uh in all cases, if this is the situation,
+
+00:21:39.920 --> 00:21:42.240
+situation, so for any dynamic program, the running
+
+00:21:42.240 --> 00:21:45.560
+so for any dynamic program, the running time is going to equal to the number of
+
+00:21:45.560 --> 00:21:47.040
+time is going to equal to the number of different subproblems you might have to
+
+00:21:47.040 --> 00:21:50.440
+different subproblems you might have to solve, or that you do solve,
+
+00:21:50.440 --> 00:21:51.800
+solve, or that you do solve, times
+
+00:21:51.800 --> 00:21:53.840
+times the amount of time you spend
+
+00:21:53.840 --> 00:22:01.030
+the amount of time you spend per subproblem.
+
+00:22:03.350 --> 00:22:06.880
+Okay, in this situation, we had n subproblems.
+
+00:22:06.880 --> 00:22:08.920
+we had n subproblems. And for each of them, we spent constant
+
+00:22:08.920 --> 00:22:10.800
+And for each of them, we spent constant time.
+
+00:22:10.800 --> 00:22:12.800
+time. And when I measure the time per
+
+00:22:12.800 --> 00:22:14.640
+And when I measure the time per subproblem, which in the Fibonacci case
+
+00:22:14.640 --> 00:22:17.120
+subproblem, which in the Fibonacci case I claim is constant, I ignore recursive
+
+00:22:17.120 --> 00:22:18.640
+I claim is constant, I ignore recursive calls.
+
+00:22:18.640 --> 00:22:19.880
+calls. That's the key.
+
+00:22:19.880 --> 00:22:21.320
+That's the key. We don't have to solve recurrences with
+
+00:22:21.320 --> 00:22:24.000
+We don't have to solve recurrences with dynamic programming. Yay! No recurrences
+
+00:22:24.000 --> 00:22:25.360
+dynamic programming. Yay! No recurrences necessary.
+
+00:22:25.360 --> 00:22:27.920
+necessary. Okay? Don't
+
+00:22:27.920 --> 00:22:29.600
+Okay? Don't count
+
+00:22:29.600 --> 00:22:34.150
+count recursions.
+
+00:22:35.669 --> 00:22:38.560
+Obviously, don't count memoized recursions. The reason is I only need to
+
+00:22:38.560 --> 00:22:40.520
+recursions. The reason is I only need to count them once. After the first time I
+
+00:22:40.520 --> 00:22:42.440
+count them once. After the first time I do it, it's free.
+
+00:22:42.440 --> 00:22:45.000
+do it, it's free. So, I count how many different
+
+00:22:45.000 --> 00:22:46.440
+So, I count how many different subproblems do I need to do? These are
+
+00:22:46.440 --> 00:22:47.960
+subproblems do I need to do? These are the going to be the expensive recursions
+
+00:22:47.960 --> 00:22:50.000
+the going to be the expensive recursions where I do work. I do some amount of
+
+00:22:50.000 --> 00:22:51.320
+where I do work. I do some amount of work, but I don't count the recursions
+
+00:22:51.320 --> 00:22:53.440
+work, but I don't count the recursions cuz otherwise I'd be double counting.
+
+00:22:53.440 --> 00:22:55.320
+cuz otherwise I'd be double counting. I only want to cut count each subproblem
+
+00:22:55.320 --> 00:22:56.840
+I only want to cut count each subproblem once.
+
+00:22:56.840 --> 00:22:58.880
+once. And then this will solve it.
+
+00:22:58.880 --> 00:23:00.720
+And then this will solve it. So, a simple idea.
+
+00:23:00.720 --> 00:23:02.560
+So, a simple idea. In general, dynamic programming is super
+
+00:23:02.560 --> 00:23:05.440
+In general, dynamic programming is super simple idea. It's nothing fancy. It's
+
+00:23:05.440 --> 00:23:07.360
+simple idea. It's nothing fancy. It's basically just memoization.
+
+00:23:07.360 --> 00:23:09.160
+basically just memoization. There is one extra trick we're going to
+
+00:23:09.160 --> 00:23:11.840
+There is one extra trick we're going to pull out. Uh but
+
+00:23:11.840 --> 00:23:13.960
+pull out. Uh but that's the idea. All right.
+
+00:23:13.960 --> 00:23:21.390
+that's the idea. All right. Let me tell you
+
+00:23:23.870 --> 00:23:25.560
+another perspective. This is the one maybe most commonly
+
+00:23:25.560 --> 00:23:27.880
+This is the one maybe most commonly taught.
+
+00:23:27.880 --> 00:23:30.560
+taught. Is to think of that I'm not a particular
+
+00:23:30.560 --> 00:23:32.400
+Is to think of that I'm not a particular fan of it. I really like memoization. I
+
+00:23:32.400 --> 00:23:35.080
+fan of it. I really like memoization. I think it's a simple idea.
+
+00:23:35.080 --> 00:23:37.400
+think it's a simple idea. And as long as you remember this formula
+
+00:23:37.400 --> 00:23:38.400
+And as long as you remember this formula here,
+
+00:23:38.400 --> 00:23:42.870
+here, it's really easy to work with.
+
+00:23:44.390 --> 00:23:46.480
+Okay, but some people like to think of it this way. And so, we can pick
+
+00:23:46.480 --> 00:23:49.040
+it this way. And so, we can pick whichever way you find most intuitive.
+
+00:23:49.040 --> 00:23:50.720
+whichever way you find most intuitive. Uh instead of thinking of a recursive
+
+00:23:50.720 --> 00:23:52.200
+Uh instead of thinking of a recursive algorithm, which in some sense starts at
+
+00:23:52.200 --> 00:23:53.840
+algorithm, which in some sense starts at the top
+
+00:23:53.840 --> 00:23:55.960
+the top of the big of what you want to solve and
+
+00:23:55.960 --> 00:23:57.679
+of the big of what you want to solve and works its way down,
+
+00:23:57.679 --> 00:23:59.040
+works its way down, you can do the reverse. You can start at
+
+00:23:59.040 --> 00:24:01.000
+you can do the reverse. You can start at the bottom and work your way up. And
+
+00:24:01.000 --> 00:24:02.440
+the bottom and work your way up. And this is probably how you normally think
+
+00:24:02.440 --> 00:24:03.920
+this is probably how you normally think about computing Fibonacci numbers, or
+
+00:24:03.920 --> 00:24:06.240
+about computing Fibonacci numbers, or how you learned it before. I'm going to
+
+00:24:06.240 --> 00:24:31.590
+how you learned it before. I'm going to write it in a slightly funny way.
+
+00:24:32.950 --> 00:24:34.920
+The point I want to make is that the transformation I'm doing
+
+00:24:34.920 --> 00:24:36.400
+transformation I'm doing from
+
+00:24:36.400 --> 00:24:38.760
+from the naive recursive algorithm
+
+00:24:38.760 --> 00:24:41.000
+the naive recursive algorithm to the memoized algorithm to the
+
+00:24:41.000 --> 00:24:43.080
+to the memoized algorithm to the bottom-up algorithm is completely
+
+00:24:43.080 --> 00:24:45.400
+bottom-up algorithm is completely automated. I'm not thinking, I'm just
+
+00:24:45.400 --> 00:24:46.480
+automated. I'm not thinking, I'm just doing.
+
+00:24:46.480 --> 00:24:47.360
+doing. Okay?
+
+00:24:47.360 --> 00:24:49.400
+Okay? It's easy.
+
+00:24:49.400 --> 00:24:51.960
+It's easy. This code is exactly the same as this
+
+00:24:51.960 --> 00:24:53.800
+This code is exactly the same as this code and as that code, except I replaced
+
+00:24:53.800 --> 00:24:56.480
+code and as that code, except I replaced n by k.
+
+00:24:56.480 --> 00:24:58.040
+n by k. Just cuz I needed couple of different n
+
+00:24:58.040 --> 00:24:59.240
+Just cuz I needed couple of different n values
+
+00:24:59.240 --> 00:25:00.920
+values here, or I want to iterate over n
+
+00:25:00.920 --> 00:25:03.950
+here, or I want to iterate over n values.
+
+00:25:06.030 --> 00:25:10.710
+And then there's this stuff around that code, which is just formulaic.
+
+00:25:12.669 --> 00:25:15.360
+A little bit of thought goes into this for loop, but that's it.
+
+00:25:15.360 --> 00:25:17.840
+for loop, but that's it. Okay, this does exactly the same thing
+
+00:25:17.840 --> 00:25:20.600
+Okay, this does exactly the same thing as the memoized algorithm.
+
+00:25:20.600 --> 00:25:22.560
+as the memoized algorithm. Uh
+
+00:25:22.560 --> 00:25:24.040
+Uh maybe it takes a little bit of thinking
+
+00:25:24.040 --> 00:25:25.720
+maybe it takes a little bit of thinking to realize if you unroll all the
+
+00:25:25.720 --> 00:25:27.200
+to realize if you unroll all the recursion that's happening here and just
+
+00:25:27.200 --> 00:25:29.520
+recursion that's happening here and just write it out sequentially, this is
+
+00:25:29.520 --> 00:25:31.560
+write it out sequentially, this is exactly what's happening.
+
+00:25:31.560 --> 00:25:33.320
+exactly what's happening. Okay, this code does exactly the same
+
+00:25:33.320 --> 00:25:36.000
+Okay, this code does exactly the same additions, exactly the same computations
+
+00:25:36.000 --> 00:25:38.640
+additions, exactly the same computations as this. The only difference is
+
+00:25:38.640 --> 00:25:40.160
+as this. The only difference is how you get there. Here we're using a
+
+00:25:40.160 --> 00:25:42.240
+how you get there. Here we're using a loop, here we're using recursion.
+
+00:25:42.240 --> 00:25:43.760
+loop, here we're using recursion. But the same things happen in the same
+
+00:25:43.760 --> 00:25:45.480
+But the same things happen in the same order.
+
+00:25:45.480 --> 00:25:46.679
+order. There's really no difference between the
+
+00:25:46.679 --> 00:25:48.280
+There's really no difference between the code. This code's probably going to be
+
+00:25:48.280 --> 00:25:50.040
+code. This code's probably going to be more efficient in practice because you
+
+00:25:50.040 --> 00:25:52.880
+more efficient in practice because you don't make function calls so much. In
+
+00:25:52.880 --> 00:25:53.960
+don't make function calls so much. In fact, I
+
+00:25:53.960 --> 00:25:55.840
+fact, I mistake made a little mistake here. It's
+
+00:25:55.840 --> 00:25:57.760
+mistake made a little mistake here. It's not a function call, it's just a look up
+
+00:25:57.760 --> 00:25:59.360
+not a function call, it's just a look up into a table.
+
+00:25:59.360 --> 00:26:00.720
+into a table. Here I'm using a hash table to be
+
+00:26:00.720 --> 00:26:01.960
+Here I'm using a hash table to be simple, but of course you could use an
+
+00:26:01.960 --> 00:26:03.040
+simple, but of course you could use an array.
+
+00:26:03.040 --> 00:26:04.800
+array. Okay? Um
+
+00:26:04.800 --> 00:26:05.840
+Okay? Um be it.
+
+00:26:05.840 --> 00:26:08.160
+be it. But they're both constant time
+
+00:26:08.160 --> 00:26:10.400
+But they're both constant time uh with good hashing.
+
+00:26:10.400 --> 00:26:11.960
+uh with good hashing. All right. So, is it clear what this is
+
+00:26:11.960 --> 00:26:14.400
+All right. So, is it clear what this is doing? I think so. Uh I think I made a
+
+00:26:14.400 --> 00:26:16.320
+doing? I think so. Uh I think I made a little typo.
+
+00:26:16.320 --> 00:26:20.120
+little typo. So, we have to compute
+
+00:26:20.120 --> 00:26:21.560
+So, we have to compute another typo.
+
+00:26:21.560 --> 00:26:24.720
+another typo. We have to compute F1 up to Fn, which in
+
+00:26:24.720 --> 00:26:26.960
+We have to compute F1 up to Fn, which in Python is that.
+
+00:26:26.960 --> 00:26:28.920
+Python is that. And
+
+00:26:28.920 --> 00:26:30.720
+And yeah, we compute it exactly how we used
+
+00:26:30.720 --> 00:26:31.760
+yeah, we compute it exactly how we used to.
+
+00:26:31.760 --> 00:26:34.400
+to. Except now instead of recursing, I know
+
+00:26:34.400 --> 00:26:35.760
+Except now instead of recursing, I know that when I'm computing the kth
+
+00:26:35.760 --> 00:26:38.040
+that when I'm computing the kth Fibonacci number, man,
+
+00:26:38.040 --> 00:26:40.080
+Fibonacci number, man, so many typos.
+
+00:26:40.080 --> 00:26:41.840
+so many typos. Okay, so we're laughing.
+
+00:26:41.840 --> 00:26:42.840
+Okay, so we're laughing. Uh
+
+00:26:42.840 --> 00:26:45.120
+Uh when I compute the kth Fibonacci number,
+
+00:26:45.120 --> 00:26:46.800
+when I compute the kth Fibonacci number, I know that I've already computed the
+
+00:26:46.800 --> 00:26:48.280
+I know that I've already computed the previous two.
+
+00:26:48.280 --> 00:26:49.480
+previous two. Why? Because I'm doing them in
+
+00:26:49.480 --> 00:26:52.520
+Why? Because I'm doing them in increasing order. Nothing fancy.
+
+00:26:52.520 --> 00:26:54.600
+increasing order. Nothing fancy. Then I can just do this, and the
+
+00:26:54.600 --> 00:26:56.800
+Then I can just do this, and the solutions will just be waiting there. If
+
+00:26:56.800 --> 00:26:58.520
+solutions will just be waiting there. If they weren't, I'd get a key error. So,
+
+00:26:58.520 --> 00:27:00.440
+they weren't, I'd get a key error. So, I'd know that there's a bug. But in
+
+00:27:00.440 --> 00:27:01.840
+I'd know that there's a bug. But in fact, I won't get a key error. I will
+
+00:27:01.840 --> 00:27:03.440
+fact, I won't get a key error. I will have always computed these things
+
+00:27:03.440 --> 00:27:05.000
+have always computed these things already.
+
+00:27:05.000 --> 00:27:06.720
+already. Then I store it in my table, then I
+
+00:27:06.720 --> 00:27:08.960
+Then I store it in my table, then I iterate. Eventually, I've solved all the
+
+00:27:08.960 --> 00:27:11.600
+iterate. Eventually, I've solved all the subproblems F1 through Fn, and the one I
+
+00:27:11.600 --> 00:27:14.320
+subproblems F1 through Fn, and the one I cared about was the nth one.
+
+00:27:14.320 --> 00:27:16.000
+cared about was the nth one. Okay, so
+
+00:27:16.000 --> 00:27:18.760
+Okay, so straightforward. I'm do this because I
+
+00:27:18.760 --> 00:27:20.160
+straightforward. I'm do this because I don't really want to have to go through
+
+00:27:20.160 --> 00:27:21.679
+don't really want to have to go through this transformation for every single
+
+00:27:21.679 --> 00:27:23.679
+this transformation for every single problem we do. I'm doing it in Fibonacci
+
+00:27:23.679 --> 00:27:25.800
+problem we do. I'm doing it in Fibonacci cuz it's super easy to write the code
+
+00:27:25.800 --> 00:27:27.760
+cuz it's super easy to write the code out explicitly. But you can do it for
+
+00:27:27.760 --> 00:27:29.360
+out explicitly. But you can do it for all of the dynamic programs that we
+
+00:27:29.360 --> 00:27:30.720
+all of the dynamic programs that we cover
+
+00:27:30.720 --> 00:27:33.160
+cover uh in the next four lectures.
+
+00:27:33.160 --> 00:27:34.720
+uh in the next four lectures. Okay, I'm going to give you now the
+
+00:27:34.720 --> 00:27:37.280
+Okay, I'm going to give you now the general case. This was the special
+
+00:27:37.280 --> 00:27:39.160
+general case. This was the special Fibonacci version.
+
+00:27:39.160 --> 00:27:41.720
+Fibonacci version. In general, the bottom-up does exactly
+
+00:27:41.720 --> 00:27:44.120
+In general, the bottom-up does exactly the same computation
+
+00:27:44.120 --> 00:27:51.070
+the same computation as the memoized version.
+
+00:27:54.110 --> 00:27:59.790
+And what we're doing is actually a topological sort
+
+00:28:01.270 --> 00:28:04.120
+of the subproblem
+
+00:28:04.120 --> 00:28:13.750
+the subproblem dependency DAG.
+
+00:28:16.030 --> 00:28:19.760
+So, uh in this case, the dependency DAG is very simple. In order to compute um
+
+00:28:19.760 --> 00:28:23.120
+is very simple. In order to compute um do it backwards. In order to compute Fn,
+
+00:28:23.120 --> 00:28:26.360
+do it backwards. In order to compute Fn, I need to know Fn - 1
+
+00:28:26.360 --> 00:28:28.720
+I need to know Fn - 1 and Fn - 2.
+
+00:28:28.720 --> 00:28:30.600
+and Fn - 2. If I can do If I know those, I can
+
+00:28:30.600 --> 00:28:34.880
+If I can do If I know those, I can compute Fn. Then there's Fn - 3, which
+
+00:28:34.880 --> 00:28:36.560
+compute Fn. Then there's Fn - 3, which is necessary to compute this one and
+
+00:28:36.560 --> 00:28:39.080
+is necessary to compute this one and that one, and so on. So, you see what
+
+00:28:39.080 --> 00:28:41.320
+that one, and so on. So, you see what this DAG looks like. Now, I've drawn it
+
+00:28:41.320 --> 00:28:43.000
+this DAG looks like. Now, I've drawn it conveniently so all the edges go left to
+
+00:28:43.000 --> 00:28:45.520
+conveniently so all the edges go left to right. So, this is a topological order
+
+00:28:45.520 --> 00:28:47.040
+right. So, this is a topological order from left to right. And so, I just need
+
+00:28:47.040 --> 00:28:50.520
+from left to right. And so, I just need to do F1, F2 up to Fn in order.
+
+00:28:50.520 --> 00:28:51.880
+to do F1, F2 up to Fn in order. Okay, usually
+
+00:28:51.880 --> 00:28:54.240
+Okay, usually it's totally obvious what order to solve
+
+00:28:54.240 --> 00:28:56.760
+it's totally obvious what order to solve the subproblems in. But in general, what
+
+00:28:56.760 --> 00:28:58.360
+the subproblems in. But in general, what we What you should have in mind is that
+
+00:28:58.360 --> 00:29:00.560
+we What you should have in mind is that we are doing a topological sort. Here we
+
+00:29:00.560 --> 00:29:01.919
+we are doing a topological sort. Here we just did it in our heads cuz it's so
+
+00:29:01.919 --> 00:29:02.960
+just did it in our heads cuz it's so easy.
+
+00:29:02.960 --> 00:29:04.320
+easy. And usually it's so easy. It's just a
+
+00:29:04.320 --> 00:29:09.750
+And usually it's so easy. It's just a for loop. Nothing fancy.
+
+00:29:23.590 --> 00:29:25.080
+Let's do something a little more interesting, shall we?
+
+00:29:25.080 --> 00:29:38.190
+interesting, shall we? Uh
+
+00:29:39.630 --> 00:29:42.080
+All right, one thing you can do from this bottom-up perspective is you can
+
+00:29:42.080 --> 00:29:46.149
+this bottom-up perspective is you can save space.
+
+00:29:48.750 --> 00:29:50.520
+Storage space in your We don't usually worry about space in
+
+00:29:50.520 --> 00:29:53.240
+We don't usually worry about space in this class, but
+
+00:29:53.240 --> 00:29:55.880
+this class, but it matters in in reality.
+
+00:29:55.880 --> 00:29:57.480
+it matters in in reality. So, here we're building a table of size
+
+00:29:57.480 --> 00:29:59.800
+So, here we're building a table of size n, but in fact, we really only need to
+
+00:29:59.800 --> 00:30:02.240
+n, but in fact, we really only need to remember the last two values.
+
+00:30:02.240 --> 00:30:03.680
+remember the last two values. So, you could just store the last two
+
+00:30:03.680 --> 00:30:05.640
+So, you could just store the last two values and each time you make a new one,
+
+00:30:05.640 --> 00:30:07.600
+values and each time you make a new one, delete the oldest.
+
+00:30:07.600 --> 00:30:08.760
+delete the oldest. So,
+
+00:30:08.760 --> 00:30:10.000
+So, by thinking a little bit here, you
+
+00:30:10.000 --> 00:30:12.440
+by thinking a little bit here, you realize you only need constant space.
+
+00:30:12.440 --> 00:30:15.760
+realize you only need constant space. Still linear time, but constant space.
+
+00:30:15.760 --> 00:30:17.680
+Still linear time, but constant space. And that's a that's often the case. From
+
+00:30:17.680 --> 00:30:19.120
+And that's a that's often the case. From the bottom-up perspective, you see what
+
+00:30:19.120 --> 00:30:20.720
+the bottom-up perspective, you see what you really need to store,
+
+00:30:20.720 --> 00:30:24.750
+you really need to store, what you need to keep track of.
+
+00:30:27.270 --> 00:30:28.520
+All right. Uh, I guess another nice thing about this perspective is the
+
+00:30:28.520 --> 00:30:30.640
+thing about this perspective is the running time is totally obvious. Right,
+
+00:30:30.640 --> 00:30:32.600
+running time is totally obvious. Right, this is clearly constant time, so this
+
+00:30:32.600 --> 00:30:34.680
+this is clearly constant time, so this is clearly linear time.
+
+00:30:34.680 --> 00:30:37.000
+is clearly linear time. Whereas in this memoized algorithm, you
+
+00:30:37.000 --> 00:30:39.520
+Whereas in this memoized algorithm, you have to think about
+
+00:30:39.520 --> 00:30:41.120
+have to think about when's it going to be memoized, when's
+
+00:30:41.120 --> 00:30:43.320
+when's it going to be memoized, when's it's not. I still like this perspective
+
+00:30:43.320 --> 00:30:45.560
+it's not. I still like this perspective because with this rule, just multiply
+
+00:30:45.560 --> 00:30:47.000
+because with this rule, just multiply number of subproblems by time per
+
+00:30:47.000 --> 00:30:49.040
+number of subproblems by time per subproblem, you get the answer.
+
+00:30:49.040 --> 00:30:53.120
+subproblem, you get the answer. But, it's a little less obvious than uh
+
+00:30:53.120 --> 00:30:55.360
+But, it's a little less obvious than uh than code like this. So, you know,
+
+00:30:55.360 --> 00:30:56.760
+than code like this. So, you know, choose however you like to think about
+
+00:30:56.760 --> 00:31:00.350
+choose however you like to think about it.
+
+00:31:31.270 --> 00:31:33.920
+So, I'm again, as usual, thinking about single source shortest paths.
+
+00:31:33.920 --> 00:31:35.560
+single source shortest paths. So, we want to compute
+
+00:31:35.560 --> 00:31:38.000
+So, we want to compute the shortest path weight from S to V for
+
+00:31:38.000 --> 00:31:41.230
+the shortest path weight from S to V for all V.
+
+00:31:43.870 --> 00:31:45.320
+Okay, I'd like to write this initially as a naive recursive
+
+00:31:45.320 --> 00:31:47.160
+initially as a naive recursive algorithm, which I can then memoize,
+
+00:31:47.160 --> 00:31:49.720
+algorithm, which I can then memoize, which I can then bottom-uppify.
+
+00:31:49.720 --> 00:31:51.920
+which I can then bottom-uppify. I just made that up.
+
+00:31:51.920 --> 00:31:52.960
+I just made that up. Uh-huh.
+
+00:31:52.960 --> 00:31:54.080
+Uh-huh. So,
+
+00:31:54.080 --> 00:31:55.800
+So, how could I write this as a naive
+
+00:31:55.800 --> 00:31:57.640
+how could I write this as a naive recursive algorithm? This is not so
+
+00:31:57.640 --> 00:31:59.360
+recursive algorithm? This is not so obvious.
+
+00:31:59.360 --> 00:32:00.840
+obvious. Okay, but
+
+00:32:00.840 --> 00:32:02.400
+Okay, but uh
+
+00:32:02.400 --> 00:32:04.360
+uh first I'm going to tell you how,
+
+00:32:04.360 --> 00:32:06.760
+first I'm going to tell you how, just as a, you know, an oracle tells
+
+00:32:06.760 --> 00:32:08.320
+just as a, you know, an oracle tells you, "Here's what you should do."
+
+00:32:08.320 --> 00:32:09.600
+you, "Here's what you should do." But then we're going to think about go
+
+00:32:09.600 --> 00:32:11.400
+But then we're going to think about go back, step back. Well, actually, I mean,
+
+00:32:11.400 --> 00:32:12.600
+back, step back. Well, actually, I mean, it's up to you. We could either I could
+
+00:32:12.600 --> 00:32:13.560
+it's up to you. We could either I could tell you the answer and then we can
+
+00:32:13.560 --> 00:32:15.320
+tell you the answer and then we can figure out how we got there, or we could
+
+00:32:15.320 --> 00:32:17.800
+figure out how we got there, or we could just figure out the answer.
+
+00:32:17.800 --> 00:32:18.880
+just figure out the answer. Uh
+
+00:32:18.880 --> 00:32:22.230
+Uh preferences?
+
+00:32:24.150 --> 00:32:26.080
+Figure it out. All right, good. No divine inspiration allowed.
+
+00:32:26.080 --> 00:32:35.270
+divine inspiration allowed. So.
+
+00:32:37.590 --> 00:32:41.750
+Let me give you a tool. The tool is guessing.
+
+00:32:44.390 --> 00:32:47.000
+Okay, this may sound silly, but it's a very powerful tool.
+
+00:32:47.000 --> 00:32:48.440
+very powerful tool. Okay?
+
+00:32:48.440 --> 00:32:50.320
+Okay? The general idea is suppose you don't
+
+00:32:50.320 --> 00:32:52.040
+The general idea is suppose you don't know something, but you'd like to know
+
+00:32:52.040 --> 00:32:53.280
+know something, but you'd like to know it.
+
+00:32:53.280 --> 00:32:54.400
+it. So, I like you know, what's the answer
+
+00:32:54.400 --> 00:32:56.560
+So, I like you know, what's the answer to this question? I don't know.
+
+00:32:56.560 --> 00:32:58.040
+to this question? I don't know. Man, I really want a cushion. How am I
+
+00:32:58.040 --> 00:33:00.560
+Man, I really want a cushion. How am I going to answer the question? Guess.
+
+00:33:00.560 --> 00:33:02.480
+going to answer the question? Guess. Okay?
+
+00:33:02.480 --> 00:33:04.320
+Okay? It's a tried and tested method for
+
+00:33:04.320 --> 00:33:06.400
+It's a tried and tested method for solving any problem.
+
+00:33:06.400 --> 00:33:16.790
+solving any problem. Okay?
+
+00:33:19.630 --> 00:33:21.840
+I'm belaboring the point here. The algorithmic concept is don't just
+
+00:33:21.840 --> 00:33:23.480
+The algorithmic concept is don't just try any guess,
+
+00:33:23.480 --> 00:33:25.920
+try any guess, try them all.
+
+00:33:25.920 --> 00:33:28.990
+try them all. Okay?
+
+00:33:31.510 --> 00:33:38.550
+Also pretty simple. I said dynamic programming was simple. Okay?
+
+00:33:40.390 --> 00:33:42.960
+Try all guesses.
+
+00:33:42.960 --> 00:33:44.840
+guesses. This is central to the dynamic
+
+00:33:44.840 --> 00:33:46.920
+This is central to the dynamic programming. I know it sounds obvious,
+
+00:33:46.920 --> 00:33:52.390
+programming. I know it sounds obvious, but if I want to fix my equation here,
+
+00:33:55.150 --> 00:33:58.200
+dynamic programming is roughly recursion plus memoization.
+
+00:33:58.200 --> 00:34:01.720
+recursion plus memoization. This should really be plus guessing.
+
+00:34:01.720 --> 00:34:05.120
+This should really be plus guessing. Memoization, which is obvious, guessing,
+
+00:34:05.120 --> 00:34:07.120
+Memoization, which is obvious, guessing, which is obvious, are the central
+
+00:34:07.120 --> 00:34:09.280
+which is obvious, are the central concepts to dynamic programming. Trying
+
+00:34:09.280 --> 00:34:10.840
+concepts to dynamic programming. Trying to make it sound easy because usually
+
+00:34:10.840 --> 00:34:11.840
+to make it sound easy because usually people have trouble with dynamic
+
+00:34:11.840 --> 00:34:15.190
+people have trouble with dynamic programming. It is easy.
+
+00:34:16.990 --> 00:34:18.159
+Try all the guesses. That's something a computer can do
+
+00:34:18.159 --> 00:34:20.359
+That's something a computer can do great. This is the brute force part.
+
+00:34:20.359 --> 00:34:21.600
+great. This is the brute force part. Okay, but we're going to do it
+
+00:34:21.600 --> 00:34:23.560
+Okay, but we're going to do it carefully.
+
+00:34:23.560 --> 00:34:25.120
+carefully. Not not that carefully. I mean, we're
+
+00:34:25.120 --> 00:34:26.919
+Not not that carefully. I mean, we're just trying all the guesses. Take the
+
+00:34:26.919 --> 00:34:33.869
+just trying all the guesses. Take the best one.
+
+00:34:35.230 --> 00:34:37.159
+That's kind of important that we can choose one to be called best. That's why
+
+00:34:37.159 --> 00:34:38.480
+choose one to be called best. That's why dynamic programming is good for
+
+00:34:38.480 --> 00:34:39.760
+dynamic programming is good for optimization problems. You want to
+
+00:34:39.760 --> 00:34:42.000
+optimization problems. You want to maximize something, minimize something,
+
+00:34:42.000 --> 00:34:43.960
+maximize something, minimize something, you try them all, and then you can
+
+00:34:43.960 --> 00:34:45.679
+you try them all, and then you can forget about all of them and just reduce
+
+00:34:45.679 --> 00:34:48.120
+forget about all of them and just reduce it down to one thing, which is the best
+
+00:34:48.120 --> 00:34:50.919
+it down to one thing, which is the best one or a best one.
+
+00:34:50.919 --> 00:34:52.440
+one or a best one. Okay, so now
+
+00:34:52.440 --> 00:34:53.919
+Okay, so now I want you to try to apply this
+
+00:34:53.919 --> 00:34:55.280
+I want you to try to apply this principle
+
+00:34:55.280 --> 00:34:57.040
+principle to shortest paths. Now, I'm going to
+
+00:34:57.040 --> 00:34:59.640
+to shortest paths. Now, I'm going to draw a picture which may help.
+
+00:34:59.640 --> 00:35:01.200
+draw a picture which may help. Have the source
+
+00:35:01.200 --> 00:35:07.950
+Have the source S.
+
+00:35:09.910 --> 00:35:11.359
+We have some vertex V. We'd like to find the shortest a
+
+00:35:11.359 --> 00:35:13.680
+We'd like to find the shortest a shortest path from S to V.
+
+00:35:13.680 --> 00:35:15.480
+shortest path from S to V. And suppose I I want to know what this
+
+00:35:15.480 --> 00:35:18.240
+And suppose I I want to know what this shortest path is. Suppose this was it.
+
+00:35:18.240 --> 00:35:21.200
+shortest path is. Suppose this was it. You have an idea? Already? Yeah.
+
+00:35:21.200 --> 00:35:24.080
+You have an idea? Already? Yeah. One thing you do is
+
+00:35:24.080 --> 00:35:26.000
+One thing you do is you could
+
+00:35:26.000 --> 00:35:27.160
+you could look at
+
+00:35:27.160 --> 00:35:30.080
+look at everywhere you can go from from S.
+
+00:35:30.080 --> 00:35:31.440
+everywhere you can go from from S. And say, "Okay, what's the shortest path
+
+00:35:31.440 --> 00:35:33.280
+And say, "Okay, what's the shortest path to each of those nodes?"
+
+00:35:33.280 --> 00:35:35.160
+to each of those nodes?" Good. So, I can look at
+
+00:35:35.160 --> 00:35:37.840
+Good. So, I can look at all the places I can go from S,
+
+00:35:37.840 --> 00:35:39.400
+all the places I can go from S, and then look at the shortest paths from
+
+00:35:39.400 --> 00:35:40.800
+and then look at the shortest paths from there
+
+00:35:40.800 --> 00:35:42.760
+there to V. So, we could call this, I don't
+
+00:35:42.760 --> 00:35:45.560
+to V. So, we could call this, I don't know, S prime.
+
+00:35:45.560 --> 00:35:47.080
+know, S prime. So, here's the idea. There's some
+
+00:35:47.080 --> 00:35:50.630
+So, here's the idea. There's some hypothetical shortest path.
+
+00:35:53.430 --> 00:35:55.960
+I don't know where it goes first. So, I will guess where it goes first.
+
+00:35:55.960 --> 00:35:58.200
+So, I will guess where it goes first. Right, I know it it the first edge must
+
+00:35:58.200 --> 00:36:00.040
+Right, I know it it the first edge must be one of the outgoing edges from S. I
+
+00:36:00.040 --> 00:36:03.120
+be one of the outgoing edges from S. I don't know which one. Try them all.
+
+00:36:03.120 --> 00:36:05.080
+don't know which one. Try them all. Very simple idea. Then from each of
+
+00:36:05.080 --> 00:36:06.480
+Very simple idea. Then from each of those, if somehow I could compute the
+
+00:36:06.480 --> 00:36:10.480
+those, if somehow I could compute the shortest path from there to V,
+
+00:36:10.480 --> 00:36:13.600
+shortest path from there to V, just do that and take the best choice
+
+00:36:13.600 --> 00:36:15.640
+just do that and take the best choice for what that first edge was.
+
+00:36:15.640 --> 00:36:17.520
+for what that first edge was. So, this would be the guess
+
+00:36:17.520 --> 00:36:22.230
+So, this would be the guess first edge approach.
+
+00:36:24.590 --> 00:36:27.400
+It's a very good idea. Not quite the one I wanted, uh because
+
+00:36:27.400 --> 00:36:30.880
+I wanted, uh because unfortunately, that changes S.
+
+00:36:30.880 --> 00:36:32.040
+unfortunately, that changes S. And so, this would work, it would just
+
+00:36:32.040 --> 00:36:33.359
+And so, this would work, it would just be slightly less efficient if I'm
+
+00:36:33.359 --> 00:36:36.000
+be slightly less efficient if I'm solving single source shortest paths.
+
+00:36:36.000 --> 00:36:37.000
+solving single source shortest paths. So, I'm going to tweak that idea
+
+00:36:37.000 --> 00:36:39.200
+So, I'm going to tweak that idea slightly by guessing the last edge
+
+00:36:39.200 --> 00:36:40.320
+slightly by guessing the last edge instead of the first edge. They're
+
+00:36:40.320 --> 00:36:41.880
+instead of the first edge. They're really equivalent.
+
+00:36:41.880 --> 00:36:42.920
+really equivalent. Okay, if I was doing this, I'd
+
+00:36:42.920 --> 00:36:45.720
+Okay, if I was doing this, I'd essentially be solving uh single target
+
+00:36:45.720 --> 00:36:49.200
+essentially be solving uh single target shortest paths, which we talked about
+
+00:36:49.200 --> 00:36:51.280
+shortest paths, which we talked about before. So, I'm going to draw the same
+
+00:36:51.280 --> 00:36:56.470
+before. So, I'm going to draw the same picture.
+
+00:36:58.470 --> 00:37:01.440
+I want to get to V. I'm going to guess the last edge, call it UV.
+
+00:37:01.440 --> 00:37:03.560
+the last edge, call it UV. I know it's one of the incoming edges to
+
+00:37:03.560 --> 00:37:04.960
+I know it's one of the incoming edges to V,
+
+00:37:04.960 --> 00:37:06.520
+V, unless S equals V, then there's a
+
+00:37:06.520 --> 00:37:08.560
+unless S equals V, then there's a special case. As long as this path has
+
+00:37:08.560 --> 00:37:10.520
+special case. As long as this path has length at least one, there's some last
+
+00:37:10.520 --> 00:37:13.960
+length at least one, there's some last edge. What is it? I don't know. Guess.
+
+00:37:13.960 --> 00:37:16.320
+edge. What is it? I don't know. Guess. Guess all the possible incoming edges to
+
+00:37:16.320 --> 00:37:18.160
+Guess all the possible incoming edges to V.
+
+00:37:18.160 --> 00:37:20.920
+V. And then recursively compute the
+
+00:37:20.920 --> 00:37:23.040
+And then recursively compute the shortest path from S to U,
+
+00:37:23.040 --> 00:37:26.120
+shortest path from S to U, and then add on the edge V.
+
+00:37:26.120 --> 00:37:27.880
+and then add on the edge V. Okay, so what is the shortest path? It's
+
+00:37:27.880 --> 00:37:30.600
+Okay, so what is the shortest path? It's delta of S {comma} U,
+
+00:37:30.600 --> 00:37:32.600
+delta of S {comma} U, which is looks the same. It's another
+
+00:37:32.600 --> 00:37:34.840
+which is looks the same. It's another subproblem that I want to solve.
+
+00:37:34.840 --> 00:37:37.720
+subproblem that I want to solve. There's V subproblems here I care about.
+
+00:37:37.720 --> 00:37:40.480
+There's V subproblems here I care about. So, that's good. I take that. I add on
+
+00:37:40.480 --> 00:37:44.710
+So, that's good. I take that. I add on the weight of the edge UV.
+
+00:37:47.190 --> 00:37:49.920
+And that should hopefully give me delta of S {comma} V.
+
+00:37:49.920 --> 00:37:51.800
+delta of S {comma} V. Well, if I was lucky and I guessed the
+
+00:37:51.800 --> 00:37:54.400
+Well, if I was lucky and I guessed the right choice of U. Now, in reality, I'm
+
+00:37:54.400 --> 00:37:58.359
+right choice of U. Now, in reality, I'm not lucky. So, I have to minimize
+
+00:37:58.359 --> 00:38:02.760
+not lucky. So, I have to minimize over all edges UV.
+
+00:38:02.760 --> 00:38:04.560
+over all edges UV. So, this is the
+
+00:38:04.560 --> 00:38:06.520
+So, this is the we're minimizing over the choice of U. V
+
+00:38:06.520 --> 00:38:08.280
+we're minimizing over the choice of U. V was already given here.
+
+00:38:08.280 --> 00:38:10.080
+was already given here. So, I take the minimum
+
+00:38:10.080 --> 00:38:12.359
+So, I take the minimum over all edges of the shortest path from
+
+00:38:12.359 --> 00:38:15.640
+over all edges of the shortest path from S to U plus the weight
+
+00:38:15.640 --> 00:38:17.320
+S to U plus the weight of the edge UV.
+
+00:38:17.320 --> 00:38:18.920
+of the edge UV. That should give me the shortest path
+
+00:38:18.920 --> 00:38:20.400
+That should give me the shortest path cuz this gave me the shortest path from
+
+00:38:20.400 --> 00:38:21.520
+cuz this gave me the shortest path from S to U.
+
+00:38:21.520 --> 00:38:23.320
+S to U. Then I added on the edge I need to get
+
+00:38:23.320 --> 00:38:25.800
+Then I added on the edge I need to get there. And wherever the shortest path
+
+00:38:25.800 --> 00:38:29.000
+there. And wherever the shortest path is, it has some it uses some last edge
+
+00:38:29.000 --> 00:38:30.040
+is, it has some it uses some last edge UV.
+
+00:38:30.040 --> 00:38:31.240
+UV. There's got to be some choice of U
+
+00:38:31.240 --> 00:38:33.760
+There's got to be some choice of U that's the right one. That's the that's
+
+00:38:33.760 --> 00:38:35.800
+that's the right one. That's the that's the good guess that we're hoping for. We
+
+00:38:35.800 --> 00:38:36.960
+the good guess that we're hoping for. We don't know what the good guess is, so we
+
+00:38:36.960 --> 00:38:38.560
+don't know what the good guess is, so we just try them all.
+
+00:38:38.560 --> 00:38:41.040
+just try them all. But whatever it is, this will be the
+
+00:38:41.040 --> 00:38:43.560
+But whatever it is, this will be the weight of that path.
+
+00:38:43.560 --> 00:38:44.920
+weight of that path. It's going to take the best path from S
+
+00:38:44.920 --> 00:38:46.520
+It's going to take the best path from S to U because subpaths of shortest paths
+
+00:38:46.520 --> 00:38:47.520
+to U because subpaths of shortest paths are shortest paths, optimal
+
+00:38:47.520 --> 00:38:48.840
+are shortest paths, optimal substructure.
+
+00:38:48.840 --> 00:38:51.680
+substructure. So, this part will be delta of SU. This
+
+00:38:51.680 --> 00:38:54.400
+So, this part will be delta of SU. This part is obviously W of UV. So, this will
+
+00:38:54.400 --> 00:38:57.670
+part is obviously W of UV. So, this will give the right answer.
+
+00:38:59.550 --> 00:39:00.400
+Hopefully. Okay?
+
+00:39:00.400 --> 00:39:02.320
+Okay? Uh it's certainly going to I mean, this
+
+00:39:02.320 --> 00:39:04.600
+Uh it's certainly going to I mean, this is the analog of the naive recursive
+
+00:39:04.600 --> 00:39:06.120
+is the analog of the naive recursive algorithm for Fibonacci. So, it's not
+
+00:39:06.120 --> 00:39:08.280
+algorithm for Fibonacci. So, it's not going to be efficient. If I I mean, this
+
+00:39:08.280 --> 00:39:10.400
+going to be efficient. If I I mean, this is an algorithm, right? You could say
+
+00:39:10.400 --> 00:39:13.560
+is an algorithm, right? You could say you this is a recursive call.
+
+00:39:13.560 --> 00:39:14.880
+you this is a recursive call. I'm going to treat this as recursive
+
+00:39:14.880 --> 00:39:17.120
+I'm going to treat this as recursive call
+
+00:39:17.120 --> 00:39:19.840
+call instead of just a definition.
+
+00:39:19.840 --> 00:39:23.240
+instead of just a definition. Then this is a recursive algorithm.
+
+00:39:23.240 --> 00:39:25.040
+Then this is a recursive algorithm. How good or bad is this recursive
+
+00:39:25.040 --> 00:39:27.120
+How good or bad is this recursive algorithm?
+
+00:39:27.120 --> 00:39:29.880
+algorithm? Terrible. Terrible. Very good.
+
+00:39:29.880 --> 00:39:32.160
+Terrible. Terrible. Very good. Very bad, I should say.
+
+00:39:32.160 --> 00:39:33.960
+Very bad, I should say. Uh
+
+00:39:33.960 --> 00:39:37.990
+Uh it's definitely going to be exponential
+
+00:39:40.110 --> 00:39:41.560
+without memoization. So, but we know we know how to make algorithms better, we
+
+00:39:41.560 --> 00:39:42.880
+know how to make algorithms better, we memoize.
+
+00:39:42.880 --> 00:39:44.680
+memoize. Okay, so you can I think you know how to
+
+00:39:44.680 --> 00:39:46.800
+Okay, so you can I think you know how to write this as a memoized algorithm.
+
+00:39:46.800 --> 00:39:49.400
+write this as a memoized algorithm. To define the function delta of SV,
+
+00:39:49.400 --> 00:39:51.080
+To define the function delta of SV, you
+
+00:39:51.080 --> 00:39:53.280
+you first check is S {comma} V in the memo
+
+00:39:53.280 --> 00:39:55.440
+first check is S {comma} V in the memo table? If so, return that value.
+
+00:39:55.440 --> 00:39:58.000
+table? If so, return that value. Otherwise, do this computation, where
+
+00:39:58.000 --> 00:39:59.960
+Otherwise, do this computation, where this is a recursive call, and then store
+
+00:39:59.960 --> 00:40:02.760
+this is a recursive call, and then store it in the memo table.
+
+00:40:02.760 --> 00:40:04.520
+it in the memo table. Okay? I don't think I need to write that
+
+00:40:04.520 --> 00:40:06.280
+Okay? I don't think I need to write that down. It's just like the memoized code
+
+00:40:06.280 --> 00:40:07.320
+down. It's just like the memoized code over there.
+
+00:40:07.320 --> 00:40:08.720
+over there. Just there's now two arguments instead
+
+00:40:08.720 --> 00:40:11.120
+Just there's now two arguments instead of one.
+
+00:40:11.120 --> 00:40:12.640
+of one. In fact, S isn't changing, so I only
+
+00:40:12.640 --> 00:40:15.080
+In fact, S isn't changing, so I only need to store with V instead of S
+
+00:40:15.080 --> 00:40:17.360
+need to store with V instead of S {comma} V.
+
+00:40:17.360 --> 00:40:20.280
+{comma} V. Uh is that a good algorithm? I claim
+
+00:40:20.280 --> 00:40:23.480
+Uh is that a good algorithm? I claim memoization makes everything faster.
+
+00:40:23.480 --> 00:40:24.640
+memoization makes everything faster. Is that
+
+00:40:24.640 --> 00:40:36.310
+Is that a fast algorithm?
+
+00:40:52.230 --> 00:40:53.720
+Yes? How many people think yes, it's a good
+
+00:40:53.720 --> 00:40:54.920
+How many people think yes, it's a good algorithm?
+
+00:40:54.920 --> 00:40:57.160
+algorithm? Better. Better. Definitely better. Can't
+
+00:40:57.160 --> 00:40:58.240
+Better. Better. Definitely better. Can't be worse.
+
+00:40:58.240 --> 00:40:59.320
+be worse. How many people think it's a bad
+
+00:40:59.320 --> 00:41:00.360
+How many people think it's a bad algorithm?
+
+00:41:00.360 --> 00:41:01.280
+algorithm? Still.
+
+00:41:01.280 --> 00:41:05.400
+Still. Okay, so three for yes, zero for no.
+
+00:41:05.400 --> 00:41:07.560
+Okay, so three for yes, zero for no. How many people aren't sure?
+
+00:41:07.560 --> 00:41:08.720
+How many people aren't sure? Yeah.
+
+00:41:08.720 --> 00:41:10.120
+Yeah. Including the yes votes.
+
+00:41:10.120 --> 00:41:12.830
+Including the yes votes. Good. Uh
+
+00:41:14.590 --> 00:41:26.990
+All right. It's not so tricky. Let me draw you a graph.
+
+00:41:31.910 --> 00:41:34.320
+So if we wanted to compute delta of S {comma} V,
+
+00:41:34.320 --> 00:41:35.760
+{comma} V, I'm going to give these guys names A and
+
+00:41:35.760 --> 00:41:38.640
+I'm going to give these guys names A and B. So we compute delta of S {comma} V.
+
+00:41:38.640 --> 00:41:41.800
+B. So we compute delta of S {comma} V. To compute that, we need to know uh
+
+00:41:41.800 --> 00:41:44.800
+To compute that, we need to know uh delta of S {comma} A
+
+00:41:44.800 --> 00:41:47.880
+delta of S {comma} A and delta of S {comma} B.
+
+00:41:47.880 --> 00:41:49.240
+and delta of S {comma} B. All right, those are the two ways or
+
+00:41:49.240 --> 00:41:51.840
+All right, those are the two ways or sorry, actually we just need one.
+
+00:41:51.840 --> 00:41:54.240
+sorry, actually we just need one. Only one incoming edge to V. So it's
+
+00:41:54.240 --> 00:41:57.360
+Only one incoming edge to V. So it's delta of S {comma}
+
+00:41:57.360 --> 00:42:00.630
+delta of S {comma} A.
+
+00:42:02.350 --> 00:42:05.800
+Uh sorry, I should I should have put a base case here, too. Uh delta of
+
+00:42:05.800 --> 00:42:07.880
+base case here, too. Uh delta of S {comma} S equals zero.
+
+00:42:07.880 --> 00:42:10.230
+S {comma} S equals zero. Let's say.
+
+00:42:12.070 --> 00:42:14.160
+Okay, delta of S {comma} A plus the edge. Okay, there is some shortest path
+
+00:42:14.160 --> 00:42:16.280
+edge. Okay, there is some shortest path to A. To compute the shortest path to A,
+
+00:42:16.280 --> 00:42:17.880
+to A. To compute the shortest path to A, we look at all the incoming edges to A.
+
+00:42:17.880 --> 00:42:19.320
+we look at all the incoming edges to A. There's only one.
+
+00:42:19.320 --> 00:42:22.200
+There's only one. So delta of S {comma} B.
+
+00:42:22.200 --> 00:42:23.480
+So delta of S {comma} B. Now I want to compute the shortest path
+
+00:42:23.480 --> 00:42:24.640
+Now I want to compute the shortest path from B.
+
+00:42:24.640 --> 00:42:26.160
+from B. Uh well, there's two ways to get to B.
+
+00:42:26.160 --> 00:42:30.640
+Uh well, there's two ways to get to B. One of them is delta of S {comma} B.
+
+00:42:30.640 --> 00:42:33.640
+One of them is delta of S {comma} B. Sorry. Uh S {comma} S
+
+00:42:33.640 --> 00:42:35.360
+Sorry. Uh S {comma} S came from S.
+
+00:42:35.360 --> 00:42:40.600
+came from S. The other way is delta of S {comma} V.
+
+00:42:40.600 --> 00:42:42.600
+The other way is delta of S {comma} V. Do you see a problem?
+
+00:42:42.600 --> 00:42:44.240
+Do you see a problem? Yeah.
+
+00:42:44.240 --> 00:42:46.200
+Yeah. Delta of S {comma} V is what we're
+
+00:42:46.200 --> 00:42:49.950
+Delta of S {comma} V is what we're trying to figure out.
+
+00:42:51.310 --> 00:42:52.720
+Now you might say, "Oh, it's okay because we're going to memoize our
+
+00:42:52.720 --> 00:42:54.320
+because we're going to memoize our answer to delta S {comma} V, and then we
+
+00:42:54.320 --> 00:42:56.040
+answer to delta S {comma} V, and then we can reuse it here." Except we haven't
+
+00:42:56.040 --> 00:42:57.840
+can reuse it here." Except we haven't finished computing delta of S {comma} V.
+
+00:42:57.840 --> 00:42:59.960
+finished computing delta of S {comma} V. We can only put it in the memo table
+
+00:42:59.960 --> 00:43:02.240
+We can only put it in the memo table once we're done.
+
+00:43:02.240 --> 00:43:05.080
+once we're done. So at this when this call happens,
+
+00:43:05.080 --> 00:43:06.760
+So at this when this call happens, the memo table has not been set, and
+
+00:43:06.760 --> 00:43:08.440
+the memo table has not been set, and we're going to do the same thing over
+
+00:43:08.440 --> 00:43:10.200
+we're going to do the same thing over and over and over again. This is an
+
+00:43:10.200 --> 00:43:12.760
+and over and over again. This is an infinite algorithm.
+
+00:43:12.760 --> 00:43:14.640
+infinite algorithm. Oops.
+
+00:43:14.640 --> 00:43:19.350
+Oops. Not so hot.
+
+00:43:26.150 --> 00:43:29.390
+time on graphs
+
+00:43:37.390 --> 00:43:40.080
+Okay, for DAGs, or acyclic graphs, it actually runs in V
+
+00:43:40.080 --> 00:43:42.320
+or acyclic graphs, it actually runs in V plus E time.
+
+00:43:42.320 --> 00:43:43.920
+plus E time. This is the good case. In this
+
+00:43:43.920 --> 00:43:46.800
+This is the good case. In this situation, we can use this uh formula.
+
+00:43:46.800 --> 00:43:48.200
+situation, we can use this uh formula. The time is equal to the number of
+
+00:43:48.200 --> 00:43:49.760
+The time is equal to the number of subproblems times the time per
+
+00:43:49.760 --> 00:43:51.360
+subproblems times the time per subproblem.
+
+00:43:51.360 --> 00:43:53.440
+subproblem. Uh so I guess we have to think about
+
+00:43:53.440 --> 00:43:54.960
+Uh so I guess we have to think about that a little bit.
+
+00:43:54.960 --> 00:43:57.040
+that a little bit. Where's my code? Here's my code.
+
+00:43:57.040 --> 00:44:00.760
+Where's my code? Here's my code. Uh number of subproblems is V. There's V
+
+00:44:00.760 --> 00:44:02.680
+Uh number of subproblems is V. There's V different subproblems that I'm using
+
+00:44:02.680 --> 00:44:04.480
+different subproblems that I'm using here. I'm always reusing subproblems of
+
+00:44:04.480 --> 00:44:06.680
+here. I'm always reusing subproblems of the form delta S {comma} something. The
+
+00:44:06.680 --> 00:44:08.400
+the form delta S {comma} something. The something could be any of the V
+
+00:44:08.400 --> 00:44:10.000
+something could be any of the V vertices.
+
+00:44:10.000 --> 00:44:12.040
+vertices. Uh how much time do I spend per
+
+00:44:12.040 --> 00:44:13.760
+Uh how much time do I spend per subproblem?
+
+00:44:13.760 --> 00:44:15.840
+subproblem? Mm. That's a little tricky. It's the
+
+00:44:15.840 --> 00:44:18.920
+Mm. That's a little tricky. It's the number of incoming edges to V.
+
+00:44:18.920 --> 00:44:20.040
+number of incoming edges to V. So
+
+00:44:20.040 --> 00:44:21.480
+So uh
+
+00:44:21.480 --> 00:44:23.359
+uh time
+
+00:44:23.359 --> 00:44:27.310
+time for subproblem
+
+00:44:36.750 --> 00:44:39.120
+of V, the number of incoming edges to V. So I This depends on V, so I can't just
+
+00:44:39.120 --> 00:44:40.920
+So I This depends on V, so I can't just take a straightforward product here.
+
+00:44:40.920 --> 00:44:42.240
+take a straightforward product here. What this is really saying is you should
+
+00:44:42.240 --> 00:44:44.600
+What this is really saying is you should sum up over all subproblems of the time
+
+00:44:44.600 --> 00:44:46.520
+sum up over all subproblems of the time per subproblem.
+
+00:44:46.520 --> 00:44:51.550
+per subproblem. So total time
+
+00:44:55.110 --> 00:44:57.160
+is the sum over all V in V of the in-degree
+
+00:44:57.160 --> 00:45:00.600
+in-degree of V. And we know this is
+
+00:45:00.600 --> 00:45:02.800
+of V. And we know this is number of edges.
+
+00:45:02.800 --> 00:45:04.400
+number of edges. Okay, it's really sub in-degree plus
+
+00:45:04.400 --> 00:45:07.880
+Okay, it's really sub in-degree plus one, in-degree plus one, so this is E
+
+00:45:07.880 --> 00:45:10.710
+one, in-degree plus one, so this is E plus V.
+
+00:45:12.390 --> 00:45:13.920
+Okay, handshaking lemma. Again.
+
+00:45:13.920 --> 00:45:15.520
+Again. Okay. Uh now we already knew an
+
+00:45:15.520 --> 00:45:17.240
+Okay. Uh now we already knew an algorithm for shortest paths in DAGs,
+
+00:45:17.240 --> 00:45:19.359
+algorithm for shortest paths in DAGs, and it ran in V plus E time. So this is
+
+00:45:19.359 --> 00:45:21.520
+and it ran in V plus E time. So this is another way to do the same thing. If you
+
+00:45:21.520 --> 00:45:23.840
+another way to do the same thing. If you think about it long enough,
+
+00:45:23.840 --> 00:45:26.440
+think about it long enough, this algorithm, memoized,
+
+00:45:26.440 --> 00:45:27.960
+this algorithm, memoized, is essentially doing a depth-first
+
+00:45:27.960 --> 00:45:29.359
+is essentially doing a depth-first search
+
+00:45:29.359 --> 00:45:31.720
+search to do a topological sort to run one
+
+00:45:31.720 --> 00:45:34.200
+to do a topological sort to run one round of Bellman-Ford. So we had
+
+00:45:34.200 --> 00:45:35.560
+round of Bellman-Ford. So we had topological sort plus one round of
+
+00:45:35.560 --> 00:45:36.920
+topological sort plus one round of Bellman-Ford. This is kind of it all
+
+00:45:36.920 --> 00:45:38.920
+Bellman-Ford. This is kind of it all rolled into one. This should look kind
+
+00:45:38.920 --> 00:45:40.840
+rolled into one. This should look kind of like the Bellman-Ford relaxation step
+
+00:45:40.840 --> 00:45:43.040
+of like the Bellman-Ford relaxation step or shortest paths relaxation step. It
+
+00:45:43.040 --> 00:45:44.040
+or shortest paths relaxation step. It is.
+
+00:45:44.040 --> 00:45:46.800
+is. This min is really doing the same thing.
+
+00:45:46.800 --> 00:45:48.320
+This min is really doing the same thing. So it's really the same algorithm, but
+
+00:45:48.320 --> 00:45:49.440
+So it's really the same algorithm, but we come at it from a different
+
+00:45:49.440 --> 00:45:52.230
+we come at it from a different perspective.
+
+00:45:53.349 --> 00:45:55.760
+Okay. But I claim I can use this same approach
+
+00:45:55.760 --> 00:45:57.840
+But I claim I can use this same approach to solve shortest paths in general
+
+00:45:57.840 --> 00:46:01.120
+to solve shortest paths in general graphs, even when they have cycles.
+
+00:46:01.120 --> 00:46:04.080
+graphs, even when they have cycles. Huh. How am I going to do that?
+
+00:46:04.080 --> 00:46:06.960
+Huh. How am I going to do that? DAGs seem fine.
+
+00:46:06.960 --> 00:46:08.880
+DAGs seem fine. Oh, what was the lesson learned here?
+
+00:46:08.880 --> 00:46:15.430
+Oh, what was the lesson learned here? Lesson learned is that subproblem
+
+00:46:18.310 --> 00:46:20.160
+dependencies should be acyclic. Otherwise, we get an
+
+00:46:20.160 --> 00:46:22.160
+should be acyclic. Otherwise, we get an infinite algorithm.
+
+00:46:22.160 --> 00:46:24.120
+infinite algorithm. For memoization to work, this is what
+
+00:46:24.120 --> 00:46:25.320
+For memoization to work, this is what you need.
+
+00:46:25.320 --> 00:46:29.830
+you need. It's all you need.
+
+00:46:32.390 --> 00:46:34.640
+Okay, we've almost seen this already because I said that to do a bottom-up
+
+00:46:34.640 --> 00:46:36.400
+because I said that to do a bottom-up algorithm, you do a topological sort of
+
+00:46:36.400 --> 00:46:39.400
+algorithm, you do a topological sort of the subproblem dependency DAG. I already
+
+00:46:39.400 --> 00:46:41.880
+the subproblem dependency DAG. I already said it should be acyclic. Okay? We just
+
+00:46:41.880 --> 00:46:44.080
+said it should be acyclic. Okay? We just forgot. I didn't tell you yet. So for
+
+00:46:44.080 --> 00:46:45.600
+forgot. I didn't tell you yet. So for that to work, it better be acyclic. For
+
+00:46:45.600 --> 00:46:47.960
+that to work, it better be acyclic. For DP to work, for memoization to work, it
+
+00:46:47.960 --> 00:46:50.760
+DP to work, for memoization to work, it better be acyclic. If you're acyclic,
+
+00:46:50.760 --> 00:46:52.120
+better be acyclic. If you're acyclic, then
+
+00:46:52.120 --> 00:46:55.480
+then uh this is the running time.
+
+00:46:55.480 --> 00:46:57.160
+uh this is the running time. So that's all
+
+00:46:57.160 --> 00:46:59.750
+So that's all general.
+
+00:47:01.630 --> 00:47:04.359
+Okay, so somehow I need to take a cyclic graph and make it acyclic.
+
+00:47:04.359 --> 00:47:08.349
+graph and make it acyclic. Mm.
+
+00:47:09.550 --> 00:47:18.630
+We've actually done this already in recitation.
+
+00:47:21.950 --> 00:47:24.600
+So if I have a graph, uh let's let's take a very simple cyclic
+
+00:47:24.600 --> 00:47:26.120
+uh let's let's take a very simple cyclic graph.
+
+00:47:26.120 --> 00:47:28.400
+graph. Okay, one thing I could do is explode it
+
+00:47:28.400 --> 00:47:29.960
+Okay, one thing I could do is explode it into multiple layers. We did this on
+
+00:47:29.960 --> 00:47:32.520
+into multiple layers. We did this on quiz two in various forms. Okay, it's
+
+00:47:32.520 --> 00:47:34.600
+quiz two in various forms. Okay, it's like the only cool thing you can do is
+
+00:47:34.600 --> 00:47:36.440
+like the only cool thing you can do is shortest paths, I feel like.
+
+00:47:36.440 --> 00:47:38.160
+shortest paths, I feel like. Uh
+
+00:47:38.160 --> 00:47:39.760
+Uh you want to make a shortest path problem
+
+00:47:39.760 --> 00:47:41.440
+you want to make a shortest path problem where you or require that you reduce
+
+00:47:41.440 --> 00:47:43.160
+where you or require that you reduce your graph to
+
+00:47:43.160 --> 00:47:45.480
+your graph to K copies of the graph.
+
+00:47:45.480 --> 00:47:46.440
+K copies of the graph. All right, I'm going to do it in a
+
+00:47:46.440 --> 00:47:47.800
+All right, I'm going to do it in a particular way here, which I think
+
+00:47:47.800 --> 00:47:50.280
+particular way here, which I think you've seen in recitation,
+
+00:47:50.280 --> 00:47:53.160
+you've seen in recitation, which is to think of this axis as time,
+
+00:47:53.160 --> 00:47:55.040
+which is to think of this axis as time, or however you want, and make all of the
+
+00:47:55.040 --> 00:47:57.560
+or however you want, and make all of the edges go from each layer to the next
+
+00:47:57.560 --> 00:48:00.830
+edges go from each layer to the next layer.
+
+00:48:02.390 --> 00:48:03.800
+Okay, this should be a familiar technique.
+
+00:48:03.800 --> 00:48:05.320
+technique. So the idea is every time I follow an
+
+00:48:05.320 --> 00:48:07.520
+So the idea is every time I follow an edge, I go down to the next layer. This
+
+00:48:07.520 --> 00:48:09.640
+edge, I go down to the next layer. This makes any graph acyclic.
+
+00:48:09.640 --> 00:48:11.520
+makes any graph acyclic. Done.
+
+00:48:11.520 --> 00:48:13.560
+Done. What in the world is does this mean?
+
+00:48:13.560 --> 00:48:19.830
+What in the world is does this mean? What is it doing?
+
+00:48:21.830 --> 00:48:26.270
+What does it mean? Double rainbow. All right, so
+
+00:48:27.470 --> 00:48:28.840
+I don't know how I've gone so long in the semester without referring to double
+
+00:48:28.840 --> 00:48:30.680
+the semester without referring to double rainbow. It used to be my favorite. Uh
+
+00:48:30.680 --> 00:48:32.240
+rainbow. It used to be my favorite. Uh all right, so
+
+00:48:32.240 --> 00:48:33.480
+all right, so um
+
+00:48:33.480 --> 00:48:37.000
+um here's what it means. Delta sub K of SV.
+
+00:48:37.000 --> 00:48:38.560
+here's what it means. Delta sub K of SV. I'm going to define this first. This is
+
+00:48:38.560 --> 00:48:41.280
+I'm going to define this first. This is a new kind of subproblem,
+
+00:48:41.280 --> 00:48:44.200
+a new kind of subproblem, which is what is the shortest
+
+00:48:44.200 --> 00:48:49.110
+which is what is the shortest What's the weight of the shortest
+
+00:49:00.310 --> 00:49:01.720
+So I want it to be shortest in terms of total weight, but I also want it to use
+
+00:49:01.720 --> 00:49:03.800
+total weight, but I also want it to use few edges total. So this is going to be
+
+00:49:03.800 --> 00:49:05.080
+few edges total. So this is going to be zero.
+
+00:49:05.080 --> 00:49:07.520
+zero. Some sense, if you look at So here's
+
+00:49:07.520 --> 00:49:09.880
+Some sense, if you look at So here's here's S and
+
+00:49:09.880 --> 00:49:11.880
+here's S and uh I'm always going to make S this, and
+
+00:49:11.880 --> 00:49:14.040
+uh I'm always going to make S this, and then this is going to be V in the zero
+
+00:49:14.040 --> 00:49:16.480
+then this is going to be V in the zero situation. This is going to be V in the
+
+00:49:16.480 --> 00:49:19.160
+situation. This is going to be V in the one situation, V. So if I look at this
+
+00:49:19.160 --> 00:49:21.040
+one situation, V. So if I look at this V, I look at the shortest path from S to
+
+00:49:21.040 --> 00:49:23.960
+V, I look at the shortest path from S to V. That is delta sub zero of SV.
+
+00:49:23.960 --> 00:49:25.680
+V. That is delta sub zero of SV. So maybe I'll call this V sub zero, V
+
+00:49:25.680 --> 00:49:28.680
+So maybe I'll call this V sub zero, V sub one, V sub two.
+
+00:49:28.680 --> 00:49:30.040
+sub one, V sub two. Okay, shortest path from here to here is
+
+00:49:30.040 --> 00:49:31.720
+Okay, shortest path from here to here is the there's no way to get there in zero
+
+00:49:31.720 --> 00:49:33.400
+the there's no way to get there in zero edges. Shortest path from here to here,
+
+00:49:33.400 --> 00:49:35.240
+edges. Shortest path from here to here, that's this the best way to get there
+
+00:49:35.240 --> 00:49:36.800
+that's this the best way to get there with at most
+
+00:49:36.800 --> 00:49:38.200
+with at most one edge.
+
+00:49:38.200 --> 00:49:39.640
+one edge. Shortest path from here to here, well,
+
+00:49:39.640 --> 00:49:41.640
+Shortest path from here to here, well, if I add some vertical edges, too, I
+
+00:49:41.640 --> 00:49:43.760
+if I add some vertical edges, too, I guess. Cheating a little bit. Then this
+
+00:49:43.760 --> 00:49:45.680
+guess. Cheating a little bit. Then this is the best way to get from S to V using
+
+00:49:45.680 --> 00:49:47.480
+is the best way to get from S to V using at most two edges. And then you get a
+
+00:49:47.480 --> 00:49:50.870
+at most two edges. And then you get a recurrence.
+
+00:49:52.390 --> 00:49:54.920
+Which is the min over all last edges. So, I'm just
+
+00:49:54.920 --> 00:49:57.800
+over all last edges. So, I'm just copying that recurrence, but realizing
+
+00:49:57.800 --> 00:49:59.760
+copying that recurrence, but realizing that the
+
+00:49:59.760 --> 00:50:02.960
+that the the S to U part uses one fewer edge.
+
+00:50:02.960 --> 00:50:06.550
+the S to U part uses one fewer edge. And then I use the edge UV.
+
+00:50:07.830 --> 00:50:09.800
+Okay? That's our new recurrence. By adding
+
+00:50:09.800 --> 00:50:11.560
+That's our new recurrence. By adding this K parameter, I've made this
+
+00:50:11.560 --> 00:50:14.080
+this K parameter, I've made this recurrence on subproblems acyclic.
+
+00:50:14.080 --> 00:50:15.560
+recurrence on subproblems acyclic. Unfortunately, I've increased the number
+
+00:50:15.560 --> 00:50:20.590
+Unfortunately, I've increased the number of subproblems. Number of subproblems
+
+00:50:25.630 --> 00:50:27.880
+is uh V squared.
+
+00:50:27.880 --> 00:50:31.680
+V squared. Mm, technically V * V - 1. Cuz I really
+
+00:50:31.680 --> 00:50:33.760
+Mm, technically V * V - 1. Cuz I really Or I actually V squared, sorry.
+
+00:50:33.760 --> 00:50:36.800
+Or I actually V squared, sorry. Get it right. I start at zero.
+
+00:50:36.800 --> 00:50:38.760
+Get it right. I start at zero. And what I care about
+
+00:50:38.760 --> 00:50:42.070
+And what I care about the my goal
+
+00:50:45.070 --> 00:50:47.720
+is delta sub V minus one of SV. Because by Bellman-Ford analysis,
+
+00:50:47.720 --> 00:50:49.720
+of SV. Because by Bellman-Ford analysis, I know that I only care about simple
+
+00:50:49.720 --> 00:50:51.760
+I know that I only care about simple paths. Paths of length at most V minus
+
+00:50:51.760 --> 00:50:53.000
+paths. Paths of length at most V minus one. I'm assuming here no negative
+
+00:50:53.000 --> 00:50:54.240
+one. I'm assuming here no negative weight cycles. Should have said that
+
+00:50:54.240 --> 00:50:55.400
+weight cycles. Should have said that earlier.
+
+00:50:55.400 --> 00:50:57.120
+earlier. If you assume that, then this is what I
+
+00:50:57.120 --> 00:50:58.560
+If you assume that, then this is what I care about.
+
+00:50:58.560 --> 00:51:00.440
+care about. So, K ranges from zero to V minus one.
+
+00:51:00.440 --> 00:51:02.240
+So, K ranges from zero to V minus one. So, there are V choices for K. There are
+
+00:51:02.240 --> 00:51:03.880
+So, there are V choices for K. There are V choices for V.
+
+00:51:03.880 --> 00:51:05.000
+V choices for V. So, the number of subproblems is V
+
+00:51:05.000 --> 00:51:06.400
+So, the number of subproblems is V squared. How much time do I spend per
+
+00:51:06.400 --> 00:51:08.080
+squared. How much time do I spend per subproblem? Well, same as before, the
+
+00:51:08.080 --> 00:51:09.600
+subproblem? Well, same as before, the in-degree.
+
+00:51:09.600 --> 00:51:11.320
+in-degree. Where did I write it? Up here.
+
+00:51:11.320 --> 00:51:13.120
+Where did I write it? Up here. The in-degree of that problem. So, what
+
+00:51:13.120 --> 00:51:16.440
+The in-degree of that problem. So, what I'm really doing is summing over all V
+
+00:51:16.440 --> 00:51:18.080
+I'm really doing is summing over all V of the in-degree, and then I multiply it
+
+00:51:18.080 --> 00:51:20.040
+of the in-degree, and then I multiply it by V. So, the running time, total
+
+00:51:20.040 --> 00:51:22.600
+by V. So, the running time, total running time
+
+00:51:22.600 --> 00:51:25.200
+running time is VE.
+
+00:51:25.200 --> 00:51:26.680
+is VE. Sound familiar?
+
+00:51:26.680 --> 00:51:29.640
+Sound familiar? This is Bellman-Ford's algorithm again.
+
+00:51:29.640 --> 00:51:31.000
+This is Bellman-Ford's algorithm again. And this is actually where Bellman's
+
+00:51:31.000 --> 00:51:33.480
+And this is actually where Bellman's Ford Bellman-Ford algorithm came from.
+
+00:51:33.480 --> 00:51:35.880
+Ford Bellman-Ford algorithm came from. Is this view on dynamic programming. So,
+
+00:51:35.880 --> 00:51:37.920
+Is this view on dynamic programming. So, we've seen yet another way to do
+
+00:51:37.920 --> 00:51:40.080
+we've seen yet another way to do Bellman-Ford. It may seem familiar, but
+
+00:51:40.080 --> 00:51:41.160
+Bellman-Ford. It may seem familiar, but in the next three lectures, we're going
+
+00:51:41.160 --> 00:51:42.520
+in the next three lectures, we're going to see a whole bunch of problems that
+
+00:51:42.520 --> 00:51:45.040
+to see a whole bunch of problems that can succumb to the same approach. And
+
+00:51:45.040 --> 00:51:47.720
+can succumb to the same approach. And it's super cool.

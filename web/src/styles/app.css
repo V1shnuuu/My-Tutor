@@ -1,28 +1,28 @@
 /* Notebook theme tokens. Logical properties everywhere so RTL flips for free. */
 :root {
-  --paper: #fdfcf7;
-  --paper-2: #f5f2e9;
-  --ink: #1f2933;
-  --ink-2: #4b5963;
-  --ink-3: #7b8790;
-  --rule: #d9e2ec;
-  --rule-2: #e9eef3;
-  --margin: #d24b3a;
-  --accent: #c1440e;
+  --paper: #f2ecd9;
+  --paper-2: #ece2c8;
+  --ink: #232a33;
+  --ink-2: #57616b;
+  --ink-3: #8b8a76;
+  --rule: #e3d9bc;
+  --rule-2: #ece4cd;
+  --margin: #cf4a39;
+  --accent: #b5431a;
   --accent-ink: #ffffff;
-  --highlighter: #fff3a3;
+  --highlighter: #f6d979;
   --highlighter-ink: #4a3d00;
   /* Display ink: headings, brand and nav are written in navy, the way a pen
      differs from the printed rule it sits on. */
-  --ink-display: #1b3b6f;
-  --hole: #e2ded1;
-  --hole-edge: #cdc7b6;
+  --ink-display: #1d3557;
+  --hole: #e7ddc0;
+  --hole-edge: #cfc2a0;
   /* An index card laid on the page: lighter than the paper it sits on, which is
      what separates it from the ruled ground rather than a border would. */
-  --card: #fffefb;
-  --card-edge: rgba(31, 41, 51, 0.07);
-  --tape: rgba(250, 221, 126, 0.85);
-  --tape-edge: rgba(198, 158, 44, 0.45);
+  --card: #fdfaf0;
+  --card-edge: rgba(31, 41, 51, 0.08);
+  --tape: rgba(246, 217, 121, 0.85);
+  --tape-edge: rgba(196, 156, 40, 0.45);
   --ok: #1f7a4d;
   --warn: #9a6700;
   --danger: #b42318;
@@ -227,15 +227,8 @@ button { cursor: pointer; }
 
 /* ---------------- avatar ---------------- */
 /* Transparent so the page's ruling runs behind the face, as if drawn on it. */
-.avatar-wrap { width: 100%; height: 100%; display: grid; place-items: center; background: transparent; }
-/* 2D face and 3D canvas stack in the same cell so the swap on load does not reflow. */
-.avatar-wrap > svg, .avatar-3d { grid-area: 1 / 1; }
-.avatar-wrap svg { width: min(100%, 100%); height: 100%; max-height: 100%; }
-.avatar-3d { width: 100%; height: 100%; min-height: 0; }
-.avatar-3d canvas { display: block; width: 100%; height: 100%; }
+.avatar-wrap { width: 100%; height: 100%; display: grid; place-items: center; background: transparent; position: relative; }
 .avatar-state { position: absolute; inset-block-end: 8px; inset-inline-start: 10px; font: 500 12px/1 var(--font-mono); color: var(--ink-3); letter-spacing: .06em; text-transform: uppercase; }
-.avatar-state.listening { color: var(--danger); }
-.avatar-state.speaking { color: var(--accent); }
 .mute-badge { position: absolute; inset-block-end: 8px; inset-inline-end: 10px; padding: 4px 10px; border-radius: 999px; background: var(--highlighter); color: var(--highlighter-ink); border: 0; font-size: 12.5px; font-weight: 600; }
 .avatar-state.danger { color: var(--danger); }
 .live-avatar video { width: 100%; height: 100%; object-fit: cover; }
@@ -263,7 +256,10 @@ button { cursor: pointer; }
   overflow-y: auto; padding: 8px 16px 8px 26px;
   background-color: var(--paper);
   background-image: repeating-linear-gradient(transparent 0 calc(var(--lh) - 1px), var(--rule-2) calc(var(--lh) - 1px) var(--lh));
-  background-attachment: local;
+  /* Fixed (viewport-anchored), not local (scrolls with content): this is the same coordinate
+     space the page ruling on .app uses, so the two rulings share one continuous phase instead
+     of each panel drawing its own grid from its own top edge. */
+  background-attachment: fixed;
   border-inline-start: 2px solid var(--margin);
   position: relative;
 }

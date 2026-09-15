@@ -1,5 +1,5 @@
 {
-  "corpus_version": "b399469d8a",
+  "corpus_version": "cf73a66d04",
   "videos": [
     {
       "id": "sample-6006-l01",
@@ -8,6 +8,16 @@
       "youtube_id": "HtSuA80QTyo",
       "url": null,
       "duration": 3201.65,
+      "lang": "en",
+      "week": 1
+    },
+    {
+      "id": "sample-6006-l02",
+      "title": "Sample — MIT 6.006 Lecture 2: Models of Computation, Document Distance",
+      "source": "youtube",
+      "youtube_id": "Zc54gFhdpLA",
+      "url": null,
+      "duration": 2931.62,
       "lang": "en",
       "week": 1
     }
