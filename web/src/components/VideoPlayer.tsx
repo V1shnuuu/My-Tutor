@@ -48,6 +48,7 @@ const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
  */
 const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer({ token, videos, lang, activeId, onActiveChange }, ref) {
   const video = useMemo(() => videos.find((v) => v.id === activeId) || videos[0] || null, [videos, activeId]);
+  const root = useRef<HTMLDivElement>(null);
   const ytHost = useRef<HTMLDivElement>(null);
   const yt = useRef<YTPlayer | null>(null);
   const html5 = useRef<HTMLVideoElement>(null);
@@ -57,6 +58,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer({ token
   const [speed, setSpeed] = useState(1);
   const [cc, setCc] = useState(true);
   const [muted, setMuted] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
   const [cues, setCues] = useState<Cue[]>([]);
   const pendingSeek = useRef<number | null>(null);
   const isYT = video?.source === "youtube" && !!video.youtube_id;
@@ -147,12 +149,21 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer({ token
     const m = !muted; setMuted(m);
     if (isYT) { m ? yt.current?.mute() : yt.current?.unMute(); } else if (html5.current) html5.current.muted = m;
   };
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void root.current?.requestFullscreen();
+  };
+  useEffect(() => {
+    const onChange = () => setFullscreen(document.fullscreenElement === root.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
   const onKey = (e: React.KeyboardEvent) => {
     if ((e.target as HTMLElement).tagName === "SELECT" || (e.target as HTMLElement).tagName === "INPUT") return;
     const map: Record<string, () => void> = {
       " ": toggle, k: toggle, j: () => seek(Math.max(0, time - 10), playing), l: () => seek(time + 10, playing),
       ",": () => changeSpeed(SPEEDS[Math.max(0, SPEEDS.indexOf(speed) - 1)]), ".": () => changeSpeed(SPEEDS[Math.min(SPEEDS.length - 1, SPEEDS.indexOf(speed) + 1)]),
-      c: () => setCc((v) => !v), m: toggleMute,
+      c: () => setCc((v) => !v), m: toggleMute, f: toggleFullscreen,
     };
     const fn = map[e.key.toLowerCase()] || map[e.key];
     if (fn) { e.preventDefault(); fn(); }
@@ -168,7 +179,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer({ token
   );
 
   return (
-    <div className="video" tabIndex={0} onKeyDown={onKey} aria-label={video.title}>
+    <div ref={root} className={`video${videos.length > 1 ? " has-picker" : ""}`} tabIndex={0} onKeyDown={onKey} aria-label={video.title}>
       {videos.length > 1 && (
         <div className="video-picker">
           <select value={video.id} onChange={(e) => onActiveChange(e.target.value)} aria-label="Video">
@@ -178,7 +189,11 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer({ token
       )}
       <div className="video-stage">
         {isYT ? (
-          <div ref={ytHost} style={{ position: "absolute", inset: 0 }} />
+          <>
+            <div ref={ytHost} style={{ position: "absolute", inset: 0 }} />
+            {/* blocks pointer events before they reach the iframe, so YouTube's own hover chrome (share, watch-on-youtube, end screen) never renders */}
+            <div className="yt-shield" onClick={toggle} />
+          </>
         ) : (
           <video ref={html5} src={video.url || undefined} playsInline preload="metadata" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}>
             <track kind="captions" src={`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/videos/${video.id}/captions.vtt`} srcLang={video.lang || "en"} default />
@@ -195,6 +210,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer({ token
         </select>
         <button onClick={() => setCc((v) => !v)} aria-pressed={cc} aria-label="Captions">{t("captions", lang)}</button>
         <button onClick={toggleMute} aria-pressed={muted} aria-label="Mute">{muted ? "🔇" : "🔊"}</button>
+        <button onClick={toggleFullscreen} aria-pressed={fullscreen} aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen"}>{fullscreen ? "⤡" : "⛶"}</button>
       </div>
     </div>
   );

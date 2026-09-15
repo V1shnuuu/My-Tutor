@@ -108,8 +108,8 @@ button { cursor: pointer; }
 .app {
   display: grid;
   height: 100dvh;
-  grid-template-columns: minmax(260px, 1fr) minmax(0, 2fr) clamp(215px, 18vw, 300px);
-  grid-template-rows: clamp(220px, 38vh, 420px) minmax(0, 1fr);
+  grid-template-columns: minmax(180px, 0.6fr) minmax(0, 2fr) clamp(215px, 18vw, 300px);
+  grid-template-rows: clamp(210px, 48vh, 510px) minmax(0, 1fr);
   grid-template-areas:
     "avatar video curriculum"
     "chat   chat  curriculum";
@@ -167,6 +167,7 @@ button { cursor: pointer; }
   .panel-avatar .mute-badge, .panel-avatar .avatar-state { display: none; }
   .panel-video { grid-area: auto; }
   .video { grid-template-rows: auto auto; height: auto; }
+  .video.has-picker { grid-template-rows: auto auto auto; }
   .video-stage { aspect-ratio: 16 / 9; }
   .top.video-collapsed { grid-template-columns: 96px 1fr; }
   .top.video-collapsed .panel-video { height: 96px; aspect-ratio: auto; }
@@ -243,8 +244,10 @@ button { cursor: pointer; }
 
 /* ---------------- video ---------------- */
 .video { display: grid; grid-template-rows: minmax(0, 1fr) auto; height: 100%; background: #000; }
+.video.has-picker { grid-template-rows: auto minmax(0, 1fr) auto; }
 .video-stage { position: relative; min-height: 0; background: #000; }
 .video-stage iframe, .video-stage video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.yt-shield { position: absolute; inset: 0; z-index: 1; cursor: pointer; background: transparent; }
 .captions { position: absolute; inset-inline: 8%; inset-block-end: 8px; text-align: center; pointer-events: none; }
 .captions span { display: inline-block; background: rgba(0, 0, 0, 0.72); color: #fff; padding: 3px 10px; border-radius: 6px; font-size: clamp(13px, 1.6vw, 18px); line-height: 1.5; unicode-bidi: plaintext; }
 .controls { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: var(--paper-2); border-top: 1px solid var(--rule); font-size: 13px; }
@@ -254,8 +257,8 @@ button { cursor: pointer; }
 .controls select { border: 1px solid var(--rule); background: var(--paper); border-radius: 6px; padding: 2px 4px; }
 .controls .time { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 12px; direction: ltr; }
 .video-title { padding: 4px 10px; background: var(--paper-2); font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid var(--rule); }
-.video-picker { position: absolute; inset-block-start: 8px; inset-inline-end: 8px; z-index: 2; }
-.video-picker select { max-width: 46vw; border: 1px solid var(--rule); background: var(--paper); border-radius: 6px; padding: 3px 6px; font-size: 12.5px; }
+.video-picker { padding: 6px 10px; background: var(--paper-2); border-bottom: 1px solid var(--rule); }
+.video-picker select { width: 100%; border: 1px solid var(--rule); background: var(--paper); border-radius: 6px; padding: 3px 6px; font-size: 12.5px; }
 .video-empty {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
   height: 100%; background: #000; color: #ccc; padding: 20px; text-align: center; font-size: 14px;
