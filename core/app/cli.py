@@ -24,6 +24,8 @@ def main() -> None:
     c = sub.add_parser("codes", help="generate enrollment codes")
     c.add_argument("n", type=int, nargs="?", default=0)
     c.add_argument("--labels", help="one-column CSV of student labels")
+    c.add_argument("--reusable", action="store_true",
+                   help="codes that never bind to a device — for you and for demos, not for a cohort")
     v = sub.add_parser("voices", help="download Piper voices (ar/en/fr) into DATA_DIR/voices")
     v.add_argument("langs", nargs="*", default=["ar", "en", "fr"])
     d = sub.add_parser("doctor", help="check brain, ears, voice, corpus — and say what to do about each")
@@ -40,8 +42,12 @@ def main() -> None:
             sys.exit("give n or --labels")
         w = csv.writer(sys.stdout, lineterminator="\n")
         w.writerow(["label", "code"])
-        for r in auth.create_students(n, labels):
+        for r in auth.create_students(n, labels, reusable=args.reusable):
             w.writerow([r["label"], r["code"]])
+        if args.reusable:
+            print("\n# Reusable: works on any device, for good. Everyone who redeems one shares",
+                  "\n# that student's identity — one daily budget, one history. Keep it to yourself.",
+                  file=sys.stderr)
 
 
     elif args.cmd == "voices":

@@ -154,3 +154,70 @@ def test_the_avatar_never_reads_an_elevenlabs_key(keyless):
     assert not hasattr(Settings(), "elevenlabs_api_key")
     src = __import__("pathlib").Path(liveavatar.__file__).read_text()
     assert "ELEVENLABS" not in src.upper().replace("ELEVEN_MULTILINGUAL", "")
+
+
+# ------------------------------------------------------------------ enrollment
+@pytest.fixture
+def auth_mod(settings):
+    from app import auth
+    from app.db import connect
+
+    connect()
+    return auth
+
+
+def test_an_ordinary_code_binds_to_the_first_device(auth_mod):
+    """The default, and the reason a second browser gets turned away: one code, one student,
+    one device. Sharing it would share a daily budget and a conversation history."""
+    from fastapi import HTTPException
+
+    code = auth_mod.create_students(1, ["binds"])[0]["code"]
+    assert auth_mod.redeem(code, "phone")
+    assert auth_mod.redeem(code, "phone"), "the same device must keep working"
+    with pytest.raises(HTTPException) as e:
+        auth_mod.redeem(code, "laptop")
+    assert e.value.status_code == 403
+
+
+def test_a_reusable_code_works_on_every_device(auth_mod):
+    code = auth_mod.create_students(1, ["teacher"], reusable=True)[0]["code"]
+    for device in ("phone", "laptop", "lecture-hall-pc"):
+        assert auth_mod.redeem(code, device), f"{device} was turned away"
+
+
+def test_a_reusable_code_keeps_one_identity(auth_mod):
+    """Worth pinning because it is the cost of reusability: two devices are one student, so
+    they share the daily cap and the history. Fine for a demo, wrong for a cohort."""
+    code = auth_mod.create_students(1, ["teacher"], reusable=True)[0]["code"]
+    a = auth_mod.decode_token(auth_mod.redeem(code, "phone"))
+    b = auth_mod.decode_token(auth_mod.redeem(code, "laptop"))
+    assert a["sub"] == b["sub"]
+    assert a["dev"] != b["dev"]
+
+
+def test_the_reusable_column_reaches_an_older_database(tmp_path, monkeypatch):
+    """CREATE TABLE IF NOT EXISTS cannot add a column, and every existing install has a real
+    tutor.sqlite with real students in it. Without the migration those installs would take
+    --reusable and silently still bind to one device."""
+    import sqlite3
+
+    from app import db
+
+    path = tmp_path / "old.sqlite"
+    old = sqlite3.connect(path)
+    old.execute("""CREATE TABLE students (id TEXT PRIMARY KEY, label TEXT, code TEXT UNIQUE NOT NULL,
+                   redeemed_at INTEGER, device_id TEXT, created_at INTEGER NOT NULL)""")
+    old.execute("INSERT INTO students VALUES ('s1', 'before', 'AAAA-BBBB', NULL, NULL, 0)")
+    old.commit()
+    old.close()
+
+    monkeypatch.setattr(db, "_conn", None)
+    monkeypatch.setattr(db.settings, "data_dir", tmp_path)
+    (tmp_path / "tutor.sqlite").write_bytes(path.read_bytes())
+
+    conn = db.connect()
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(students)")}
+    assert "reusable" in cols
+    assert conn.execute("SELECT code FROM students WHERE id='s1'").fetchone()[0] == "AAAA-BBBB", \
+        "the migration must not lose the students already enrolled"
+    monkeypatch.setattr(db, "_conn", None)

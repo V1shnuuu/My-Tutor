@@ -21,8 +21,14 @@ def new_code() -> str:
     return f"{raw[:4]}-{raw[4:]}"
 
 
-def create_students(n: int, labels: list[str] | None = None) -> list[dict]:
-    """Insert n students with fresh codes. Returns [{id, label, code}]."""
+def create_students(n: int, labels: list[str] | None = None, reusable: bool = False) -> list[dict]:
+    """Insert n students with fresh codes. Returns [{id, label, code}].
+
+    `reusable` marks a code that never binds to a device, so the same one works on a phone,
+    a laptop and a lecture-hall machine, for as long as it exists. That is what you want for
+    yourself and for a demo, and what you must not hand to a cohort: everyone redeeming it
+    shares one identity, and therefore one daily budget and one conversation history.
+    """
     out = []
     now = int(time.time())
     with tx() as c:
@@ -31,8 +37,8 @@ def create_students(n: int, labels: list[str] | None = None) -> list[dict]:
             label = labels[i] if labels and i < len(labels) else f"student-{i + 1:03d}"
             code = new_code()
             c.execute(
-                "INSERT INTO students (id, label, code, created_at) VALUES (?, ?, ?, ?)",
-                (sid, label, code, now),
+                "INSERT INTO students (id, label, code, created_at, reusable) VALUES (?, ?, ?, ?, ?)",
+                (sid, label, code, now, 1 if reusable else 0),
             )
             out.append({"id": sid, "label": label, "code": code})
     return out
@@ -46,7 +52,8 @@ def redeem(code: str, device_id: str) -> str:
     if not rows:
         raise HTTPException(401, "invalid_code")
     s = rows[0]
-    if s["redeemed_at"] and s["device_id"] != device_id:
+    # A reusable code is deliberately not bound to the device that got there first.
+    if not s["reusable"] and s["redeemed_at"] and s["device_id"] != device_id:
         raise HTTPException(403, "code_already_used")
     with tx() as c:
         c.execute(
