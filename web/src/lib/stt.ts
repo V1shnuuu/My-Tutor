@@ -120,10 +120,17 @@ async function recordAndUpload(o: ListenOpts): Promise<ListenSession> {
         }
         o.onInterim(finalText + interim);
       };
-      liveCaption.onerror = () => {};
-      liveCaption.onend = () => {};
+      // Best-effort only — the server transcript is what actually gets sent — but silent
+      // failures here are indistinguishable from "the browser doesn't support this at all",
+      // so log the reason (network unreachable, mic already claimed exclusively by the
+      // MediaRecorder stream above, no-speech, etc.) rather than swallowing it blind.
+      liveCaption.onerror = (e: SpeechRecognitionErrorEvent) => console.warn("live caption: recognition error —", e.error);
+      liveCaption.onend = () => console.warn("live caption: recognition ended early");
       liveCaption.start();
-    } catch { liveCaption = null; }
+      console.log("live caption: started —", LOCALE[o.langHint]);
+    } catch (e) { console.warn("live caption: failed to start —", e); liveCaption = null; }
+  } else {
+    console.warn("live caption: no WebSpeech in this browser — interim text disabled on the server lane");
   }
 
   // Simple energy VAD: stop 1.1 s after speech ends (Arabic speakers pause longer than English).

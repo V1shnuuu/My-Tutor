@@ -90,7 +90,13 @@ def _transcribe_local_sync(audio: bytes, lang_hint: str | None, vocab: str) -> d
     model = _local_whisper()
     segments, info = model.transcribe(
         io.BytesIO(audio),
-        language=lang_hint if lang_hint in ("ar", "en", "fr") else None,
+        # Never force the decode language from lang_hint (the UI toggle): a student who
+        # hasn't switched the toggle yet, or code-switches mid-sentence, would otherwise have
+        # their actual speech force-decoded as the wrong language and come back garbled —
+        # detect() in lang.py then answers in whatever that garbled text happens to look like.
+        # Auto-detect what was actually spoken; the dialect primer below still biases Arabic
+        # decoding toward Egyptian without forcing it.
+        language=None,
         initial_prompt=_prompt_for(lang_hint, vocab),
         beam_size=1,  # a live question is short: greedy keeps it responsive
         vad_filter=True,  # drop the silence around the utterance before decoding
@@ -128,8 +134,8 @@ async def transcribe(audio: bytes, filename: str, content_type: str, lang_hint: 
     _minute.append(now)
 
     data = {"model": "whisper-large-v3-turbo", "response_format": "verbose_json", "temperature": "0"}
-    if lang_hint in ("ar", "en", "fr"):
-        data["language"] = lang_hint
+    # Same reasoning as the local path above: let Groq auto-detect the spoken language rather
+    # than forcing lang_hint (the UI toggle), which may not match what was actually said.
     prompt = _prompt_for(lang_hint, vocab)
     if prompt:
         data["prompt"] = prompt

@@ -42,6 +42,12 @@ export default function App() {
   // falls back to Piper/the OS voice. `liveUp` is a ref because the streaming callbacks below
   // are created once per send and must see the current value, not the one they closed over.
   const liveUp = useRef(false);
+  // Sentences that arrived while the avatar session was mid-reconnect (sandbox's ~60s cap,
+  // or a language switch tearing the session down). Queued here instead of falling straight
+  // to the local voice, so a routine reconnect gap doesn't look like "the avatar went silent" —
+  // flushed to the avatar the moment it's ready again, or to the local voice if it takes too long.
+  const pendingAvatar = useRef<{ text: string; lang: Lang }[]>([]);
+  const pendingAvatarTimer = useRef<number | undefined>(undefined);
   // Hands-free: the mic re-arms itself after the tutor finishes speaking, and the energy
   // VAD in lib/stt.ts closes it when the student stops. Off by default — arming a
   // microphone is the user's decision, and the first tap is also the gesture the browser
@@ -111,14 +117,55 @@ export default function App() {
   const avatarSpeaks = (_l: Lang) => liveAvatarOn && liveUp.current;
   // Interrupting an inactive engine is a no-op, so stop both rather than guessing which
   // one is mid-sentence when a session drops.
-  const stopSpeech = useCallback(() => { liveAvatar.current?.interrupt(); speaker.stop(); }, []);
+  const stopSpeech = useCallback(() => {
+    liveAvatar.current?.interrupt(); speaker.stop();
+    if (pendingAvatarTimer.current) { clearTimeout(pendingAvatarTimer.current); pendingAvatarTimer.current = undefined; }
+    pendingAvatar.current = [];
+  }, []);
+  // Sentences queued while the avatar was mid-reconnect get spoken now, in order.
+  const flushPendingToAvatar = () => {
+    if (pendingAvatarTimer.current) { clearTimeout(pendingAvatarTimer.current); pendingAvatarTimer.current = undefined; }
+    const queued = pendingAvatar.current;
+    pendingAvatar.current = [];
+    for (const { text } of queued) liveAvatar.current?.speakText(text);
+  };
   const onLiveReady = useCallback(() => {
     liveUp.current = true;
+    flushPendingToAvatar();
   }, []);
   // Speech must not be queued at a session that is mid-reconnect; it would be dropped
-  // silently. The panel reconnects on its own, so this only pauses the hand-off.
-  const onLivePaused = useCallback(() => { liveUp.current = false; }, []);
-  const onLiveUnavailable = useCallback(() => { liveUp.current = false; }, []);
+  // silently. The panel reconnects on its own, so this only pauses the hand-off — any
+  // sentence that arrives in the meantime waits in pendingAvatar rather than jumping to the
+  // local voice, unless the reconnect drags on long enough that waiting stops helping.
+  const onLivePaused = useCallback(() => {
+    liveUp.current = false;
+    if (pendingAvatar.current.length && !pendingAvatarTimer.current) {
+      pendingAvatarTimer.current = window.setTimeout(() => {
+        pendingAvatarTimer.current = undefined;
+        const queued = pendingAvatar.current;
+        pendingAvatar.current = [];
+        for (const { text, lang: l } of queued) sentences.current.set(speaker.enqueue(text, l), text);
+      }, 12000);
+    }
+  }, []);
+  const onLiveUnavailable = useCallback(() => {
+    liveUp.current = false;
+    // The lane itself is down (not a transient reconnect) — nothing queued will ever be
+    // flushed to it, so hand it to the local voice right away instead of waiting out the timer.
+    if (pendingAvatarTimer.current) { clearTimeout(pendingAvatarTimer.current); pendingAvatarTimer.current = undefined; }
+    const queued = pendingAvatar.current;
+    pendingAvatar.current = [];
+    for (const { text, lang: l } of queued) sentences.current.set(speaker.enqueue(text, l), text);
+  }, []);
+
+  // Routes one sentence to whichever engine should speak it: the avatar when it's up, the
+  // local voice when the avatar is off entirely, or a short hold in pendingAvatar when it's
+  // only mid-reconnect — see onLivePaused/onLiveReady for how that queue drains.
+  const speakSentence = (text: string, l: Lang) => {
+    if (avatarSpeaks(l)) { liveAvatar.current?.speakText(text); return; }
+    if (liveAvatarOn) { pendingAvatar.current.push({ text, lang: l }); return; }
+    sentences.current.set(speaker.enqueue(text, l), text);
+  };
 
   // ---- send a message and stream the answer
   const send = useCallback(async (text: string) => {
@@ -132,11 +179,7 @@ export default function App() {
     setMessages((m) => [...m, userMsg, asst]);
     setStreaming(true); setLive({ stage: "retrieving" });
     const history = messages.slice(-6).map((m) => ({ role: m.role, content: m.content }));
-    const splitter = new SentenceSplitter((s) => {
-      if (avatarSpeaks(asst.lang)) { liveAvatar.current?.speakText(s); return; }
-      const id = speaker.enqueue(s, asst.lang);
-      sentences.current.set(id, s);
-    });
+    const splitter = new SentenceSplitter((s) => speakSentence(s, asst.lang));
     let content = "";
     const update = (patch: Partial<StoredMessage>) => setMessages((m) => { const c = [...m]; c[c.length - 1] = { ...c[c.length - 1], ...patch }; return c; });
     try {
@@ -155,8 +198,7 @@ export default function App() {
           content = ev.text; update({ content });
           for (const s of ev.text.split(/\n+/)) {
             if (!s.trim()) continue;
-            if (avatarSpeaks(asst.lang)) liveAvatar.current?.speakText(s.trim());
-            else sentences.current.set(speaker.enqueue(s, asst.lang), s.trim());
+            speakSentence(s.trim(), asst.lang);
           }
         } else if (ev.type === "error") {
           // The server gave up early (e.g. the encoder is unavailable). Say so in place of
