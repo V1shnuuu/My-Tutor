@@ -122,16 +122,27 @@ export default function Chat({ lang, messages, live, streaming, speakingSentence
           );
         })}
       </div>
-      {(listening || interim) && (
+      {listening && (
         <div className="interim" dir="auto">
-          {listening ? `🎙 ${t("listening", lang)}${sttMode === "browser" ? ` · ${t("stt_fallback", lang)}` : ""}` : ""} {interim}
+          🎙 {t("listening", lang)}{sttMode === "browser" ? ` · ${t("stt_fallback", lang)}` : ""}
         </div>
       )}
       <div className="composer">
         <button className={`btn ${listening ? "rec" : ""}`} onClick={listening ? onStop : onMic} aria-label={listening ? t("stop", lang) : t("mic", lang)} disabled={streaming && !listening}>
           {listening ? "■" : "🎙"}
         </button>
-        <textarea ref={taRef} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={onKey} placeholder={t("placeholder", lang)} rows={1} maxLength={800} aria-label={t("placeholder", lang)} dir="auto" />
+        <textarea
+          ref={taRef}
+          value={listening ? interim : draft}
+          onChange={(e) => { if (!listening) setDraft(e.target.value); }}
+          onKeyDown={onKey}
+          placeholder={listening ? t("listening", lang) : t("placeholder", lang)}
+          rows={1}
+          maxLength={800}
+          aria-label={t("placeholder", lang)}
+          dir="auto"
+          readOnly={listening}
+        />
         <button className="btn primary" onClick={submit} disabled={!draft.trim() || streaming} aria-label={t("send", lang)}>
           <span className="icon-dir" aria-hidden="true">➤</span>
         </button>

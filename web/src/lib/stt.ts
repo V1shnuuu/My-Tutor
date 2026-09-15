@@ -98,6 +98,34 @@ async function recordAndUpload(o: ListenOpts): Promise<ListenSession> {
   const chunks: Blob[] = [];
   rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
 
+  // The server upload only yields text once transcription finishes, which reads as a dead
+  // mic for the several seconds it takes. Web Speech (when present) streams interim words
+  // as they're spoken, so run it purely as a live caption — its text never reaches onFinal,
+  // the server's Whisper pass still produces the answer that actually gets sent.
+  let liveCaption: SRInstance | null = null;
+  if (WebSpeech) {
+    try {
+      liveCaption = new WebSpeech();
+      liveCaption.lang = LOCALE[o.langHint];
+      liveCaption.interimResults = true;
+      liveCaption.continuous = true;
+      liveCaption.maxAlternatives = 1;
+      let finalText = "";
+      liveCaption.onresult = (e: SpeechRecognitionEvent) => {
+        let interim = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const r = e.results[i];
+          if (r.isFinal) finalText += r[0].transcript;
+          else interim += r[0].transcript;
+        }
+        o.onInterim(finalText + interim);
+      };
+      liveCaption.onerror = () => {};
+      liveCaption.onend = () => {};
+      liveCaption.start();
+    } catch { liveCaption = null; }
+  }
+
   // Simple energy VAD: stop 1.1 s after speech ends (Arabic speakers pause longer than English).
   const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!AC) {
@@ -142,6 +170,7 @@ async function recordAndUpload(o: ListenOpts): Promise<ListenSession> {
     stopped = true;
     stream.getTracks().forEach((t) => t.stop());
     void ctx.close();
+    try { liveCaption?.abort(); } catch { /* */ }
   };
   const stop = () => {
     if (stopped) return;
