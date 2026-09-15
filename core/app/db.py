@@ -15,10 +15,11 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS students (
   id TEXT PRIMARY KEY,           -- opaque student id (sub in JWT)
   label TEXT,                    -- optional name / roster label
-  code TEXT UNIQUE NOT NULL,     -- enrollment code (single use)
+  code TEXT UNIQUE NOT NULL,     -- enrollment code (single use unless reusable)
   redeemed_at INTEGER,           -- unix seconds
   device_id TEXT,                -- bound on first redeem
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  reusable INTEGER NOT NULL DEFAULT 0  -- 1 = never binds to a device (teacher/demo code)
 );
 CREATE TABLE IF NOT EXISTS usage (
   student_id TEXT NOT NULL,
@@ -68,7 +69,19 @@ def connect() -> sqlite3.Connection:
         _conn.execute("PRAGMA synchronous=NORMAL")
         _conn.row_factory = sqlite3.Row
         _conn.executescript(SCHEMA)
+        _migrate(_conn)
     return _conn
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add columns that CREATE TABLE IF NOT EXISTS cannot add to an existing database.
+
+    Every install that predates a column has a real tutor.sqlite with real students in it,
+    so the schema string alone would silently never reach them.
+    """
+    have = {r["name"] for r in conn.execute("PRAGMA table_info(students)")}
+    if "reusable" not in have:
+        conn.execute("ALTER TABLE students ADD COLUMN reusable INTEGER NOT NULL DEFAULT 0")
 
 
 @contextmanager
