@@ -350,26 +350,6 @@ button { cursor: pointer; }
 .icon-dir { display: inline-block; }
 [dir="rtl"] .icon-dir { transform: scaleX(-1); }
 
-/* ---------------- login / onboarding ---------------- */
-.login {
-  min-height: 100dvh; display: grid; place-items: center; padding: 24px;
-  background-color: var(--paper);
-  background-image: repeating-linear-gradient(transparent 0 calc(var(--lh) - 1px), var(--rule-2) calc(var(--lh) - 1px) var(--lh));
-}
-.card { width: min(440px, 100%); background: var(--paper-2); border: 1px solid var(--rule); border-radius: 14px; box-shadow: var(--shadow); padding: 28px; }
-.card h1 { font: 700 44px/1 var(--font-hand); color: var(--ink-display); margin: 0 0 6px; position: relative; display: inline-block; }
-.card h1::after {
-  content: ""; position: absolute; inset-inline-start: 2px; inset-block-end: -6px; width: 78%; height: 6px;
-  background: var(--margin); border-radius: 999px; transform: rotate(-1deg);
-}
-.card p { margin: 0 0 16px; color: var(--ink-2); }
-.card input { width: 100%; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); font: 500 20px/1.2 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; text-align: center; direction: ltr; }
-.card .btn { margin-top: 12px; width: 100%; padding: 11px; border: 0; border-radius: 10px; background: var(--accent); color: var(--accent-ink); font-weight: 600; }
-.card .err { color: var(--danger); font-size: 14px; margin-top: 8px; }
-.lang-row { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
-.lang-row button { border: 1px solid var(--rule); background: var(--paper); border-radius: 999px; padding: 2px 12px; font-size: 13px; }
-.lang-row button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-
 /* Last, so it wins over the base .composer rule above: at phone width the
    placeholder wraps to two lines and must not be clipped. */
 @media (max-width: 767px) {

@@ -2,12 +2,6 @@ import type { Lang } from "./api";
 
 const S = {
   appName: { ar: "المُدرّس", en: "Tutor", fr: "Tuteur" },
-  login_title: { ar: "أهلاً بيك", en: "Welcome", fr: "Bienvenue" },
-  login_help: { ar: "اكتب كود التسجيل اللي استلمته من الكلية.", en: "Enter the enrollment code you received from the college.", fr: "Saisis le code d'inscription reçu de l'école." },
-  login_btn: { ar: "ادخل", en: "Enter", fr: "Entrer" },
-  login_invalid: { ar: "الكود مش صح.", en: "That code isn't valid.", fr: "Ce code n'est pas valide." },
-  login_used: { ar: "الكود ده اتستخدم على جهاز تاني.", en: "This code was already used on another device.", fr: "Ce code a déjà été utilisé sur un autre appareil." },
-  login_offline: { ar: "مش قادر أوصل للسيرفر. جرّب تاني بعد شوية.", en: "Can't reach the server. Try again in a moment.", fr: "Impossible de joindre le serveur. Réessaie dans un instant." },
   placeholder: { ar: "اسأل عن أي حاجة في المحاضرات…", en: "Ask anything about the lectures…", fr: "Pose une question sur les cours…" },
   send: { ar: "إرسال", en: "Send", fr: "Envoyer" },
   mic: { ar: "اتكلم", en: "Speak", fr: "Parler" },

@@ -2,21 +2,24 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Chat, { type LiveState } from "./components/Chat";
 import Curriculum from "./components/Curriculum";
 import LiveAvatarPanel, { type LiveAvatarHandle } from "./components/LiveAvatarPanel";
-import Login from "./components/Login";
 import VideoPlayer, { type PlayerHandle } from "./components/VideoPlayer";
 import { ApiError, chat as chatApi, listVideos, me, type Citation, type Lang, type Video } from "./lib/api";
 
 import { dirOf, t } from "./lib/i18n";
 import { SentenceSplitter, Speaker, isUnlocked, resumeAudio, unlockAudio } from "./lib/speech";
 import { startListening, type ListenSession } from "./lib/stt";
-import { db, getPref, getToken, setPref, setToken, type StoredMessage } from "./lib/store";
+import { db, getPref, setPref, type StoredMessage } from "./lib/store";
 
 const speaker = new Speaker();
+
+// No login/enrollment gate: every visitor is this one fixed anonymous identity. The value
+// only has to be a non-empty string — the backend no longer checks it at all (core/app/main.py).
+const TOKEN = "anon";
 
 type Theme = "light" | "dark";
 
 export default function App() {
-  const [token, setTok] = useState<string | null>(getToken());
+  const token = TOKEN;
   const [theme, setTheme] = useState<Theme>((getPref("theme") as Theme) || "light");
   const [lang, setLang] = useState<Lang>((getPref("lang") as Lang) || (navigator.language.startsWith("ar") ? "ar" : navigator.language.startsWith("fr") ? "fr" : "en"));
   const [videos, setVideos] = useState<Video[]>([]);
@@ -31,7 +34,6 @@ export default function App() {
   const [interim, setInterim] = useState("");
   const [sttMode, setSttMode] = useState<"server" | "browser" | null>(null);
   const [sttServer, setSttServer] = useState(false);
-  const [, setBudget] = useState<{ used: number; cap: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [videoCollapsed, setVideoCollapsed] = useState(false);
   // Whether to stream HeyGen instead of the local face. The server decides — it holds the
@@ -70,7 +72,7 @@ export default function App() {
       try {
         const m = await me(token);
         if (!alive) return;
-        setBudget(m.budget); setSttServer(m.stt); setLiveAvatarOn(!!m.avatar);
+        setSttServer(m.stt); setLiveAvatarOn(!!m.avatar);
         speaker.configure(token, m.tts || {});
         const vs = await listVideos(token);
         if (!alive) return;
@@ -80,8 +82,7 @@ export default function App() {
         setMessages(hist.length ? hist : [{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]);
       } catch (e) {
         console.error("bootstrap: /me or /videos failed —", e instanceof ApiError ? { status: e.status, code: e.code } : e);
-        if (e instanceof ApiError && e.status === 401) { setToken(null); setTok(null); }
-        else setToast(t("offline", lang));
+        setToast(t("offline", lang));
       }
     })();
     return () => { alive = false; };
@@ -186,7 +187,7 @@ export default function App() {
       // Spoken answers get a much shorter register; a muted session keeps the reading length.
       for await (const ev of chatApi(token, text, history, lang, voiceOn)) {
         if (ev.type === "meta") {
-          asst.lang = ev.lang; setLang(ev.lang); setPref("lang", ev.lang); setBudget(ev.budget); update({ lang: ev.lang });
+          asst.lang = ev.lang; setLang(ev.lang); setPref("lang", ev.lang); update({ lang: ev.lang });
         } else if (ev.type === "status") {
           setLive({ stage: ev.stage, text: ev.text, eta: ev.eta });
         } else if (ev.type === "citations") {
@@ -209,7 +210,6 @@ export default function App() {
           splitter.flush();
           asst.content = ev.answer || content; asst.source = ev.source;
           update({ content: asst.content, source: ev.source });
-          if (ev.source !== "refusal") setBudget((b) => (b ? { ...b, used: b.used + 1 } : b));
         }
       }
     } catch (e) {
@@ -290,8 +290,6 @@ export default function App() {
   const toggleVoice = () => { ensureUnlocked(); const v = !voiceOn; setVoiceOn(v); setPref("voice", v ? "on" : "off"); };
 
   useEffect(() => { if (toast) { const id = setTimeout(() => setToast(null), 5000); return () => clearTimeout(id); } }, [toast]);
-
-  if (!token) return <Login lang={lang} onLang={setLang} onToken={(tk) => { setToken(tk); setTok(tk); }} />;
 
   const engine = speaker.engineFor(lang);
   const topbar = (

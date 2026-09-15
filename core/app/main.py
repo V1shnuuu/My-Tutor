@@ -116,26 +116,16 @@ def metrics():
     return "\n".join(lines) + "\n"
 
 
-# ---------------------------------------------------------------- auth
-class RedeemIn(BaseModel):
-    code: str
-    device_id: str = Field(min_length=8, max_length=64)
-
-
-@app.post("/auth/redeem")
-def redeem(body: RedeemIn):
-    token = auth.redeem(body.code, body.device_id)
-    return {"token": token}
+# No per-student login: every visitor shares one anonymous identity for usage logging.
+# There is deliberately no enrollment-code gate any more — see git history for the JWT/
+# redeem flow this replaced (core/app/auth.py still holds the admin-token check used below;
+# create_students/redeem are now unused by the API but left for any offline/CLI use).
+ANON_ID = "anon"
 
 
 @app.get("/me")
-def me(student=auth.Student):
-    day = auth.today()
-    rows = query("SELECT messages FROM usage WHERE student_id = ? AND day = ?", (student["sub"], day))
-    used = rows[0]["messages"] if rows else 0
+def me():
     return {
-        "id": student["sub"],
-        "budget": {"used": used, "cap": settings.student_daily_cap},
         "stt": stt.budget()["available"],
         "tts": tts.availability(),
         # Whether to stream the HeyGen avatar instead of the local 2D face. The server owns
@@ -147,7 +137,7 @@ def me(student=auth.Student):
 
 # ---------------------------------------------------------------- corpus
 @app.get("/videos")
-def videos(student=auth.Student):
+def videos():
     return {"corpus_version": corpus.version, "videos": [v.__dict__ for v in corpus.videos.values()]}
 
 
@@ -160,7 +150,7 @@ def captions(video_id: str):
 
 
 @app.get("/videos/{video_id}/transcript")
-def transcript(video_id: str, student=auth.Student):
+def transcript(video_id: str):
     """Cue list for the in-app caption overlay (works with the YouTube IFrame too)."""
     path = settings.corpus_dir / "transcripts" / f"{video_id}.cues.json"
     if not path.exists():
@@ -179,26 +169,25 @@ class ChatIn(BaseModel):
 
 
 @app.post("/chat")
-async def chat(body: ChatIn, student=auth.Student):
-    budget = auth.check_fair_share(student["sub"])
-    gen = run_chat(student["sub"], body.message, body.history, body.prev_lang, budget, body.spoken)
+async def chat(body: ChatIn):
+    gen = run_chat(ANON_ID, body.message, body.history, body.prev_lang, {}, body.spoken)
     return StreamingResponse(gen, media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 # ---------------------------------------------------------------- stt
 @app.get("/stt/budget")
-def stt_budget(student=auth.Student):
+def stt_budget():
     return stt.budget()
 
 
 @app.post("/stt")
-async def stt_endpoint(file: UploadFile = File(...), lang_hint: str | None = Form(None), student=auth.Student):
+async def stt_endpoint(file: UploadFile = File(...), lang_hint: str | None = Form(None)):
     audio = await file.read()
     if len(audio) > 4_000_000:
         raise HTTPException(413, "audio_too_large")
     vocab = VOCAB_FILE.read_text(encoding="utf-8") if VOCAB_FILE.exists() else ""
     result = await stt.transcribe(audio, file.filename or "audio.webm", file.content_type or "audio/webm", lang_hint, vocab)
-    auth.bump_usage(student["sub"], stt_calls=1)
+    auth.bump_usage(ANON_ID, stt_calls=1)
     return result
 
 
@@ -209,12 +198,12 @@ class TtsIn(BaseModel):
 
 
 @app.get("/tts/voices")
-def tts_voices(student=auth.Student):
+def tts_voices():
     return tts.availability()
 
 
 @app.post("/tts")
-async def tts_endpoint(body: TtsIn, student=auth.Student):
+async def tts_endpoint(body: TtsIn):
     if not tts.available(body.lang):
         raise HTTPException(404, "no_voice")
     wav, duration = await tts.synthesize(body.text, body.lang)
@@ -232,7 +221,7 @@ def live_avatar_available():
 
 
 @app.post("/avatar/live/session")
-async def live_avatar_session(body: LiveAvatarSessionIn, student=auth.Student):
+async def live_avatar_session(body: LiveAvatarSessionIn):
     try:
         return await liveavatar.start_session(body.lang)
     except liveavatar.LiveAvatarError as e:
@@ -240,7 +229,7 @@ async def live_avatar_session(body: LiveAvatarSessionIn, student=auth.Student):
 
 
 @app.post("/avatar/live/session/{session_id}/stop")
-async def live_avatar_stop(session_id: str, student=auth.Student):
+async def live_avatar_stop(session_id: str):
     await liveavatar.stop_session(session_id)
     return {"ok": True}
 

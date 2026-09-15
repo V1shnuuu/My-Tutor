@@ -27,7 +27,7 @@ export interface Video {
 }
 
 export type ChatEvent =
-  | { type: "meta"; lang: Lang; arabizi: boolean; budget: { used: number; cap: number } }
+  | { type: "meta"; lang: Lang; arabizi: boolean }
   | { type: "status"; stage: "retrieving" | "queued" | "generating" | "cached" | "floor" | "refusal"; text?: string; eta?: number; depth?: number; provider?: string }
   | { type: "citations"; items: Citation[] }
   | { type: "token"; text: string }
@@ -63,14 +63,9 @@ async function check(r: Response): Promise<Response> {
   throw new ApiError(r.status, code);
 }
 
-export async function redeem(code: string, deviceId: string): Promise<string> {
-  const r = await check(await fetch(`${API}/auth/redeem`, { method: "POST", headers: headers(), body: JSON.stringify({ code, device_id: deviceId }) }));
-  return (await r.json()).token;
-}
-
 export async function me(token: string) {
   const r = await check(await fetch(`${API}/me`, { headers: headers(token) }));
-  return r.json() as Promise<{ id: string; budget: { used: number; cap: number }; stt: boolean; tts?: Partial<Record<Lang, boolean>>; avatar?: boolean }>;
+  return r.json() as Promise<{ stt: boolean; tts?: Partial<Record<Lang, boolean>>; avatar?: boolean }>;
 }
 
 export async function listVideos(token: string): Promise<Video[]> {
