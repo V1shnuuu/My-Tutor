@@ -160,7 +160,12 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer({ token
 
   const cue = cc ? cues.find((c) => time >= c.start && time <= c.end) : undefined;
 
-  if (!video) return <div className="video-empty">{t("no_video", lang)}</div>;
+  if (!video) return (
+    <div className="video-empty">
+      <span className="placeholder-icon" aria-hidden="true">🎬</span>
+      <span>{t("no_video", lang)}</span>
+    </div>
+  );
 
   return (
     <div className="video" tabIndex={0} onKeyDown={onKey} aria-label={video.title}>

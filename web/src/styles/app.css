@@ -231,6 +231,14 @@ button { cursor: pointer; }
 .avatar-state { position: absolute; inset-block-end: 8px; inset-inline-start: 10px; font: 500 12px/1 var(--font-mono); color: var(--ink-3); letter-spacing: .06em; text-transform: uppercase; }
 .mute-badge { position: absolute; inset-block-end: 8px; inset-inline-end: 10px; padding: 4px 10px; border-radius: 999px; background: var(--highlighter); color: var(--highlighter-ink); border: 0; font-size: 12.5px; font-weight: 600; }
 .avatar-state.danger { color: var(--danger); }
+/* Same boxed placeholder treatment as .video-empty, so a missing avatar reads as an
+   empty slot on the page rather than a caption floating with no container. */
+.avatar-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: #000; color: var(--danger); font: 500 12px/1 var(--font-mono); letter-spacing: .06em;
+  text-transform: uppercase; text-align: center; padding: 16px;
+}
+.placeholder-icon { font-size: 28px; line-height: 1; filter: grayscale(1) opacity(0.8); }
 .live-avatar video { width: 100%; height: 100%; object-fit: cover; }
 
 /* ---------------- video ---------------- */
@@ -248,7 +256,10 @@ button { cursor: pointer; }
 .video-title { padding: 4px 10px; background: var(--paper-2); font-size: 13px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid var(--rule); }
 .video-picker { position: absolute; inset-block-start: 8px; inset-inline-end: 8px; z-index: 2; }
 .video-picker select { max-width: 46vw; border: 1px solid var(--rule); background: var(--paper); border-radius: 6px; padding: 3px 6px; font-size: 12.5px; }
-.video-empty { display: grid; place-items: center; height: 100%; color: #ccc; padding: 20px; text-align: center; }
+.video-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  height: 100%; background: #000; color: #ccc; padding: 20px; text-align: center; font-size: 14px;
+}
 
 /* ---------------- chat ---------------- */
 .chat { display: grid; grid-template-rows: minmax(0, 1fr) auto auto; flex: 1; min-height: 0; }

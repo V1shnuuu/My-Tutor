@@ -73,6 +73,7 @@ export default function App() {
         if (!alive) return;
         setMessages(hist.length ? hist : [{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]);
       } catch (e) {
+        console.error("bootstrap: /me or /videos failed —", e instanceof ApiError ? { status: e.status, code: e.code } : e);
         if (e instanceof ApiError && e.status === 401) { setToken(null); setTok(null); }
         else setToast(t("offline", lang));
       }
@@ -292,8 +293,9 @@ export default function App() {
           onUnavailable={onLiveUnavailable}
         />
       ) : (
-        <div className="avatar-wrap">
-          <span className="avatar-state danger" aria-hidden="true">live avatar unavailable</span>
+        <div className="avatar-wrap avatar-empty">
+          <span className="placeholder-icon" aria-hidden="true">🧑‍🏫</span>
+          <span>live avatar unavailable</span>
         </div>
       )}
     </section>
