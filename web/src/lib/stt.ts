@@ -69,6 +69,31 @@ async function recordAndUpload(o: ListenOpts): Promise<ListenSession> {
   const chunks: Blob[] = [];
   rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
 
+  // Live captioning for the server lane: faster-whisper has no streaming/partial API, so
+  // this fakes it by re-transcribing everything captured so far every ~1.3s. Each MediaRecorder
+  // chunk is a valid continuation of the same webm/opus stream (started with rec.start(250)),
+  // so concatenating chunks[0..n] from the start is a decodable growing clip. Guarded so a
+  // slow decode never queues a second one behind it — the next tick just reuses the latest
+  // chunks once the in-flight call returns instead of piling up.
+  let partialBusy = false;
+  let partialTimer: number | undefined;
+  const partialTick = () => {
+    partialTimer = window.setTimeout(async () => {
+      if (stopped) return;
+      if (partialBusy || chunks.length < 2) { partialTick(); return; }
+      partialBusy = true;
+      try {
+        const blob = new Blob(chunks, { type: mime || "audio/webm" });
+        if (blob.size >= 4000) {
+          const r = await sttApi(o.token, blob, o.langHint);
+          if (!stopped && r.text.trim()) o.onInterim(r.text.trim());
+        }
+      } catch { /* a failed partial just means no caption update this tick — not fatal */ }
+      partialBusy = false;
+      if (!stopped) partialTick();
+    }, 1300);
+  };
+
   // Simple energy VAD: stop 1.1 s after speech ends (Arabic speakers pause longer than English).
   const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
   const src = ctx.createMediaStreamSource(stream);
@@ -106,6 +131,7 @@ async function recordAndUpload(o: ListenOpts): Promise<ListenSession> {
 
   const cleanup = () => {
     stopped = true;
+    if (partialTimer) clearTimeout(partialTimer);
     stream.getTracks().forEach((t) => t.stop());
     void ctx.close();
   };
@@ -136,6 +162,7 @@ async function recordAndUpload(o: ListenOpts): Promise<ListenSession> {
   };
   rec.start(250);
   requestAnimationFrame(tick);
+  partialTick();
   return { stop, cancel };
 }
 

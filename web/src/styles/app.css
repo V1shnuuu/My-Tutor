@@ -238,7 +238,12 @@ button { cursor: pointer; }
 .avatar-state.speaking { color: var(--accent); }
 .mute-badge { position: absolute; inset-block-end: 8px; inset-inline-end: 10px; padding: 4px 10px; border-radius: 999px; background: var(--highlighter); color: var(--highlighter-ink); border: 0; font-size: 12.5px; font-weight: 600; }
 .avatar-state.danger { color: var(--danger); }
-.live-avatar video { width: 100%; height: 100%; object-fit: cover; }
+/* Both slots share the same cell so the pre-warmed replacement can cross-fade in without
+   reflow; only the active one is opaque and interactive. */
+.live-avatar { position: relative; }
+.live-avatar video { grid-area: 1 / 1; width: 100%; height: 100%; object-fit: cover; transition: opacity .25s ease; }
+.live-avatar video.off { opacity: 0; pointer-events: none; }
+.live-avatar video.on { opacity: 1; }
 
 /* ---------------- video ---------------- */
 .video { display: grid; grid-template-rows: minmax(0, 1fr) auto; height: 100%; background: #000; }

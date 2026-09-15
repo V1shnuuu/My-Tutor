@@ -39,6 +39,8 @@ const S = {
     en: "Voice needs the server lane: this browser has no speech recognition. Install faster-whisper in core.",
     fr: "La voix passe par le serveur : ce navigateur n'a pas de reconnaissance vocale. Installe faster-whisper dans core.",
   },
+  theme_light: { ar: "☀️ فاتح", en: "☀️ Light", fr: "☀️ Clair" },
+  theme_dark: { ar: "🌙 غامق", en: "🌙 Dark", fr: "🌙 Sombre" },
   curriculum: { ar: "المنهج", en: "Lessons", fr: "Leçons" },
   curriculum_empty: {
     ar: "مفيش محاضرات لسه. شغّل add_videos.py وبعدها ingest.py.",
