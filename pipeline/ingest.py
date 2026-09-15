@@ -198,6 +198,24 @@ def write_vtt(cues: list[dict], path: Path) -> None:
     path.write_text("\n".join(lines), encoding="utf-8", newline="\n")
 
 
+# Every MIT OpenCourseWare recording opens with the same ~15s spoken donation notice,
+# verbatim, before the lecture starts. Left in, it becomes a near-duplicate chunk across
+# every OCW video in the corpus — bm25 tokenizes it identically everywhere, so a query
+# that IS that chunk's own text can tie (or lose) against another video's copy of the
+# same notice instead of matching itself, corrupting citations project-wide. Cut it by
+# signature rather than by a fixed clip length, since durations vary a little per video.
+_OCW_BOILERPLATE_SIGNATURE = ("creative commons license", "opencourseware")
+
+
+def strip_ocw_boilerplate(cues: list[dict]) -> list[dict]:
+    cut = 0
+    for i, c in enumerate(cues[:12]):
+        low = c["text"].lower()
+        if any(sig in low for sig in _OCW_BOILERPLATE_SIGNATURE):
+            cut = i + 1
+    return cues[cut:] if cut else cues
+
+
 # ------------------------------------------------------------------ chunking
 def chunk_cues(cues: list[dict], video_id: str) -> list[dict]:
     """Time-windowed chunks (~60 s, 30–90 s) aligned to cue boundaries with ~15 s overlap.
@@ -278,7 +296,7 @@ def ingest_video(v: dict, vocab: str, force: bool) -> bool:
 
     write_vtt(cues, tr / f"{vid}.vtt")
     (tr / f"{vid}.cues.json").write_text(json.dumps(cues, ensure_ascii=False), encoding="utf-8")
-    chunks = chunk_cues(cues, vid)
+    chunks = chunk_cues(strip_ocw_boilerplate(cues), vid)
     from app.embed import embed_passages
 
     vecs = embed_passages([c["text"] for c in chunks])
