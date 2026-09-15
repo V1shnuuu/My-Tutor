@@ -1,0 +1,4033 @@
+WEBVTT
+
+00:00:01.870 --> 00:00:04.640
+The following content is provided under a Creative Commons License. Your support
+
+00:00:04.640 --> 00:00:06.920
+a Creative Commons License. Your support will help MIT OpenCourseware continue to
+
+00:00:06.920 --> 00:00:09.280
+will help MIT OpenCourseware continue to offer high-quality educational resources
+
+00:00:09.280 --> 00:00:10.560
+offer high-quality educational resources for free.
+
+00:00:10.560 --> 00:00:12.720
+for free. To make a donation or view additional
+
+00:00:12.720 --> 00:00:15.360
+To make a donation or view additional materials from hundreds of MIT courses,
+
+00:00:15.360 --> 00:00:21.630
+materials from hundreds of MIT courses, visit MIT OpenCourseware at ocw.mit.edu.
+
+00:00:23.590 --> 00:00:25.800
+Okay, then let's start with problems and as we find pro as we find concept
+
+00:00:25.800 --> 00:00:29.400
+as we find pro as we find concept issues, we'll get to concept issues.
+
+00:00:29.400 --> 00:00:30.920
+issues, we'll get to concept issues. So, we talked about shortest path, but
+
+00:00:30.920 --> 00:00:33.520
+So, we talked about shortest path, but we talked about shortest paths in a
+
+00:00:33.520 --> 00:00:35.680
+we talked about shortest paths in a very odd way, right? I'm a coder, so for
+
+00:00:35.680 --> 00:00:37.760
+very odd way, right? I'm a coder, so for me I'm used to All right, I go to one of
+
+00:00:37.760 --> 00:00:39.200
+me I'm used to All right, I go to one of these lectures,
+
+00:00:39.200 --> 00:00:41.120
+these lectures, I hear a problem, then I get out of the
+
+00:00:41.120 --> 00:00:42.920
+I hear a problem, then I get out of the lecture with an algorithm and a running
+
+00:00:42.920 --> 00:00:44.320
+lecture with an algorithm and a running time, right?
+
+00:00:44.320 --> 00:00:46.040
+time, right? This time we got out of the lecture with
+
+00:00:46.040 --> 00:00:47.960
+This time we got out of the lecture with no algorithm and no running time. So,
+
+00:00:47.960 --> 00:00:49.480
+no algorithm and no running time. So, what's the point?
+
+00:00:49.480 --> 00:00:50.840
+what's the point? The point is that we learned some
+
+00:00:50.840 --> 00:00:53.920
+The point is that we learned some analysis tricks that we can use for any
+
+00:00:53.920 --> 00:00:56.000
+analysis tricks that we can use for any shortest path algorithm. And the
+
+00:00:56.000 --> 00:00:57.720
+shortest path algorithm. And the advantage of knowing that, by the way,
+
+00:00:57.720 --> 00:00:59.440
+advantage of knowing that, by the way, it's really easy to forget, at least
+
+00:00:59.440 --> 00:01:01.760
+it's really easy to forget, at least until you see the first real algorithms.
+
+00:01:01.760 --> 00:01:03.520
+until you see the first real algorithms. If you know that, if you have to modify
+
+00:01:03.520 --> 00:01:05.120
+If you know that, if you have to modify an algorithm,
+
+00:01:05.120 --> 00:01:06.760
+an algorithm, you can still use the same analysis to
+
+00:01:06.760 --> 00:01:08.080
+you can still use the same analysis to prove that your new algorithm is going
+
+00:01:08.080 --> 00:01:09.560
+prove that your new algorithm is going to be correct and that is going to be
+
+00:01:09.560 --> 00:01:10.680
+to be correct and that is going to be fast.
+
+00:01:10.680 --> 00:01:12.480
+fast. So, they're really nice tools to have,
+
+00:01:12.480 --> 00:01:14.560
+So, they're really nice tools to have, especially if you have to do that on a
+
+00:01:14.560 --> 00:01:16.960
+especially if you have to do that on a problem set or on an interview or who
+
+00:01:16.960 --> 00:01:18.880
+problem set or on an interview or who knows, maybe even on a quiz.
+
+00:01:18.880 --> 00:01:19.920
+knows, maybe even on a quiz. So,
+
+00:01:19.920 --> 00:01:21.760
+So, we'll see if that happens or not.
+
+00:01:21.760 --> 00:01:23.040
+we'll see if that happens or not. So, we didn't talk about any shortest
+
+00:01:23.040 --> 00:01:25.560
+So, we didn't talk about any shortest path algorithms. So, we're not going to
+
+00:01:25.560 --> 00:01:27.040
+path algorithms. So, we're not going to assume shortest path algorithms.
+
+00:01:27.040 --> 00:01:29.440
+assume shortest path algorithms. Instead, we're going to use them as if
+
+00:01:29.440 --> 00:01:32.390
+Instead, we're going to use them as if we had them.
+
+00:01:34.390 --> 00:01:35.760
+No, wait. I don't like that. Uh that's kind of annoying. Let's Let's not do
+
+00:01:35.760 --> 00:01:37.440
+kind of annoying. Let's Let's not do that. Let's do something else.
+
+00:01:37.440 --> 00:01:38.760
+that. Let's do something else. We didn't talk about the shortest path
+
+00:01:38.760 --> 00:01:40.400
+We didn't talk about the shortest path algorithm in lecture. Let's build one
+
+00:01:40.400 --> 00:01:41.480
+algorithm in lecture. Let's build one right now.
+
+00:01:41.480 --> 00:01:42.840
+right now. How about that?
+
+00:01:42.840 --> 00:01:45.120
+How about that? Let's start with a graph.
+
+00:01:45.120 --> 00:01:52.710
+Let's start with a graph. Vertices and edges, right?
+
+00:02:18.350 --> 00:02:22.600
+Okay, so suppose we have a graph. We have V vertices, E edges,
+
+00:02:22.600 --> 00:02:25.840
+have V vertices, E edges, and all the edges have a weight that's
+
+00:02:25.840 --> 00:02:28.120
+and all the edges have a weight that's non-negative. Sorry, that's Let's make
+
+00:02:28.120 --> 00:02:31.200
+non-negative. Sorry, that's Let's make it positive just to make things easy.
+
+00:02:31.200 --> 00:02:33.880
+it positive just to make things easy. It's smaller than W, so it's not too
+
+00:02:33.880 --> 00:02:35.400
+It's smaller than W, so it's not too big.
+
+00:02:35.400 --> 00:02:38.320
+big. And they're all integers.
+
+00:02:38.320 --> 00:02:42.590
+And they're all integers. Go.
+
+00:02:44.390 --> 00:02:46.240
+There's brute force. There's brute force, okay.
+
+00:02:46.240 --> 00:02:47.360
+There's brute force, okay. So, brute force would mean what?
+
+00:02:47.360 --> 00:02:49.400
+So, brute force would mean what? Enumerate all the paths?
+
+00:02:49.400 --> 00:02:50.440
+Enumerate all the paths? Okay.
+
+00:02:50.440 --> 00:02:52.000
+Okay. Uh let's go for something a little bit
+
+00:02:52.000 --> 00:02:56.070
+Uh let's go for something a little bit better.
+
+00:02:59.030 --> 00:03:02.720
+Does anyone remember the algorithm that was taught in class? The structure? No.
+
+00:03:02.720 --> 00:03:05.560
+was taught in class? The structure? No. So, class mentioned Dijkstra and
+
+00:03:05.560 --> 00:03:08.400
+So, class mentioned Dijkstra and mentioned Bellman-Ford.
+
+00:03:08.400 --> 00:03:14.230
+mentioned Bellman-Ford. Let's write them up here.
+
+00:03:16.590 --> 00:03:18.480
+Bellman-Ford. And it gave us the running times, which we'll try to remember in a
+
+00:03:18.480 --> 00:03:20.960
+times, which we'll try to remember in a bit, but we don't know the algorithms.
+
+00:03:20.960 --> 00:03:23.240
+bit, but we don't know the algorithms. So,
+
+00:03:23.240 --> 00:03:26.920
+So, no Dijkstra, no Bellman-Ford for us.
+
+00:03:26.920 --> 00:03:29.680
+no Dijkstra, no Bellman-Ford for us. What do we know?
+
+00:03:29.680 --> 00:03:32.120
+What do we know? Let's start with a simpler case. What if
+
+00:03:32.120 --> 00:03:33.760
+Let's start with a simpler case. What if there were no weights here? What if the
+
+00:03:33.760 --> 00:03:38.230
+there were no weights here? What if the graph looked like this?
+
+00:03:50.950 --> 00:03:52.920
+Like this. No cost. All the edges have the same
+
+00:03:52.920 --> 00:03:54.560
+No cost. All the edges have the same cost.
+
+00:03:54.560 --> 00:03:58.630
+cost. What would we do to solve the problem?
+
+00:04:01.870 --> 00:04:08.030
+Say we want the shortest path from A to E.
+
+00:04:10.190 --> 00:04:14.270
+BFS? How's everyone feeling about BFS?
+
+00:04:21.349 --> 00:04:23.240
+How do you run BFS? Take a starting node and then you search
+
+00:04:23.240 --> 00:04:25.800
+Take a starting node and then you search all of its neighbors. Okay, so take a
+
+00:04:25.800 --> 00:04:27.480
+all of its neighbors. Okay, so take a starting node.
+
+00:04:27.480 --> 00:04:31.720
+starting node. Then look at its neighbors. And then you
+
+00:04:31.720 --> 00:04:33.120
+Then look at its neighbors. And then you iterate through each of its neighbors to
+
+00:04:33.120 --> 00:04:35.400
+iterate through each of its neighbors to find its neighbors and
+
+00:04:35.400 --> 00:04:36.840
+find its neighbors and so forth.
+
+00:04:36.840 --> 00:04:39.560
+so forth. Sounds an awful lot like DFS. What's the
+
+00:04:39.560 --> 00:04:41.960
+Sounds an awful lot like DFS. What's the difference between them? Well, um you go
+
+00:04:41.960 --> 00:04:44.160
+difference between them? Well, um you go through all of A's neighbors before you
+
+00:04:44.160 --> 00:04:45.760
+through all of A's neighbors before you start going through any of it. I mean,
+
+00:04:45.760 --> 00:04:47.120
+start going through any of it. I mean, you go through all of A's neighbors
+
+00:04:47.120 --> 00:04:48.120
+you go through all of A's neighbors before you take a neighbor and go
+
+00:04:48.120 --> 00:04:50.080
+before you take a neighbor and go through all of its neighbors. Okay,
+
+00:04:50.080 --> 00:04:52.120
+through all of its neighbors. Okay, that's the difference. And it makes a
+
+00:04:52.120 --> 00:04:53.480
+that's the difference. And it makes a huge difference as we've seen in
+
+00:04:53.480 --> 00:04:55.400
+huge difference as we've seen in topological sorting last time.
+
+00:04:55.400 --> 00:04:58.280
+topological sorting last time. So, we have a list and we're going to
+
+00:04:58.280 --> 00:04:59.760
+So, we have a list and we're going to use it to keep track of the nodes that
+
+00:04:59.760 --> 00:05:02.680
+use it to keep track of the nodes that we need to visit. We start with A.
+
+00:05:02.680 --> 00:05:05.400
+we need to visit. We start with A. We enumerate all of A's neighbors
+
+00:05:05.400 --> 00:05:07.400
+We enumerate all of A's neighbors and the ones that haven't see haven't
+
+00:05:07.400 --> 00:05:09.440
+and the ones that haven't see haven't been seen get stuck at the end of the
+
+00:05:09.440 --> 00:05:10.440
+been seen get stuck at the end of the list.
+
+00:05:10.440 --> 00:05:13.880
+list. A B C. A is out of the list. Then we
+
+00:05:13.880 --> 00:05:17.560
+A B C. A is out of the list. Then we take out the first node from the list,
+
+00:05:17.560 --> 00:05:19.160
+take out the first node from the list, B in this case.
+
+00:05:19.160 --> 00:05:23.200
+B in this case. We enumerate all its neighbors, A C D E.
+
+00:05:23.200 --> 00:05:24.960
+We enumerate all its neighbors, A C D E. Out of all these, we take the neighbors
+
+00:05:24.960 --> 00:05:26.880
+Out of all these, we take the neighbors that we haven't seen and we put them at
+
+00:05:26.880 --> 00:05:31.230
+that we haven't seen and we put them at the end of the list.
+
+00:05:33.390 --> 00:05:35.040
+Took out B. We take out C, we look at all its neighbors, we've seen them. We
+
+00:05:35.040 --> 00:05:36.320
+all its neighbors, we've seen them. We take out D, we look at all its
+
+00:05:36.320 --> 00:05:37.760
+take out D, we look at all its neighbors, we've seen them. We take out
+
+00:05:37.760 --> 00:05:39.040
+neighbors, we've seen them. We take out E, we look at all its neighbors, we've
+
+00:05:39.040 --> 00:05:39.960
+E, we look at all its neighbors, we've seen them.
+
+00:05:39.960 --> 00:05:42.880
+seen them. So, this is BFS.
+
+00:05:42.880 --> 00:05:45.320
+So, this is BFS. BFS has this concept of levels. And
+
+00:05:45.320 --> 00:05:47.360
+BFS has this concept of levels. And another way to look at levels is if you
+
+00:05:47.360 --> 00:05:48.800
+another way to look at levels is if you start at A
+
+00:05:48.800 --> 00:05:52.600
+start at A and you draw a circle of radius one,
+
+00:05:52.600 --> 00:05:54.240
+and you draw a circle of radius one, it's going to have all the nodes that
+
+00:05:54.240 --> 00:05:55.920
+it's going to have all the nodes that are a distance one from A, right?
+
+00:05:55.920 --> 00:05:58.000
+are a distance one from A, right? Exactly one edge.
+
+00:05:58.000 --> 00:06:01.680
+Exactly one edge. Then you draw a circle of radius two
+
+00:06:01.680 --> 00:06:03.440
+Then you draw a circle of radius two and you get all the nodes that you can
+
+00:06:03.440 --> 00:06:06.440
+and you get all the nodes that you can reach in two edges.
+
+00:06:06.440 --> 00:06:10.320
+reach in two edges. And BFS calls these circles levels.
+
+00:06:10.320 --> 00:06:12.800
+And BFS calls these circles levels. So, A is at level zero, this is level
+
+00:06:12.800 --> 00:06:15.200
+So, A is at level zero, this is level one, this is level two.
+
+00:06:15.200 --> 00:06:17.000
+one, this is level two. And if you look at this list and you
+
+00:06:17.000 --> 00:06:20.680
+And if you look at this list and you write down the levels, you have 0 1 1 2
+
+00:06:20.680 --> 00:06:21.760
+write down the levels, you have 0 1 1 2 2.
+
+00:06:21.760 --> 00:06:26.470
+2. If you add another node out here, say F,
+
+00:06:29.790 --> 00:06:31.200
+this would be discovered when we get to E.
+
+00:06:31.200 --> 00:06:32.840
+E. So, it would go all the way here at the
+
+00:06:32.840 --> 00:06:35.360
+So, it would go all the way here at the end and this is level three. So, in BFS
+
+00:06:35.360 --> 00:06:38.200
+end and this is level three. So, in BFS the levels are always increasing.
+
+00:06:38.200 --> 00:06:39.480
+the levels are always increasing. So, if you keep track of parent
+
+00:06:39.480 --> 00:06:40.840
+So, if you keep track of parent pointers,
+
+00:06:40.840 --> 00:06:43.400
+pointers, the parent pointer of a node at some
+
+00:06:43.400 --> 00:06:45.280
+the parent pointer of a node at some level will always point to a node at the
+
+00:06:45.280 --> 00:06:47.320
+level will always point to a node at the previous level.
+
+00:06:47.320 --> 00:06:50.160
+previous level. So, in BFS we get the shortest paths in
+
+00:06:50.160 --> 00:06:55.190
+So, in BFS we get the shortest paths in terms of edge count.
+
+00:06:56.270 --> 00:06:57.840
+Make sense? This is recall, right? It's not new
+
+00:06:57.840 --> 00:07:01.000
+This is recall, right? It's not new stuff. Everyone happy with it?
+
+00:07:01.000 --> 00:07:02.800
+stuff. Everyone happy with it? So, if we wouldn't have costs, we could
+
+00:07:02.800 --> 00:07:06.640
+So, if we wouldn't have costs, we could use BFS to compute shortest paths.
+
+00:07:06.640 --> 00:07:09.560
+use BFS to compute shortest paths. But we have costs. How do we How do we
+
+00:07:09.560 --> 00:07:12.040
+But we have costs. How do we How do we deal with that?
+
+00:07:12.040 --> 00:07:14.640
+deal with that? Intuitively, I'd like to make BFS
+
+00:07:14.640 --> 00:07:16.920
+Intuitively, I'd like to make BFS go across this edge faster than it would
+
+00:07:16.920 --> 00:07:19.120
+go across this edge faster than it would go across this edge.
+
+00:07:19.120 --> 00:07:20.640
+go across this edge. Right? If I could do that, if this guy
+
+00:07:20.640 --> 00:07:22.440
+Right? If I could do that, if this guy could get stuck in the queue before this
+
+00:07:22.440 --> 00:07:24.440
+could get stuck in the queue before this guy, I would be happy.
+
+00:07:24.440 --> 00:07:25.880
+guy, I would be happy. So, intuitively, that's what I'd like to
+
+00:07:25.880 --> 00:07:27.000
+So, intuitively, that's what I'd like to do.
+
+00:07:27.000 --> 00:07:29.840
+do. How do we do that?
+
+00:07:29.840 --> 00:07:32.870
+How do we do that? Sort it before adding.
+
+00:07:33.590 --> 00:07:35.720
+Sort? Sort your neighbors' weights.
+
+00:07:35.720 --> 00:07:38.920
+Sort your neighbors' weights. Sort? Okay. So,
+
+00:07:38.920 --> 00:07:40.360
+Sort? Okay. So, What if you kept track of an adjacency
+
+00:07:40.360 --> 00:07:42.120
+What if you kept track of an adjacency list?
+
+00:07:42.120 --> 00:07:43.720
+list? Keep track of your
+
+00:07:43.720 --> 00:07:46.480
+Keep track of your queue as a priority queue.
+
+00:07:46.480 --> 00:07:47.960
+queue as a priority queue. Congratulations, you deserve a Turing
+
+00:07:47.960 --> 00:07:53.070
+Congratulations, you deserve a Turing Award. You have discovered Dijkstra.
+
+00:07:55.110 --> 00:07:56.840
+Okay, let's go for something simpler. So, what you just said is Dijkstra. You
+
+00:07:56.840 --> 00:07:58.080
+So, what you just said is Dijkstra. You We'll talk about it in lecture on
+
+00:07:58.080 --> 00:07:59.240
+We'll talk about it in lecture on Tuesday.
+
+00:07:59.240 --> 00:08:02.470
+Tuesday. Very good.
+
+00:08:04.550 --> 00:08:07.040
+I can have an adjacency list and I think using what you said, um
+
+00:08:07.040 --> 00:08:09.120
+using what you said, um just sort it. So,
+
+00:08:09.120 --> 00:08:11.120
+just sort it. So, by cost. I mean, Okay, so let's see how
+
+00:08:11.120 --> 00:08:15.280
+by cost. I mean, Okay, so let's see how this would work. So, we have A
+
+00:08:15.280 --> 00:08:18.600
+this would work. So, we have A and we're pulling A out of the list and
+
+00:08:18.600 --> 00:08:21.200
+and we're pulling A out of the list and we see its neighbors are C and B,
+
+00:08:21.200 --> 00:08:22.160
+we see its neighbors are C and B, right?
+
+00:08:22.160 --> 00:08:24.080
+right? The distance to C is two, the distance
+
+00:08:24.080 --> 00:08:25.600
+The distance to C is two, the distance to B is four.
+
+00:08:25.600 --> 00:08:28.790
+to B is four. So, we start with A.
+
+00:08:30.190 --> 00:08:32.680
+So, does this mean that I'm going to put in B before C? And then So, I'm going to
+
+00:08:32.680 --> 00:08:34.479
+in B before C? And then So, I'm going to put in C and then B?
+
+00:08:34.479 --> 00:08:35.599
+put in C and then B? Well, I mean,
+
+00:08:35.599 --> 00:08:37.120
+Well, I mean, it doesn't really matter. You just at
+
+00:08:37.120 --> 00:08:39.120
+it doesn't really matter. You just at the end you just sort.
+
+00:08:39.120 --> 00:08:40.880
+the end you just sort. I guess you could add the
+
+00:08:40.880 --> 00:08:43.520
+I guess you could add the costs, like associate the cost of B with
+
+00:08:43.520 --> 00:08:45.360
+costs, like associate the cost of B with four and C with two
+
+00:08:45.360 --> 00:08:48.080
+four and C with two within your adjacency list.
+
+00:08:48.080 --> 00:08:49.680
+within your adjacency list. Okay, so that's how we would keep track
+
+00:08:49.680 --> 00:08:51.600
+Okay, so that's how we would keep track of costs, right? One way. For the key
+
+00:08:51.600 --> 00:08:53.040
+of costs, right? One way. For the key would be A and then the value would be
+
+00:08:53.040 --> 00:08:55.320
+would be A and then the value would be like a tuple of B and its cost and then
+
+00:08:55.320 --> 00:08:57.520
+like a tuple of B and its cost and then a tuple of C and its cost.
+
+00:08:57.520 --> 00:08:59.480
+a tuple of C and its cost. Okay, so you're saying that what I would
+
+00:08:59.480 --> 00:09:01.840
+Okay, so you're saying that what I would have in this list is
+
+00:09:01.840 --> 00:09:04.880
+have in this list is B with a cost of four
+
+00:09:04.880 --> 00:09:08.040
+B with a cost of four and C with a cost of
+
+00:09:08.040 --> 00:09:09.360
+and C with a cost of two?
+
+00:09:09.360 --> 00:09:11.440
+two? Presumably in the other
+
+00:09:11.440 --> 00:09:20.750
+Presumably in the other other way around, right? C goes first.
+
+00:09:22.310 --> 00:09:23.880
+Like this? And then I take out C, I explore the
+
+00:09:23.880 --> 00:09:26.280
+And then I take out C, I explore the neighbors so on and so forth?
+
+00:09:26.280 --> 00:09:27.920
+neighbors so on and so forth? The moment I did this, I already lost
+
+00:09:27.920 --> 00:09:31.590
+The moment I did this, I already lost the battle because
+
+00:09:33.430 --> 00:09:36.680
+See this path? Uh ACB, length three.
+
+00:09:36.680 --> 00:09:38.760
+Uh ACB, length three. If I put both of them in the queue, then
+
+00:09:38.760 --> 00:09:40.240
+If I put both of them in the queue, then the parent pointers are going to look
+
+00:09:40.240 --> 00:09:41.640
+the parent pointers are going to look like this.
+
+00:09:41.640 --> 00:09:43.600
+like this. So, I already have a bad path from B to
+
+00:09:43.600 --> 00:09:46.760
+So, I already have a bad path from B to A. Okay, well don't add that node then.
+
+00:09:46.760 --> 00:09:49.360
+A. Okay, well don't add that node then. Okay, then how How do we do it? Um
+
+00:09:49.360 --> 00:09:50.440
+Okay, then how How do we do it? Um I guess
+
+00:09:50.440 --> 00:09:52.320
+I guess Well, you can you can talk to each of
+
+00:09:52.320 --> 00:09:54.080
+Well, you can you can talk to each of them and see which one's lower and then
+
+00:09:54.080 --> 00:09:56.440
+them and see which one's lower and then only add that one if it's the lowest.
+
+00:09:56.440 --> 00:09:57.480
+only add that one if it's the lowest. And then you keep it So, it's more like
+
+00:09:57.480 --> 00:09:59.040
+And then you keep it So, it's more like depth-first search then. Well, you two
+
+00:09:59.040 --> 00:10:00.800
+depth-first search then. Well, you two need to talk together because that you
+
+00:10:00.800 --> 00:10:02.640
+need to talk together because that you you're getting to Dijkstra, too. You're
+
+00:10:02.640 --> 00:10:03.680
+you're getting to Dijkstra, too. You're You're both going to rediscover
+
+00:10:03.680 --> 00:10:04.760
+You're both going to rediscover Dijkstra.
+
+00:10:04.760 --> 00:10:06.120
+Dijkstra. So,
+
+00:10:06.120 --> 00:10:07.920
+So, so that's great, but I'm looking for
+
+00:10:07.920 --> 00:10:10.240
+so that's great, but I'm looking for something simple. So, this is too
+
+00:10:10.240 --> 00:10:11.480
+something simple. So, this is too complicated. If you're If you're going
+
+00:10:11.480 --> 00:10:12.960
+complicated. If you're If you're going to do Dijkstra now, then what are we
+
+00:10:12.960 --> 00:10:14.840
+to do Dijkstra now, then what are we going to do on lecture on Tuesday?
+
+00:10:14.840 --> 00:10:17.910
+going to do on lecture on Tuesday? More Dijkstra problems?
+
+00:10:19.470 --> 00:10:21.160
+Well, I I think Srini wants to talk about Dijkstra, so let's not get there.
+
+00:10:21.160 --> 00:10:22.480
+about Dijkstra, so let's not get there. Wait, how do you do this without doing
+
+00:10:22.480 --> 00:10:24.840
+Wait, how do you do this without doing Dijkstra?
+
+00:10:24.840 --> 00:10:29.910
+Dijkstra? That That's exactly what I want to know.
+
+00:10:31.790 --> 00:10:33.240
+So, let me give you another hint. So, the first hint was that I want to go
+
+00:10:33.240 --> 00:10:34.760
+the first hint was that I want to go through this edge faster than I would go
+
+00:10:34.760 --> 00:10:36.320
+through this edge faster than I would go through this edge.
+
+00:10:36.320 --> 00:10:37.800
+through this edge. The other hint is that we're allowed to
+
+00:10:37.800 --> 00:10:40.440
+The other hint is that we're allowed to change the graph.
+
+00:10:40.440 --> 00:10:42.280
+change the graph. So, I mean, for each node I mean, is
+
+00:10:42.280 --> 00:10:43.240
+So, I mean, for each node I mean, is this what we were talking about in
+
+00:10:43.240 --> 00:10:44.600
+this what we were talking about in lecture, or are you thinking of
+
+00:10:44.600 --> 00:10:46.640
+lecture, or are you thinking of something else? What uh
+
+00:10:46.640 --> 00:10:48.320
+something else? What uh He might have uh talked about that at
+
+00:10:48.320 --> 00:10:51.390
+He might have uh talked about that at the end of lecture.
+
+00:10:53.710 --> 00:10:55.200
+I mean, where where you're putting the current weight
+
+00:10:55.200 --> 00:10:56.520
+the current weight for each node
+
+00:10:56.520 --> 00:10:58.240
+for each node inside the circles.
+
+00:10:58.240 --> 00:11:01.320
+inside the circles. No. Oh, okay.
+
+00:11:01.320 --> 00:11:03.200
+No. Oh, okay. You could add it, and then just if you
+
+00:11:03.200 --> 00:11:05.600
+You could add it, and then just if you find a better path to B,
+
+00:11:05.600 --> 00:11:07.320
+find a better path to B, if you're always relative to A, then you
+
+00:11:07.320 --> 00:11:09.680
+if you're always relative to A, then you could just delete that path.
+
+00:11:09.680 --> 00:11:10.880
+could just delete that path. It'd be a four.
+
+00:11:10.880 --> 00:11:12.240
+It'd be a four. So, at the beginning add them all, but
+
+00:11:12.240 --> 00:11:14.280
+So, at the beginning add them all, but then You're risking to have exponential
+
+00:11:14.280 --> 00:11:18.550
+then You're risking to have exponential running time.
+
+00:11:20.310 --> 00:11:22.280
+Those are all valid optimizations under some constraints. Like, this one's good
+
+00:11:22.280 --> 00:11:23.640
+some constraints. Like, this one's good if you're willing if you don't have too
+
+00:11:23.640 --> 00:11:27.480
+if you're willing if you don't have too much memory, but the time goes up.
+
+00:11:27.480 --> 00:11:29.880
+much memory, but the time goes up. So, I want my graph to have edges with
+
+00:11:29.880 --> 00:11:32.920
+So, I want my graph to have edges with no costs. If If I have costs, this is
+
+00:11:32.920 --> 00:11:34.960
+no costs. If If I have costs, this is not going to work. BFS is not going to
+
+00:11:34.960 --> 00:11:36.880
+not going to work. BFS is not going to work.
+
+00:11:36.880 --> 00:11:38.640
+work. We can't tweak it. If we could tweak it,
+
+00:11:38.640 --> 00:11:41.080
+We can't tweak it. If we could tweak it, then that would be another Turing award.
+
+00:11:41.080 --> 00:11:42.920
+then that would be another Turing award. So, like create dummy nodes?
+
+00:11:42.920 --> 00:11:47.070
+So, like create dummy nodes? Create dummy nodes? How do I do that?
+
+00:11:49.670 --> 00:11:56.470
+Put a dummy node in between A and C. Okay. Why am I doing this?
+
+00:11:58.190 --> 00:11:59.640
+So, now I have two edges, and they have costs.
+
+00:11:59.640 --> 00:12:00.560
+costs. One.
+
+00:12:00.560 --> 00:12:01.960
+One. Then you put three nodes in between A
+
+00:12:01.960 --> 00:12:03.280
+Then you put three nodes in between A and B.
+
+00:12:03.280 --> 00:12:04.560
+and B. Okay.
+
+00:12:04.560 --> 00:12:07.040
+Okay. Or yeah, three.
+
+00:12:07.040 --> 00:12:10.920
+Or yeah, three. And now here I have four edges, right?
+
+00:12:10.920 --> 00:12:13.440
+And now here I have four edges, right? One, one, one, one. There was a four
+
+00:12:13.440 --> 00:12:15.240
+One, one, one, one. There was a four here before, and there was a two here
+
+00:12:15.240 --> 00:12:17.910
+here before, and there was a two here before.
+
+00:12:19.870 --> 00:12:22.920
+Do you guys see what's happening? So, instead of one edge of cost C, I
+
+00:12:22.920 --> 00:12:25.600
+So, instead of one edge of cost C, I have C edges. So, now BFS is going to
+
+00:12:25.600 --> 00:12:28.200
+have C edges. So, now BFS is going to take C steps
+
+00:12:28.200 --> 00:12:30.920
+take C steps to go through that edge.
+
+00:12:30.920 --> 00:12:32.360
+to go through that edge. And all the edges now have the same
+
+00:12:32.360 --> 00:12:34.280
+And all the edges now have the same cost. So, this looks like a problem that
+
+00:12:34.280 --> 00:12:36.200
+cost. So, this looks like a problem that BFS can solve. We know it can solve. We
+
+00:12:36.200 --> 00:12:38.680
+BFS can solve. We know it can solve. We proved that it can solve it. Well, CLRS
+
+00:12:38.680 --> 00:12:40.640
+proved that it can solve it. Well, CLRS did. We take their word for granted,
+
+00:12:40.640 --> 00:12:42.440
+did. We take their word for granted, sort of.
+
+00:12:42.440 --> 00:12:45.070
+sort of. So,
+
+00:12:46.990 --> 00:12:48.360
+this works, right? Is everyone happy with it? Does it make
+
+00:12:48.360 --> 00:12:49.800
+Is everyone happy with it? Does it make sense?
+
+00:12:49.800 --> 00:12:51.640
+sense? So, basically you get to You get to B
+
+00:12:51.640 --> 00:12:53.400
+So, basically you get to You get to B before you ever get
+
+00:12:53.400 --> 00:12:55.760
+before you ever get to I mean, through C before you'll get
+
+00:12:55.760 --> 00:12:57.920
+to I mean, through C before you'll get to B. You'll get in the path. Yep. So,
+
+00:12:57.920 --> 00:12:59.880
+to B. You'll get in the path. Yep. So, this is a path of length three. So, this
+
+00:12:59.880 --> 00:13:02.560
+this is a path of length three. So, this node is going to get in the queue first,
+
+00:13:02.560 --> 00:13:04.880
+node is going to get in the queue first, then this node, then these two nodes.
+
+00:13:04.880 --> 00:13:06.080
+then this node, then these two nodes. And they're going to get in the queue
+
+00:13:06.080 --> 00:13:08.990
+And they're going to get in the queue from C.
+
+00:13:12.430 --> 00:13:14.480
+So, let's see what happened here. So, this is really important because this is
+
+00:13:14.480 --> 00:13:15.880
+this is really important because this is what you're going to be doing in real
+
+00:13:15.880 --> 00:13:17.120
+what you're going to be doing in real life.
+
+00:13:17.120 --> 00:13:19.160
+life. Chances of having to build a new
+
+00:13:19.160 --> 00:13:21.000
+Chances of having to build a new algorithm kind of slim. Why don't you
+
+00:13:21.000 --> 00:13:23.240
+algorithm kind of slim. Why don't you want to do that? Say you take Dijkstra,
+
+00:13:23.240 --> 00:13:25.160
+want to do that? Say you take Dijkstra, and you tweak it a little bit.
+
+00:13:25.160 --> 00:13:26.880
+and you tweak it a little bit. If you did that, you have to go through
+
+00:13:26.880 --> 00:13:28.880
+If you did that, you have to go through the analysis and prove the running time
+
+00:13:28.880 --> 00:13:30.760
+the analysis and prove the running time again, prove the correctness again.
+
+00:13:30.760 --> 00:13:33.400
+again, prove the correctness again. Time-consuming, error-prone, it's really
+
+00:13:33.400 --> 00:13:34.839
+Time-consuming, error-prone, it's really hard.
+
+00:13:34.839 --> 00:13:37.240
+hard. However, what happened here is that we
+
+00:13:37.240 --> 00:13:39.880
+However, what happened here is that we have some problem that we want to solve.
+
+00:13:39.880 --> 00:13:41.200
+have some problem that we want to solve. Say we have the raw input for that
+
+00:13:41.200 --> 00:13:44.790
+Say we have the raw input for that problem that we're trying to solve.
+
+00:13:46.670 --> 00:13:51.670
+That is this graph that I drew on the board.
+
+00:13:54.550 --> 00:13:56.360
+And we apply some transform, and we get an input that's suitable for
+
+00:13:56.360 --> 00:14:04.510
+and we get an input that's suitable for an algorithm that we already know.
+
+00:14:05.590 --> 00:14:07.360
+And I'm I'm going to take a shortcut here
+
+00:14:07.360 --> 00:14:12.550
+I'm I'm going to take a shortcut here because I don't
+
+00:14:14.870 --> 00:14:16.600
+So, we apply the transform, right? We took this graph and we built a new graph
+
+00:14:16.600 --> 00:14:17.520
+took this graph and we built a new graph N.
+
+00:14:17.520 --> 00:14:19.680
+N. And this is hopefully easy.
+
+00:14:19.680 --> 00:14:21.600
+And this is hopefully easy. Right? Take a Take an edge and split it
+
+00:14:21.600 --> 00:14:23.720
+Right? Take a Take an edge and split it up, put in fake nodes. This is easy. We
+
+00:14:23.720 --> 00:14:26.360
+up, put in fake nodes. This is easy. We know how to code that.
+
+00:14:26.360 --> 00:14:27.680
+know how to code that. And now we have this algorithm that we
+
+00:14:27.680 --> 00:14:29.560
+And now we have this algorithm that we already know, and we're treating it like
+
+00:14:29.560 --> 00:14:33.069
+already know, and we're treating it like a black box.
+
+00:14:34.630 --> 00:14:36.040
+We know it's correct. We know it's running time. We're not questioning
+
+00:14:36.040 --> 00:14:37.200
+running time. We're not questioning them. We're taking them straight from
+
+00:14:37.200 --> 00:14:38.640
+them. We're taking them straight from the textbook. They have to be right. By
+
+00:14:38.640 --> 00:14:46.790
+the textbook. They have to be right. By the way, what's the running time of BFS?
+
+00:14:47.390 --> 00:14:48.839
+Uh and sorry?
+
+00:14:48.839 --> 00:14:50.680
+and sorry? V log V Very good.
+
+00:14:50.680 --> 00:14:54.630
+V log V Very good. I can hear you very well.
+
+00:14:56.550 --> 00:14:58.240
+So, then BFS is going to give us a path, right? And the path is going to look
+
+00:14:58.240 --> 00:15:00.839
+right? And the path is going to look like this. It's going to be
+
+00:15:00.839 --> 00:15:07.790
+like this. It's going to be uh A, fake node, C, D,
+
+00:15:13.230 --> 00:15:14.480
+If you give this back to the guy who gave you the problem, they're going to
+
+00:15:14.480 --> 00:15:16.160
+gave you the problem, they're going to be like, "What are these fake nodes? I
+
+00:15:16.160 --> 00:15:17.800
+be like, "What are these fake nodes? I don't know anything about them. This
+
+00:15:17.800 --> 00:15:19.120
+don't know anything about them. This doesn't make sense."
+
+00:15:19.120 --> 00:15:22.079
+doesn't make sense." So, you need to take this
+
+00:15:22.079 --> 00:15:23.600
+So, you need to take this raw output,
+
+00:15:23.600 --> 00:15:25.200
+raw output, and you need to transform it again.
+
+00:15:25.200 --> 00:15:27.280
+and you need to transform it again. Based on what you did on this
+
+00:15:27.280 --> 00:15:29.079
+Based on what you did on this transformation, you have to read out the
+
+00:15:29.079 --> 00:15:31.079
+transformation, you have to read out the output. You have to interpret it.
+
+00:15:31.079 --> 00:15:33.200
+output. You have to interpret it. So, this is either interpret or read
+
+00:15:33.200 --> 00:15:37.839
+So, this is either interpret or read out. And then you get a nice output
+
+00:15:37.839 --> 00:15:40.240
+out. And then you get a nice output that's the output to your original
+
+00:15:40.240 --> 00:15:43.190
+that's the output to your original problem.
+
+00:15:44.870 --> 00:15:47.880
+This process here is the most likely way in which you'll
+
+00:15:47.880 --> 00:15:50.800
+is the most likely way in which you'll use your 606 knowledge. And this is
+
+00:15:50.800 --> 00:15:52.360
+use your 606 knowledge. And this is replaced by any algorithm that we
+
+00:15:52.360 --> 00:15:53.400
+replaced by any algorithm that we taught.
+
+00:15:53.400 --> 00:15:55.360
+taught. This is replaced by any real-life
+
+00:15:55.360 --> 00:15:58.320
+This is replaced by any real-life problem that you'll encounter.
+
+00:15:58.320 --> 00:16:00.200
+problem that you'll encounter. Okay.
+
+00:16:00.200 --> 00:16:01.520
+Okay. So,
+
+00:16:01.520 --> 00:16:03.040
+So, there's one missing step here. We know
+
+00:16:03.040 --> 00:16:04.520
+there's one missing step here. We know the running time for this. Let's find
+
+00:16:04.520 --> 00:16:07.320
+the running time for this. Let's find out the running time for the whole
+
+00:16:07.320 --> 00:16:08.440
+out the running time for the whole thing.
+
+00:16:08.440 --> 00:16:09.880
+thing. So, in order to do that, we have to
+
+00:16:09.880 --> 00:16:13.320
+So, in order to do that, we have to figure out given this original graph,
+
+00:16:13.320 --> 00:16:15.040
+figure out given this original graph, let's say that now in the original graph
+
+00:16:15.040 --> 00:16:17.520
+let's say that now in the original graph we have V prime vertices, E prime edges,
+
+00:16:17.520 --> 00:16:20.680
+we have V prime vertices, E prime edges, and W prime weights.
+
+00:16:20.680 --> 00:16:23.839
+and W prime weights. We have to convert this into V plus E.
+
+00:16:23.839 --> 00:16:25.240
+We have to convert this into V plus E. So, we have to see when we make this
+
+00:16:25.240 --> 00:16:27.200
+So, we have to see when we make this transform, how many vertices do we get?
+
+00:16:27.200 --> 00:16:29.480
+transform, how many vertices do we get? How many edges do we get in terms of the
+
+00:16:29.480 --> 00:16:31.079
+How many edges do we get in terms of the original graph, so that we can compute
+
+00:16:31.079 --> 00:16:33.480
+original graph, so that we can compute the running time.
+
+00:16:33.480 --> 00:16:36.720
+the running time. So, in the original graph V prime
+
+00:16:36.720 --> 00:16:39.240
+So, in the original graph V prime vertices, E prime edges, W prime
+
+00:16:39.240 --> 00:16:41.320
+vertices, E prime edges, W prime weights. In this new graph, how many
+
+00:16:41.320 --> 00:16:42.839
+weights. In this new graph, how many edges do I have?
+
+00:16:42.839 --> 00:16:50.310
+edges do I have? At most.
+
+00:16:52.110 --> 00:16:56.030
+Sorry? Yep, perfect.
+
+00:16:57.310 --> 00:17:00.000
+So, each edge has cost at most W. So, that
+
+00:17:00.000 --> 00:17:01.400
+each edge has cost at most W. So, that means we're going to split it up into at
+
+00:17:01.400 --> 00:17:04.560
+means we're going to split it up into at most W edges.
+
+00:17:04.560 --> 00:17:16.790
+most W edges. How many vertices are we going to have?
+
+00:17:21.949 --> 00:17:23.240
+Plus V prime. Don't forget about the original ones.
+
+00:17:23.240 --> 00:17:25.160
+Don't forget about the original ones. They're still there.
+
+00:17:25.160 --> 00:17:28.640
+They're still there. Okay. So, total running time for BFS on
+
+00:17:28.640 --> 00:17:39.230
+Okay. So, total running time for BFS on this new graph is
+
+00:17:41.350 --> 00:17:44.040
+Okay. I'll put it the other way around. Plus W prime
+
+00:17:44.040 --> 00:17:47.190
+Plus W prime E prime.
+
+00:17:49.150 --> 00:17:50.240
+Okay. So, this is the running time that we have.
+
+00:17:50.240 --> 00:17:52.520
+we have. Now, does anyone remember Dijkstra's
+
+00:17:52.520 --> 00:17:54.640
+Now, does anyone remember Dijkstra's running time and Bellman-Ford's running
+
+00:17:54.640 --> 00:17:58.830
+running time and Bellman-Ford's running time?
+
+00:17:59.590 --> 00:18:00.600
+So, what's the running time for Dijkstra?
+
+00:18:00.600 --> 00:18:03.880
+Dijkstra? V log V plus E.
+
+00:18:03.880 --> 00:18:06.640
+V log V plus E. Uh almost.
+
+00:18:06.640 --> 00:18:07.720
+Uh almost. V log V
+
+00:18:07.720 --> 00:18:09.320
+V log V Oh, wait. Oh, yeah. You I think you're
+
+00:18:09.320 --> 00:18:10.720
+Oh, wait. Oh, yeah. You I think you're right.
+
+00:18:10.720 --> 00:18:14.600
+right. V log V plus
+
+00:18:14.600 --> 00:18:17.030
+V log V plus E
+
+00:18:19.590 --> 00:18:21.640
+Are you reading this from CLRS? Or is this what we got? It's what they
+
+00:18:21.640 --> 00:18:23.280
+Or is this what we got? It's what they They gave They gave in the book. You
+
+00:18:23.280 --> 00:18:24.760
+They gave They gave in the book. You need to use a fancy heap to get this
+
+00:18:24.760 --> 00:18:26.840
+need to use a fancy heap to get this running time.
+
+00:18:26.840 --> 00:18:28.560
+running time. Yeah. You can get this, but you need a
+
+00:18:28.560 --> 00:18:30.800
+Yeah. You can get this, but you need a really fancy data structure for it. In
+
+00:18:30.800 --> 00:18:32.440
+really fancy data structure for it. In real life, the running time looks more
+
+00:18:32.440 --> 00:18:34.320
+real life, the running time looks more like
+
+00:18:34.320 --> 00:18:36.640
+like E log V.
+
+00:18:36.640 --> 00:18:49.110
+E log V. Okay. And how about Bellman-Ford?
+
+00:18:51.510 --> 00:18:53.280
+Okay. So, let's take this running time for Dijkstra because this is what you're
+
+00:18:53.280 --> 00:18:55.200
+for Dijkstra because this is what you're going to implement in real life, and we
+
+00:18:55.200 --> 00:18:56.800
+going to implement in real life, and we can argue about that after next lecture.
+
+00:18:56.800 --> 00:18:58.720
+can argue about that after next lecture. For now, take my word for it.
+
+00:18:58.720 --> 00:19:00.320
+For now, take my word for it. And let's compare it to what we got
+
+00:19:00.320 --> 00:19:02.400
+And let's compare it to what we got here.
+
+00:19:02.400 --> 00:19:05.679
+here. V is smaller than E in most sane cases.
+
+00:19:05.679 --> 00:19:07.919
+V is smaller than E in most sane cases. So, let's say that this is actually W
+
+00:19:07.919 --> 00:19:09.280
+So, let's say that this is actually W prime E prime.
+
+00:19:09.280 --> 00:19:12.400
+prime E prime. So, if you compare this with this,
+
+00:19:12.400 --> 00:19:16.120
+So, if you compare this with this, you'll see that if W is smaller than log
+
+00:19:16.120 --> 00:19:17.760
+you'll see that if W is smaller than log V,
+
+00:19:17.760 --> 00:19:19.520
+V, well, smaller or equal, then this
+
+00:19:19.520 --> 00:19:22.320
+well, smaller or equal, then this algorithm is not worse than Dijkstra.
+
+00:19:22.320 --> 00:19:25.240
+algorithm is not worse than Dijkstra. It's on on par with Dijkstra.
+
+00:19:25.240 --> 00:19:27.480
+It's on on par with Dijkstra. So, for graphs with small costs, we
+
+00:19:27.480 --> 00:19:29.280
+So, for graphs with small costs, we discovered an algorithm that solves
+
+00:19:29.280 --> 00:19:30.640
+discovered an algorithm that solves shortest paths.
+
+00:19:30.640 --> 00:19:31.240
+shortest paths. We
+
+00:19:31.240 --> 00:19:32.760
+We walked in this recitation knowing no
+
+00:19:32.760 --> 00:19:34.960
+walked in this recitation knowing no algorithm to solve shortest path.
+
+00:19:34.960 --> 00:19:36.760
+algorithm to solve shortest path. Now we have an algorithm. Already in a
+
+00:19:36.760 --> 00:19:38.360
+Now we have an algorithm. Already in a much better position.
+
+00:19:38.360 --> 00:19:40.320
+much better position. Right? And we didn't invent anything
+
+00:19:40.320 --> 00:19:42.280
+Right? And we didn't invent anything new. We don't have to prove correctness.
+
+00:19:42.280 --> 00:19:43.520
+new. We don't have to prove correctness. All we did was one of these
+
+00:19:43.520 --> 00:19:46.240
+All we did was one of these transformations.
+
+00:19:46.240 --> 00:19:49.510
+transformations. Okay. How's everyone feeling?
+
+00:19:50.790 --> 00:19:54.470
+Do the things make sense? Everyone happy?
+
+00:19:56.830 --> 00:19:57.920
+Okay, let's talk about another problem that
+
+00:19:57.920 --> 00:20:09.830
+that also uses this structure.
+
+00:20:11.430 --> 00:20:13.400
+So, suppose we have the same graph that we had before, or actually any graph
+
+00:20:13.400 --> 00:20:14.640
+we had before, or actually any graph with
+
+00:20:14.640 --> 00:20:16.960
+with V vertices, E edges.
+
+00:20:16.960 --> 00:20:18.280
+V vertices, E edges. Now, we know how to compute shortest
+
+00:20:18.280 --> 00:20:20.680
+Now, we know how to compute shortest path. So, we can assume
+
+00:20:20.680 --> 00:20:26.430
+path. So, we can assume these as black boxes.
+
+00:20:27.870 --> 00:20:28.920
+So, we're going to use these as they are.
+
+00:20:28.920 --> 00:20:30.960
+are. So, we have a graph with V vertices and
+
+00:20:30.960 --> 00:20:40.430
+So, we have a graph with V vertices and E edges.
+
+00:20:41.910 --> 00:20:43.200
+A B C D E
+
+00:20:43.200 --> 00:20:45.960
+E And let me copy the costs really
+
+00:20:45.960 --> 00:20:47.680
+And let me copy the costs really quickly.
+
+00:20:47.680 --> 00:20:50.440
+quickly. 4 2 1 2
+
+00:20:50.440 --> 00:20:55.430
+4 2 1 2 1
+
+00:20:57.670 --> 00:20:59.640
+So, suppose this is a highway system. Right? Like in Google Maps.
+
+00:20:59.640 --> 00:21:01.880
+Right? Like in Google Maps. And we have two brothers. They start off
+
+00:21:01.880 --> 00:21:03.480
+And we have two brothers. They start off from a place
+
+00:21:03.480 --> 00:21:04.840
+from a place and they have to end up in another
+
+00:21:04.840 --> 00:21:07.240
+and they have to end up in another place. They're going to drive together.
+
+00:21:07.240 --> 00:21:08.960
+place. They're going to drive together. Uh they want this to be sort of fair.
+
+00:21:08.960 --> 00:21:10.280
+Uh they want this to be sort of fair. So,
+
+00:21:10.280 --> 00:21:12.160
+So, every time they go between two cities,
+
+00:21:12.160 --> 00:21:14.160
+every time they go between two cities, they're going to switch seats.
+
+00:21:14.160 --> 00:21:16.320
+they're going to switch seats. So, that none of them drives too much.
+
+00:21:16.320 --> 00:21:21.400
+So, that none of them drives too much. So, say the brothers are Tim and Jim.
+
+00:21:21.400 --> 00:21:22.640
+So, say the brothers are Tim and Jim. The names are wrong. This is actually a
+
+00:21:22.640 --> 00:21:25.400
+The names are wrong. This is actually a problem for from last year's quiz.
+
+00:21:25.400 --> 00:21:26.800
+problem for from last year's quiz. So, by the way, real problem. You can
+
+00:21:26.800 --> 00:21:29.200
+So, by the way, real problem. You can pay attention now.
+
+00:21:29.200 --> 00:21:32.640
+pay attention now. So, these are two brothers.
+
+00:21:32.640 --> 00:21:34.360
+So, these are two brothers. They They're going to alternate, right?
+
+00:21:34.360 --> 00:21:36.400
+They They're going to alternate, right? One of them's going to drive across one
+
+00:21:36.400 --> 00:21:38.120
+One of them's going to drive across one road, then the other one, then the first
+
+00:21:38.120 --> 00:21:39.440
+road, then the other one, then the first one, then the second one, so on and so
+
+00:21:39.440 --> 00:21:40.800
+one, then the second one, so on and so forth.
+
+00:21:40.800 --> 00:21:42.080
+forth. Now,
+
+00:21:42.080 --> 00:21:43.880
+Now, Tim has a much better sense of direction
+
+00:21:43.880 --> 00:21:45.840
+Tim has a much better sense of direction than Jim.
+
+00:21:45.840 --> 00:21:47.800
+than Jim. That's just how things are. And if you
+
+00:21:47.800 --> 00:21:50.840
+That's just how things are. And if you ever driven long distances,
+
+00:21:50.840 --> 00:21:52.680
+ever driven long distances, the hardest thing to do is to get from
+
+00:21:52.680 --> 00:21:54.560
+the hardest thing to do is to get from the city to the highway.
+
+00:21:54.560 --> 00:21:55.640
+the city to the highway. So, like if you have to drive from here
+
+00:21:55.640 --> 00:21:57.680
+So, like if you have to drive from here to New York, hardest thing to do, get
+
+00:21:57.680 --> 00:21:59.679
+to New York, hardest thing to do, get out of Boston and onto the highway.
+
+00:21:59.679 --> 00:22:02.040
+out of Boston and onto the highway. Then, at the end, hardest thing to do,
+
+00:22:02.040 --> 00:22:03.840
+Then, at the end, hardest thing to do, get from the highway into where you want
+
+00:22:03.840 --> 00:22:05.520
+get from the highway into where you want to go through New York traffic.
+
+00:22:05.520 --> 00:22:07.840
+to go through New York traffic. Everything else, piece of cake.
+
+00:22:07.840 --> 00:22:10.560
+Everything else, piece of cake. So, we want Tim to handle both of these
+
+00:22:10.560 --> 00:22:12.000
+So, we want Tim to handle both of these situations.
+
+00:22:12.000 --> 00:22:12.960
+situations. So,
+
+00:22:12.960 --> 00:22:15.600
+So, the driving path must start with Tim and
+
+00:22:15.600 --> 00:22:17.120
+the driving path must start with Tim and must end with Tim.
+
+00:22:17.120 --> 00:22:18.760
+must end with Tim. Otherwise, God knows, they're going to
+
+00:22:18.760 --> 00:22:20.960
+Otherwise, God knows, they're going to crash.
+
+00:22:20.960 --> 00:22:23.040
+crash. So, let's First off, let's convert this
+
+00:22:23.040 --> 00:22:25.440
+So, let's First off, let's convert this into graph terms. And then, let's solve
+
+00:22:25.440 --> 00:22:32.870
+into graph terms. And then, let's solve it.
+
+00:22:33.950 --> 00:22:37.080
+Well, so this I have this constraint that
+
+00:22:37.080 --> 00:22:39.080
+this I have this constraint that they're going to switch seats and that
+
+00:22:39.080 --> 00:22:40.880
+they're going to switch seats and that Tim has to start and Tim has to end. How
+
+00:22:40.880 --> 00:22:43.560
+Tim has to start and Tim has to end. How do I phrase this in mathy terms? In
+
+00:22:43.560 --> 00:22:50.950
+do I phrase this in mathy terms? In graph terms?
+
+00:22:52.390 --> 00:22:54.800
+Um we're starting at where and they where
+
+00:22:54.800 --> 00:22:56.240
+we're starting at where and they where We're given where in the graph. So, so
+
+00:22:56.240 --> 00:22:58.480
+We're given where in the graph. So, so we're starting at S ending at T.
+
+00:22:58.480 --> 00:23:00.400
+we're starting at S ending at T. Some points in the graph.
+
+00:23:00.400 --> 00:23:02.679
+Some points in the graph. And
+
+00:23:02.679 --> 00:23:05.080
+And people have to drive the an entire edge.
+
+00:23:05.080 --> 00:23:06.600
+people have to drive the an entire edge. Is that correct? Yeah.
+
+00:23:06.600 --> 00:23:11.000
+Is that correct? Yeah. Okay, so then So, basically Yeah.
+
+00:23:11.000 --> 00:23:12.679
+Okay, so then So, basically Yeah. Jim has to
+
+00:23:12.679 --> 00:23:15.200
+Jim has to Wait, whoever the good driver has to
+
+00:23:15.200 --> 00:23:18.120
+Wait, whoever the good driver has to drive on the edge that's adjacent to E
+
+00:23:18.120 --> 00:23:19.240
+drive on the edge that's adjacent to E and S.
+
+00:23:19.240 --> 00:23:21.800
+and S. Yep. Okay.
+
+00:23:21.800 --> 00:23:23.920
+Yep. Okay. You basically need like an odd number of
+
+00:23:23.920 --> 00:23:25.840
+You basically need like an odd number of edges. Yep.
+
+00:23:25.840 --> 00:23:27.560
+edges. Yep. So, I want the shortest path with an odd
+
+00:23:27.560 --> 00:23:29.000
+So, I want the shortest path with an odd number of edges.
+
+00:23:29.000 --> 00:23:30.920
+number of edges. Why odd number of edges? If we look at
+
+00:23:30.920 --> 00:23:33.080
+Why odd number of edges? If we look at the edges, Tim's going to take the first
+
+00:23:33.080 --> 00:23:35.840
+the edges, Tim's going to take the first one, then Jim, then Tim, then Jim, then
+
+00:23:35.840 --> 00:23:37.880
+one, then Jim, then Tim, then Jim, then Tim, then Jim, and no matter how many I
+
+00:23:37.880 --> 00:23:40.360
+Tim, then Jim, and no matter how many I have here, it has to end with Tim.
+
+00:23:40.360 --> 00:23:41.679
+have here, it has to end with Tim. So, I'm going to have an odd number of
+
+00:23:41.679 --> 00:23:43.679
+So, I'm going to have an odd number of letters here. Therefore, odd number of
+
+00:23:43.679 --> 00:23:44.679
+letters here. Therefore, odd number of edges.
+
+00:23:44.679 --> 00:23:47.440
+edges. Right? So, I want the shortest path
+
+00:23:47.440 --> 00:23:50.040
+Right? So, I want the shortest path that has an
+
+00:23:50.040 --> 00:23:58.510
+that has an odd number of edges.
+
+00:23:59.990 --> 00:24:04.240
+And that's the hint. We're going to use that trick over there. So, yes. But, the
+
+00:24:04.240 --> 00:24:06.080
+that trick over there. So, yes. But, the shortest path isn't necessarily like the
+
+00:24:06.080 --> 00:24:07.520
+shortest path isn't necessarily like the fairest, right? Like in terms of
+
+00:24:07.520 --> 00:24:09.400
+fairest, right? Like in terms of distributing
+
+00:24:09.400 --> 00:24:10.760
+distributing driving.
+
+00:24:10.760 --> 00:24:12.640
+driving. Uh one of them's going to drive one more
+
+00:24:12.640 --> 00:24:13.679
+Uh one of them's going to drive one more road.
+
+00:24:13.679 --> 00:24:15.880
+road. Such is life. Well, sorry, one more edge
+
+00:24:15.880 --> 00:24:19.000
+Such is life. Well, sorry, one more edge segment. So, Tim's going to drive, say,
+
+00:24:19.000 --> 00:24:20.480
+segment. So, Tim's going to drive, say, Tim's going to drive three times, Jim is
+
+00:24:20.480 --> 00:24:22.320
+Tim's going to drive three times, Jim is going to drive two times.
+
+00:24:22.320 --> 00:24:24.360
+going to drive two times. Right, but like in terms of the weights
+
+00:24:24.360 --> 00:24:27.550
+Right, but like in terms of the weights Oh, yeah, we don't care about that.
+
+00:24:28.790 --> 00:24:30.600
+Jim doesn't know where he's going anyways. So, the minimum you need is a
+
+00:24:30.600 --> 00:24:33.320
+anyways. So, the minimum you need is a length of like three paths, right?
+
+00:24:33.320 --> 00:24:34.720
+length of like three paths, right? Cuz you don't want to Tim to get out to
+
+00:24:34.720 --> 00:24:35.880
+Cuz you don't want to Tim to get out to the highway and be like, "Oh, look, I'm
+
+00:24:35.880 --> 00:24:37.560
+the highway and be like, "Oh, look, I'm driving it's not that far." And then So,
+
+00:24:37.560 --> 00:24:39.640
+driving it's not that far." And then So, I want the shortest
+
+00:24:39.640 --> 00:24:40.960
+I want the shortest So, I want to the path with the the
+
+00:24:40.960 --> 00:24:42.400
+So, I want to the path with the the smallest cost.
+
+00:24:42.400 --> 00:24:44.920
+smallest cost. Okay. So, smallest total weight.
+
+00:24:44.920 --> 00:24:46.120
+Okay. So, smallest total weight. But, I mean like
+
+00:24:46.120 --> 00:24:47.600
+But, I mean like in theory, it could be length two,
+
+00:24:47.600 --> 00:24:49.480
+in theory, it could be length two, right? Cuz Well, if it's length two,
+
+00:24:49.480 --> 00:24:51.040
+right? Cuz Well, if it's length two, then it's not going to be good because
+
+00:24:51.040 --> 00:24:52.880
+then it's not going to be good because they're going to crash.
+
+00:24:52.880 --> 00:24:54.560
+they're going to crash. Well, no, like Tim would Oh, I see. They
+
+00:24:54.560 --> 00:24:56.720
+Well, no, like Tim would Oh, I see. They have to switch every time. Yep.
+
+00:24:56.720 --> 00:24:58.720
+have to switch every time. Yep. Tim can't drive for two consecutive
+
+00:24:58.720 --> 00:25:07.750
+Tim can't drive for two consecutive edges. Okay.
+
+00:25:09.270 --> 00:25:11.880
+I mean, you could use breadth-first search and
+
+00:25:11.880 --> 00:25:13.600
+search and um and check once you get to the end
+
+00:25:13.600 --> 00:25:16.640
+um and check once you get to the end point, eliminate all paths that are
+
+00:25:16.640 --> 00:25:17.520
+point, eliminate all paths that are um
+
+00:25:17.520 --> 00:25:19.400
+um you know, even length.
+
+00:25:19.400 --> 00:25:21.800
+you know, even length. And then those paths, go through them to
+
+00:25:21.800 --> 00:25:23.240
+And then those paths, go through them to see if
+
+00:25:23.240 --> 00:25:24.960
+see if it comes to the lowest cost. So, you're
+
+00:25:24.960 --> 00:25:26.880
+it comes to the lowest cost. So, you're thinking enumerate all paths of even
+
+00:25:26.880 --> 00:25:28.720
+thinking enumerate all paths of even length?
+
+00:25:28.720 --> 00:25:30.840
+length? No, just to make sure I got it. Yeah.
+
+00:25:30.840 --> 00:25:32.360
+No, just to make sure I got it. Yeah. So, this is cool because it let it lets
+
+00:25:32.360 --> 00:25:35.320
+So, this is cool because it let it lets me show something else that's cool. So,
+
+00:25:35.320 --> 00:25:37.800
+me show something else that's cool. So, I'll enumerate all paths of even length.
+
+00:25:37.800 --> 00:25:40.200
+I'll enumerate all paths of even length. Um something else I heard, enumerate all
+
+00:25:40.200 --> 00:25:42.040
+Um something else I heard, enumerate all the shortest path.
+
+00:25:42.040 --> 00:25:43.600
+the shortest path. For both of these, let's look at this
+
+00:25:43.600 --> 00:25:53.750
+For both of these, let's look at this graph.
+
+00:25:57.110 --> 00:26:00.870
+S T All the paths have length one.
+
+00:26:02.550 --> 00:26:04.280
+How many ways are there to get from S to T?
+
+00:26:04.280 --> 00:26:07.150
+T? Four.
+
+00:26:08.390 --> 00:26:10.720
+Two to the three. Two ways to go across this diamond, two
+
+00:26:10.720 --> 00:26:12.720
+Two ways to go across this diamond, two ways to go across ways to go across this
+
+00:26:12.720 --> 00:26:14.960
+ways to go across ways to go across this one, two ways to go across this one.
+
+00:26:14.960 --> 00:26:15.960
+one, two ways to go across this one. Right?
+
+00:26:15.960 --> 00:26:19.200
+Right? 2 * 2 * 2 8
+
+00:26:19.200 --> 00:26:22.710
+2 * 2 * 2 8 If I add another diamond,
+
+00:26:25.390 --> 00:26:28.390
+how many paths? One more?
+
+00:26:30.950 --> 00:26:33.160
+Okay. So, the number of even paths or the number of shortest paths, the number
+
+00:26:33.160 --> 00:26:35.360
+the number of shortest paths, the number of
+
+00:26:35.360 --> 00:26:37.520
+of whatever paths I can think about is
+
+00:26:37.520 --> 00:26:41.630
+whatever paths I can think about is order of
+
+00:26:49.669 --> 00:26:53.669
+It's two to the number of diamonds. Okay, which is
+
+00:26:54.630 --> 00:26:58.430
+N related to the vertices, right?
+
+00:27:00.990 --> 00:27:02.880
+Exponential in the number of vertices. Not very good. Not very good. We can't
+
+00:27:02.880 --> 00:27:05.630
+Not very good. Not very good. We can't do this.
+
+00:27:07.390 --> 00:27:08.960
+So, it's better that we talked about it here than then you try to do it on the
+
+00:27:08.960 --> 00:27:10.120
+here than then you try to do it on the quiz and you have to discover this on
+
+00:27:10.120 --> 00:27:12.240
+quiz and you have to discover this on your own, right? So, good comment. Do
+
+00:27:12.240 --> 00:27:13.520
+your own, right? So, good comment. Do you understand what he meant by that
+
+00:27:13.520 --> 00:27:15.560
+you understand what he meant by that lecture? So,
+
+00:27:15.560 --> 00:27:16.880
+lecture? So, That's completely different. That's
+
+00:27:16.880 --> 00:27:17.400
+That's completely different. That's another
+
+00:27:17.400 --> 00:27:18.320
+another That's the other thing he's talking
+
+00:27:18.320 --> 00:27:19.800
+That's the other thing he's talking about. That's different. That wasn't the
+
+00:27:19.800 --> 00:27:21.920
+about. That's different. That wasn't the question.
+
+00:27:21.920 --> 00:27:24.040
+question. Yeah, that's that's where relaxation can
+
+00:27:24.040 --> 00:27:25.880
+Yeah, that's that's where relaxation can go wrong. So, he showed that if you
+
+00:27:25.880 --> 00:27:27.640
+go wrong. So, he showed that if you relax the edges in a random order, you
+
+00:27:27.640 --> 00:27:33.190
+relax the edges in a random order, you can have an exponential number of steps.
+
+00:27:34.630 --> 00:27:36.840
+This shows that there are an exponential number of paths for any graph, no matter
+
+00:27:36.840 --> 00:27:40.030
+number of paths for any graph, no matter how good your algorithm is.
+
+00:27:41.310 --> 00:27:42.560
+Okay, so we're not going to be able to enumerate them. Let's try something
+
+00:27:42.560 --> 00:27:47.830
+enumerate them. Let's try something else.
+
+00:27:49.710 --> 00:27:51.800
+Any suggestions? Uh Look at all the shortest paths.
+
+00:27:51.800 --> 00:27:53.640
+Uh Look at all the shortest paths. So, you So, you're doing this, right?
+
+00:27:53.640 --> 00:27:55.480
+So, you So, you're doing this, right? You were looking here.
+
+00:27:55.480 --> 00:27:58.080
+You were looking here. You're Everyone's looking here.
+
+00:27:58.080 --> 00:28:03.150
+You're Everyone's looking here. How about this?
+
+00:28:04.630 --> 00:28:05.640
+Should do that? There There's that, right? There's a
+
+00:28:05.640 --> 00:28:07.240
+There There's that, right? There's a transform. You need to transform your
+
+00:28:07.240 --> 00:28:09.400
+transform. You need to transform your graph in some way and then run the
+
+00:28:09.400 --> 00:28:11.679
+graph in some way and then run the algorithm and then reading off the
+
+00:28:11.679 --> 00:28:14.000
+algorithm and then reading off the output should be easy.
+
+00:28:14.000 --> 00:28:15.320
+output should be easy. I claim that the hard step is the
+
+00:28:15.320 --> 00:28:24.669
+I claim that the hard step is the transform step, not the read off step.
+
+00:28:26.310 --> 00:28:29.909
+Okay, so let me give you one more piece of intuition.
+
+00:28:33.110 --> 00:28:36.040
+So, we're going to keep track of state somehow. So, remember Rubik's Cube?
+
+00:28:36.040 --> 00:28:38.880
+somehow. So, remember Rubik's Cube? We had one vertex for each state, right?
+
+00:28:38.880 --> 00:28:40.760
+We had one vertex for each state, right? A state represented a configuration of
+
+00:28:40.760 --> 00:28:43.240
+A state represented a configuration of the cube.
+
+00:28:43.240 --> 00:28:45.159
+the cube. Here, suppose I got
+
+00:28:45.159 --> 00:28:46.640
+Here, suppose I got from
+
+00:28:46.640 --> 00:28:49.560
+from I'm looking at a path from S to D.
+
+00:28:49.560 --> 00:28:51.560
+I'm looking at a path from S to D. The problem that I have with this is
+
+00:28:51.560 --> 00:28:53.400
+The problem that I have with this is that
+
+00:28:53.400 --> 00:28:54.960
+that if I have an algorithm that tells me the
+
+00:28:54.960 --> 00:28:58.720
+if I have an algorithm that tells me the shortest path from S to D is something,
+
+00:28:58.720 --> 00:29:00.360
+shortest path from S to D is something, I don't know if it's even or if it's
+
+00:29:00.360 --> 00:29:02.840
+I don't know if it's even or if it's odd. It's not keeping track of that.
+
+00:29:02.840 --> 00:29:04.360
+odd. It's not keeping track of that. So, it's missing some state. The state
+
+00:29:04.360 --> 00:29:06.320
+So, it's missing some state. The state that it's missing is whether the path
+
+00:29:06.320 --> 00:29:08.320
+that it's missing is whether the path that I used to get here is even or odd
+
+00:29:08.320 --> 00:29:09.440
+that I used to get here is even or odd length.
+
+00:29:09.440 --> 00:29:10.880
+length. So, I should do something to the graph
+
+00:29:10.880 --> 00:29:16.390
+So, I should do something to the graph to keep track of the state.
+
+00:29:18.310 --> 00:29:21.470
+So, can you BFS once to find
+
+00:29:24.110 --> 00:29:26.200
+So, like right cuz if you BFS once, then you know that B and C are all
+
+00:29:26.200 --> 00:29:27.800
+you know that B and C are all like one way and then you know that E
+
+00:29:27.800 --> 00:29:29.880
+like one way and then you know that E and G are two way.
+
+00:29:29.880 --> 00:29:31.679
+and G are two way. Uh
+
+00:29:31.679 --> 00:29:34.040
+Uh Well, B might be two away if I take this
+
+00:29:34.040 --> 00:29:36.480
+Well, B might be two away if I take this path.
+
+00:29:36.480 --> 00:29:37.679
+path. So, it might be one away, it might be
+
+00:29:37.679 --> 00:29:41.430
+So, it might be one away, it might be two away.
+
+00:29:42.669 --> 00:29:44.080
+But, this is good. So, this is what you'll do on the quiz, right? You come
+
+00:29:44.080 --> 00:29:45.919
+you'll do on the quiz, right? You come up with an idea
+
+00:29:45.919 --> 00:29:47.920
+up with an idea and then you're going to think about it
+
+00:29:47.920 --> 00:29:49.880
+and then you're going to think about it for a bit. If you get stuck,
+
+00:29:49.880 --> 00:29:51.240
+for a bit. If you get stuck, try to convince yourself that it's
+
+00:29:51.240 --> 00:29:53.280
+try to convince yourself that it's wrong, or just if things get too hard,
+
+00:29:53.280 --> 00:29:56.320
+wrong, or just if things get too hard, discard and look somewhere else.
+
+00:29:56.320 --> 00:29:58.680
+discard and look somewhere else. So, this is thought process, right? You
+
+00:29:58.680 --> 00:29:59.920
+So, this is thought process, right? You think of something, backtrack,
+
+00:29:59.920 --> 00:30:01.480
+think of something, backtrack, backtrack, backtrack, and eventually you
+
+00:30:01.480 --> 00:30:13.670
+backtrack, backtrack, and eventually you get to the right solution.
+
+00:30:15.150 --> 00:30:17.520
+So, let's go over the solution for this one, and then I'll give you a hard one
+
+00:30:17.520 --> 00:30:20.200
+one, and then I'll give you a hard one that is sort of like this, and then I'll
+
+00:30:20.200 --> 00:30:22.800
+that is sort of like this, and then I'll want the solution from you for that one.
+
+00:30:22.800 --> 00:30:24.280
+want the solution from you for that one. So, I'm going to draw this graph in a
+
+00:30:24.280 --> 00:30:26.080
+So, I'm going to draw this graph in a bigger version. So, I'll have to erase
+
+00:30:26.080 --> 00:30:29.350
+bigger version. So, I'll have to erase this.
+
+00:30:32.590 --> 00:30:34.040
+So, this is a cool concept. You will be able to do a lot of things
+
+00:30:34.040 --> 00:30:36.360
+You will be able to do a lot of things with it.
+
+00:30:36.360 --> 00:30:37.480
+with it. But, is this problem solvable by
+
+00:30:37.480 --> 00:30:38.480
+But, is this problem solvable by Dijkstra?
+
+00:30:38.480 --> 00:30:39.560
+Dijkstra? Yeah.
+
+00:30:39.560 --> 00:30:41.120
+Yeah. Okay, I'm just curious. Yeah, we'll run
+
+00:30:41.120 --> 00:30:51.470
+Okay, I'm just curious. Yeah, we'll run Dijkstra on it after we transform it.
+
+00:30:52.950 --> 00:30:55.040
+These are big nodes, right? Why am I doing it this way?
+
+00:30:55.040 --> 00:30:57.360
+doing it this way? They're like Seattle, Portland, San
+
+00:30:57.360 --> 00:30:58.880
+They're like Seattle, Portland, San Francisco. Uh-huh.
+
+00:30:58.880 --> 00:31:00.160
+Francisco. Uh-huh. It's because I'm going to need room for
+
+00:31:00.160 --> 00:31:01.840
+It's because I'm going to need room for copies.
+
+00:31:01.840 --> 00:31:03.840
+copies. I'm going to make a copy of each node to
+
+00:31:03.840 --> 00:31:06.600
+I'm going to make a copy of each node to keep track of state.
+
+00:31:06.600 --> 00:31:08.720
+keep track of state. So, instead of one node, I'll have two
+
+00:31:08.720 --> 00:31:10.840
+So, instead of one node, I'll have two nodes for each node.
+
+00:31:10.840 --> 00:31:12.600
+nodes for each node. And I have two nodes because this is
+
+00:31:12.600 --> 00:31:14.320
+And I have two nodes because this is what lets me keep track of state, odd
+
+00:31:14.320 --> 00:31:18.950
+what lets me keep track of state, odd path or even path.
+
+00:31:20.910 --> 00:31:27.030
+Let me erase the edges because that's not how it's going to work, actually.
+
+00:31:28.790 --> 00:31:31.760
+So, instead of having a node A, I'm going to have a node
+
+00:31:31.760 --> 00:31:36.320
+going to have a node A even, and I'm going to have a copy
+
+00:31:36.320 --> 00:31:39.190
+A even, and I'm going to have a copy A odd.
+
+00:31:40.710 --> 00:31:43.320
+B even, I'm going to have a copy
+
+00:31:43.320 --> 00:31:45.440
+I'm going to have a copy B odd.
+
+00:31:45.440 --> 00:31:47.120
+B odd. C even,
+
+00:31:47.120 --> 00:31:48.520
+C even, copy it
+
+00:31:48.520 --> 00:31:50.400
+copy it to C odd.
+
+00:31:50.400 --> 00:31:54.190
+to C odd. D even,
+
+00:31:57.070 --> 00:31:59.400
+make a copy to D odd. Uh wait, this is E. Sorry. Sorry, my
+
+00:31:59.400 --> 00:32:08.630
+Uh wait, this is E. Sorry. Sorry, my bad.
+
+00:32:10.669 --> 00:32:11.920
+Okay, so suppose I got to A
+
+00:32:11.920 --> 00:32:15.320
+to A using an even length path.
+
+00:32:15.320 --> 00:32:18.760
+using an even length path. If I take the edge from A to B,
+
+00:32:18.760 --> 00:32:20.720
+If I take the edge from A to B, I will get to B using an even length
+
+00:32:20.720 --> 00:32:22.679
+I will get to B using an even length path or an odd length path?
+
+00:32:22.679 --> 00:32:24.600
+path or an odd length path? Odd.
+
+00:32:24.600 --> 00:32:26.400
+Odd. So, if I get to A using an even length
+
+00:32:26.400 --> 00:32:28.120
+So, if I get to A using an even length path, then from there I'll get to B
+
+00:32:28.120 --> 00:32:31.080
+path, then from there I'll get to B using an odd length path.
+
+00:32:31.080 --> 00:32:33.800
+using an odd length path. Sorry, for using this exact
+
+00:32:33.800 --> 00:32:37.790
+Sorry, for using this exact road.
+
+00:32:40.110 --> 00:32:41.840
+That's a nice way to name it. I've heard worse.
+
+00:32:41.840 --> 00:32:44.520
+I've heard worse. So, if I get to A using an odd number of
+
+00:32:44.520 --> 00:32:46.200
+So, if I get to A using an odd number of edges,
+
+00:32:46.200 --> 00:32:47.760
+edges, how many edges will I have when I get to
+
+00:32:47.760 --> 00:32:49.280
+how many edges will I have when I get to B?
+
+00:32:49.280 --> 00:32:51.080
+B? Even.
+
+00:32:51.080 --> 00:32:53.120
+Even. Okay.
+
+00:32:53.120 --> 00:32:58.430
+Okay. So, this edge became these edges here.
+
+00:32:59.990 --> 00:33:01.200
+Okay, now let's do the edge between B and E.
+
+00:33:01.200 --> 00:33:03.360
+and E. I get to B using an even number of
+
+00:33:03.360 --> 00:33:04.640
+I get to B using an even number of edges.
+
+00:33:04.640 --> 00:33:06.560
+edges. I take B,
+
+00:33:06.560 --> 00:33:11.190
+I take B, do I get to E even to or to E odd? Odd.
+
+00:33:20.190 --> 00:33:21.679
+What are the lengths of these paths? Five. Five.
+
+00:33:21.679 --> 00:33:23.560
+Five. Five. Okay.
+
+00:33:23.560 --> 00:33:25.240
+Okay. Cool.
+
+00:33:25.240 --> 00:33:26.960
+Cool. Uh
+
+00:33:26.960 --> 00:33:28.320
+Uh God, this is starting to look uglier,
+
+00:33:28.320 --> 00:33:29.600
+God, this is starting to look uglier, right?
+
+00:33:29.600 --> 00:33:32.440
+right? Uh let's do AC and stop there.
+
+00:33:32.440 --> 00:33:33.480
+Uh let's do AC and stop there. Um
+
+00:33:33.480 --> 00:33:36.920
+Um A even is connected to
+
+00:33:36.920 --> 00:33:39.560
+A even is connected to C odd by a path of length
+
+00:33:39.560 --> 00:33:40.840
+C odd by a path of length Two.
+
+00:33:40.840 --> 00:33:42.640
+Two. And A odd is connected to C even by a
+
+00:33:42.640 --> 00:33:46.630
+And A odd is connected to C even by a path of length Three.
+
+00:33:54.630 --> 00:33:58.080
+I mean, you want you you just So, all the edges are going to look like this.
+
+00:33:58.080 --> 00:33:59.640
+the edges are going to look like this. So, are those like two independent
+
+00:33:59.640 --> 00:34:01.040
+So, are those like two independent graphs?
+
+00:34:01.040 --> 00:34:03.120
+graphs? Uh well, I have well, I have edges
+
+00:34:03.120 --> 00:34:05.040
+Uh well, I have well, I have edges connecting them, but I I like your
+
+00:34:05.040 --> 00:34:08.000
+connecting them, but I I like your question. So, the reason this is ugly
+
+00:34:08.000 --> 00:34:09.560
+question. So, the reason this is ugly is because I'm looking at a 2D
+
+00:34:09.560 --> 00:34:12.240
+is because I'm looking at a 2D projection of a 3D graph.
+
+00:34:12.240 --> 00:34:13.840
+projection of a 3D graph. If I had a holographic display, which
+
+00:34:13.840 --> 00:34:15.879
+If I had a holographic display, which would be a lot nicer, then I would do
+
+00:34:15.879 --> 00:34:19.960
+would be a lot nicer, then I would do something along these lines. I would
+
+00:34:19.960 --> 00:34:21.720
+something along these lines. I would say, hmm,
+
+00:34:21.720 --> 00:34:23.879
+say, hmm, two pieces of paper.
+
+00:34:23.879 --> 00:34:25.720
+two pieces of paper. I would draw the graph, I would draw the
+
+00:34:25.720 --> 00:34:27.560
+I would draw the graph, I would draw the original graph, and call it the even
+
+00:34:27.560 --> 00:34:29.640
+original graph, and call it the even graph, put it here.
+
+00:34:29.640 --> 00:34:31.600
+graph, put it here. I would draw the graph again, call it
+
+00:34:31.600 --> 00:34:34.640
+I would draw the graph again, call it the odd graph, and put it here.
+
+00:34:34.640 --> 00:34:36.840
+the odd graph, and put it here. So, this is my 2D graph. This is my map,
+
+00:34:36.840 --> 00:34:38.359
+So, this is my 2D graph. This is my map, the original map.
+
+00:34:38.359 --> 00:34:40.080
+the original map. And this is state. The third dimension
+
+00:34:40.080 --> 00:34:41.600
+And this is state. The third dimension is state.
+
+00:34:41.600 --> 00:34:43.480
+is state. So, when I start
+
+00:34:43.480 --> 00:34:45.640
+So, when I start when I when I'm at a node, and I used an
+
+00:34:45.640 --> 00:34:49.000
+when I when I'm at a node, and I used an even number of edges to get here,
+
+00:34:49.000 --> 00:34:51.800
+even number of edges to get here, I'm going to go take one edge
+
+00:34:51.800 --> 00:34:54.000
+I'm going to go take one edge and go to another node using an odd
+
+00:34:54.000 --> 00:34:55.359
+and go to another node using an odd number of edges.
+
+00:34:55.359 --> 00:34:57.000
+number of edges. So, all the edges are going to go from
+
+00:34:57.000 --> 00:35:01.910
+So, all the edges are going to go from here to here, and from here to here.
+
+00:35:04.070 --> 00:35:05.960
+Does it make more sense now? So, the reason that looks ugly is
+
+00:35:05.960 --> 00:35:07.320
+So, the reason that looks ugly is because you're seeing the graph like
+
+00:35:07.320 --> 00:35:08.560
+because you're seeing the graph like this.
+
+00:35:08.560 --> 00:35:10.680
+this. If you could see like this, and maybe
+
+00:35:10.680 --> 00:35:12.840
+If you could see like this, and maybe play with it a little bit,
+
+00:35:12.840 --> 00:35:14.000
+play with it a little bit, it would make more sense. It wouldn't
+
+00:35:14.000 --> 00:35:17.950
+it would make more sense. It wouldn't look as ugly.
+
+00:35:19.510 --> 00:35:21.440
+So, there are two graphs, the even graph and the odd graph, and the edges between
+
+00:35:21.440 --> 00:35:22.920
+and the odd graph, and the edges between them represent
+
+00:35:22.920 --> 00:35:25.120
+them represent you doing something.
+
+00:35:25.120 --> 00:35:27.280
+you doing something. So, when you transition when you take a
+
+00:35:27.280 --> 00:35:28.960
+So, when you transition when you take a highway, you transition from an even
+
+00:35:28.960 --> 00:35:30.560
+highway, you transition from an even state to an odd state, and from an odd
+
+00:35:30.560 --> 00:35:32.560
+state to an odd state, and from an odd state to an even state. So, that's why
+
+00:35:32.560 --> 00:35:35.359
+state to an even state. So, that's why the edges are the way they are.
+
+00:35:35.359 --> 00:35:36.880
+the edges are the way they are. Okay, so now let me see if you guys get
+
+00:35:36.880 --> 00:35:39.720
+Okay, so now let me see if you guys get it. What node do I start from? What node
+
+00:35:39.720 --> 00:35:49.790
+it. What node do I start from? What node do I want to end up in?
+
+00:35:51.550 --> 00:35:54.359
+Okay. Oh, there's two odds. Yeah.
+
+00:35:54.359 --> 00:35:55.920
+Oh, there's two odds. Yeah. Okay, so I heard three answers. One of
+
+00:35:55.920 --> 00:35:57.600
+Okay, so I heard three answers. One of them's correct.
+
+00:35:57.600 --> 00:35:59.000
+them's correct. Do you want to vote, or do you guys want
+
+00:35:59.000 --> 00:36:00.880
+Do you want to vote, or do you guys want to figure it out?
+
+00:36:00.880 --> 00:36:02.120
+to figure it out? Talk it out.
+
+00:36:02.120 --> 00:36:04.750
+Talk it out. Fight.
+
+00:36:10.310 --> 00:36:16.310
+We start from A even, and we end up at E odd. Why do I start at A even?
+
+00:36:18.070 --> 00:36:20.440
+Yep, so the original path has length zero, which happens to be even.
+
+00:36:20.440 --> 00:36:22.840
+zero, which happens to be even. And we want to end up with an odd length
+
+00:36:22.840 --> 00:36:24.280
+And we want to end up with an odd length path.
+
+00:36:24.280 --> 00:36:26.280
+path. So, if we go from here to here, see how
+
+00:36:26.280 --> 00:36:28.520
+So, if we go from here to here, see how because we have two nodes instead of
+
+00:36:28.520 --> 00:36:30.359
+because we have two nodes instead of each original node, the path is going to
+
+00:36:30.359 --> 00:36:32.640
+each original node, the path is going to alternate between even and odd, and it's
+
+00:36:32.640 --> 00:36:34.160
+alternate between even and odd, and it's going to keep track of the state that I
+
+00:36:34.160 --> 00:36:35.840
+going to keep track of the state that I didn't have before, and it's going to
+
+00:36:35.840 --> 00:36:38.400
+didn't have before, and it's going to just do the right thing?
+
+00:36:38.400 --> 00:36:40.920
+just do the right thing? It's magic. It works.
+
+00:36:40.920 --> 00:36:41.800
+It's magic. It works. So,
+
+00:36:41.800 --> 00:36:42.840
+So, let's see what's the running time of
+
+00:36:42.840 --> 00:36:44.520
+let's see what's the running time of this new algorithm.
+
+00:36:44.520 --> 00:36:45.920
+this new algorithm. How many
+
+00:36:45.920 --> 00:36:48.520
+How many uh say my original graph had V and E.
+
+00:36:48.520 --> 00:36:53.830
+uh say my original graph had V and E. How many new vertices do I have?
+
+00:37:03.190 --> 00:37:05.240
+Each edge is copied exactly twice. Which algorithm am I going to use? All my
+
+00:37:05.240 --> 00:37:07.040
+algorithm am I going to use? All my weights are positive because they're the
+
+00:37:07.040 --> 00:37:08.480
+weights are positive because they're the time it takes to drive somewhere, or the
+
+00:37:08.480 --> 00:37:09.960
+time it takes to drive somewhere, or the distance, or something. So, which
+
+00:37:09.960 --> 00:37:18.630
+distance, or something. So, which algorithm do I use?
+
+00:37:19.590 --> 00:37:21.080
+Um you can't use breadth-first search
+
+00:37:21.080 --> 00:37:24.120
+you can't use breadth-first search because you have weights.
+
+00:37:24.120 --> 00:37:25.400
+because you have weights. So, breadth-first search is not going to
+
+00:37:25.400 --> 00:37:26.960
+So, breadth-first search is not going to find the right answer.
+
+00:37:26.960 --> 00:37:29.440
+find the right answer. Oh, you you want to use this thing.
+
+00:37:29.440 --> 00:37:30.640
+Oh, you you want to use this thing. Well, so we don't have to worry about
+
+00:37:30.640 --> 00:37:32.440
+Well, so we don't have to worry about that because now we put the shortest
+
+00:37:32.440 --> 00:37:34.359
+that because now we put the shortest path algorithm in a black box, and we
+
+00:37:34.359 --> 00:37:35.840
+path algorithm in a black box, and we have them.
+
+00:37:35.840 --> 00:37:38.120
+have them. Yeah, so we use these black boxes. But,
+
+00:37:38.120 --> 00:37:39.640
+Yeah, so we use these black boxes. But, what we need to know is when to use this
+
+00:37:39.640 --> 00:37:41.200
+what we need to know is when to use this black box, and when to use this black
+
+00:37:41.200 --> 00:37:44.920
+black box, and when to use this black box. Which box is faster, by the way?
+
+00:37:44.920 --> 00:37:49.230
+box. Which box is faster, by the way? Please please give me the right answer.
+
+00:37:51.030 --> 00:37:52.560
+All right, Dijkstra is faster. So, whenever we can use Dijkstra, we
+
+00:37:52.560 --> 00:37:55.000
+So, whenever we can use Dijkstra, we will use Dijkstra. When can't we use
+
+00:37:55.000 --> 00:38:00.110
+will use Dijkstra. When can't we use Dijkstra?
+
+00:38:02.070 --> 00:38:03.920
+Negative negative weights.
+
+00:38:03.920 --> 00:38:05.240
+negative weights. So,
+
+00:38:05.240 --> 00:38:07.040
+So, if I have
+
+00:38:07.040 --> 00:38:09.160
+if I have weights greater or equal to zero, I'm
+
+00:38:09.160 --> 00:38:12.120
+weights greater or equal to zero, I'm happy I can use Dijkstra. If I have
+
+00:38:12.120 --> 00:38:13.480
+happy I can use Dijkstra. If I have weights that are smaller than zero,
+
+00:38:13.480 --> 00:38:15.720
+weights that are smaller than zero, well, whatever. It's going to be slower,
+
+00:38:15.720 --> 00:38:17.359
+well, whatever. It's going to be slower, but I can still solve it. It's like
+
+00:38:17.359 --> 00:38:19.200
+but I can still solve it. It's like arbitrary negative weights, right?
+
+00:38:19.200 --> 00:38:20.960
+arbitrary negative weights, right? Yep.
+
+00:38:20.960 --> 00:38:25.230
+Yep. Arbitrary negative weights.
+
+00:38:27.430 --> 00:38:30.870
+So, all the edges here are positive, so I'm going to use
+
+00:38:32.670 --> 00:38:34.400
+Dijkstra, very good. So, the running time will be
+
+00:38:34.400 --> 00:38:38.950
+time will be order of
+
+00:38:41.870 --> 00:38:43.600
+V log V plus E if you're a theory person. If you're in
+
+00:38:43.600 --> 00:38:47.270
+if you're a theory person. If you're in real life, it's E log V.
+
+00:38:49.390 --> 00:38:51.840
+So, hey, this is exactly the running time for the original graph.
+
+00:38:51.840 --> 00:38:53.920
+time for the original graph. So, the transformation only increased
+
+00:38:53.920 --> 00:38:56.160
+So, the transformation only increased the graph size by a constant factor, so
+
+00:38:56.160 --> 00:38:57.800
+the graph size by a constant factor, so same running time.
+
+00:38:57.800 --> 00:39:01.670
+same running time. Pretty good, right?
+
+00:39:02.910 --> 00:39:11.390
+Okay, let's do one more problem. Let's do the hard problem now.
+
+00:39:12.510 --> 00:39:25.349
+Are you guys getting ready for the hard problem?
+
+00:39:26.830 --> 00:39:28.480
+Well, that's why I that's why we taught that's why we taught you this.
+
+00:39:28.480 --> 00:39:30.000
+that's why we taught you this. So, I wanted to do two things. I wanted
+
+00:39:30.000 --> 00:39:31.480
+So, I wanted to do two things. I wanted to show you that trick, which is a cool
+
+00:39:31.480 --> 00:39:33.240
+to show you that trick, which is a cool trick, keep track of
+
+00:39:33.240 --> 00:39:35.720
+trick, keep track of state by doubling or by multiplying the
+
+00:39:35.720 --> 00:39:37.600
+state by doubling or by multiplying the vertices that you have.
+
+00:39:37.600 --> 00:39:39.000
+vertices that you have. And I wanted to go through some wrong
+
+00:39:39.000 --> 00:39:40.480
+And I wanted to go through some wrong solutions and figure out why they're
+
+00:39:40.480 --> 00:39:43.000
+solutions and figure out why they're wrong, so you can develop an intuition.
+
+00:39:43.000 --> 00:39:44.360
+wrong, so you can develop an intuition. Because when you're going to get a new
+
+00:39:44.360 --> 00:39:45.680
+Because when you're going to get a new problem, you're going to think of
+
+00:39:45.680 --> 00:39:48.240
+problem, you're going to think of something. Unless you're really good,
+
+00:39:48.240 --> 00:39:50.400
+something. Unless you're really good, unless you're destined to win a Turing
+
+00:39:50.400 --> 00:39:52.600
+unless you're destined to win a Turing award of some sort, the first solution
+
+00:39:52.600 --> 00:39:54.400
+award of some sort, the first solution will probably be wrong. Even if you're
+
+00:39:54.400 --> 00:39:55.800
+will probably be wrong. Even if you're destined to win a Turing award, the
+
+00:39:55.800 --> 00:39:56.960
+destined to win a Turing award, the first thing that comes to mind will
+
+00:39:56.960 --> 00:39:58.240
+first thing that comes to mind will probably be wrong. I'm willing to bet
+
+00:39:58.240 --> 00:40:00.360
+probably be wrong. I'm willing to bet Dijkstra didn't think of Dijkstra off
+
+00:40:00.360 --> 00:40:01.880
+Dijkstra didn't think of Dijkstra off the top of his head when he heard about
+
+00:40:01.880 --> 00:40:05.000
+the top of his head when he heard about the problem. So,
+
+00:40:05.000 --> 00:40:07.600
+the problem. So, what you want to do is get an intuition.
+
+00:40:07.600 --> 00:40:09.120
+what you want to do is get an intuition. So, when you think of a solution and it
+
+00:40:09.120 --> 00:40:11.240
+So, when you think of a solution and it starts getting complicated or things
+
+00:40:11.240 --> 00:40:13.360
+starts getting complicated or things start looking wrong, you want to back
+
+00:40:13.360 --> 00:40:15.240
+start looking wrong, you want to back out and think of something else. The
+
+00:40:15.240 --> 00:40:16.840
+out and think of something else. The more things you can consider, higher
+
+00:40:16.840 --> 00:40:18.040
+more things you can consider, higher chances that you're going to stumble
+
+00:40:18.040 --> 00:40:19.720
+chances that you're going to stumble upon the correct solution. So, that's
+
+00:40:19.720 --> 00:40:21.200
+upon the correct solution. So, that's why we're building an intuition for bad
+
+00:40:21.200 --> 00:40:23.160
+why we're building an intuition for bad solutions.
+
+00:40:23.160 --> 00:40:24.960
+solutions. I'm not I'm not just saying, "Hey, give
+
+00:40:24.960 --> 00:40:26.360
+I'm not I'm not just saying, "Hey, give me a solution and now I'll tell you it's
+
+00:40:26.360 --> 00:40:27.600
+me a solution and now I'll tell you it's wrong." It's not just to embarrass you
+
+00:40:27.600 --> 00:40:29.440
+wrong." It's not just to embarrass you or something. There's that intuition
+
+00:40:29.440 --> 00:40:32.360
+or something. There's that intuition building stuff that's really important.
+
+00:40:32.360 --> 00:40:33.960
+building stuff that's really important. Okay, so there's this network that we
+
+00:40:33.960 --> 00:40:36.200
+Okay, so there's this network that we keep talking about.
+
+00:40:36.200 --> 00:40:37.680
+keep talking about. There's this highway network, except
+
+00:40:37.680 --> 00:40:42.390
+There's this highway network, except this time it's a bit more complicated.
+
+00:40:44.950 --> 00:40:46.800
+So, for each edge, I have two things.
+
+00:40:46.800 --> 00:40:48.600
+I have two things. I have a fuel cost,
+
+00:40:48.600 --> 00:40:50.080
+I have a fuel cost, which is constant.
+
+00:40:50.080 --> 00:40:52.480
+which is constant. So, a fuel cost is a function of the
+
+00:40:52.480 --> 00:40:54.120
+So, a fuel cost is a function of the length of the road.
+
+00:40:54.120 --> 00:40:56.600
+length of the road. But now I have these realistic highways
+
+00:40:56.600 --> 00:40:58.760
+But now I have these realistic highways where I have traffic. If you try to go
+
+00:40:58.760 --> 00:41:01.920
+where I have traffic. If you try to go from Boston to New York, 2:00 a.m., 3
+
+00:41:01.920 --> 00:41:03.080
+from Boston to New York, 2:00 a.m., 3 hours.
+
+00:41:03.080 --> 00:41:05.040
+hours. Rush hour, 6 hours.
+
+00:41:05.040 --> 00:41:06.480
+Rush hour, 6 hours. So, we have to keep track of this in
+
+00:41:06.480 --> 00:41:07.800
+So, we have to keep track of this in some way.
+
+00:41:07.800 --> 00:41:09.040
+some way. Well, we're going to split up the day
+
+00:41:09.040 --> 00:41:10.880
+Well, we're going to split up the day into minutes.
+
+00:41:10.880 --> 00:41:12.840
+into minutes. Say you have M minutes in a day. Can
+
+00:41:12.840 --> 00:41:15.280
+Say you have M minutes in a day. Can anyone tell me what M is really quickly?
+
+00:41:15.280 --> 00:41:17.720
+anyone tell me what M is really quickly? Not a number, a formula, something.
+
+00:41:17.720 --> 00:41:23.470
+Not a number, a formula, something. What's isn't it What's 3,600 * 24?
+
+00:41:24.710 --> 00:41:25.640
+I'm not sure. Okay.
+
+00:41:25.640 --> 00:41:27.440
+Okay. 12 * 60.
+
+00:41:27.440 --> 00:41:28.560
+12 * 60. All right.
+
+00:41:28.560 --> 00:41:36.150
+All right. So, this is how many minutes in a day.
+
+00:41:37.430 --> 00:41:38.840
+So, this is how many minutes we have in a day, right?
+
+00:41:38.840 --> 00:41:40.920
+a day, right? Okay, so we're going for each edge,
+
+00:41:40.920 --> 00:41:42.520
+Okay, so we're going for each edge, we're going to have a function that's
+
+00:41:42.520 --> 00:41:45.120
+we're going to have a function that's the time cost of the edge.
+
+00:41:45.120 --> 00:41:47.200
+the time cost of the edge. So, it's the time cost of this edge,
+
+00:41:47.200 --> 00:41:49.440
+So, it's the time cost of this edge, and it's going to say, "If I started a
+
+00:41:49.440 --> 00:41:51.360
+and it's going to say, "If I started a certain time, it's going to take this
+
+00:41:51.360 --> 00:41:54.320
+certain time, it's going to take this many minutes to go across the edge."
+
+00:41:54.320 --> 00:41:55.680
+many minutes to go across the edge." So, for each street, I know how much
+
+00:41:55.680 --> 00:41:57.320
+So, for each street, I know how much time it Sorry, each highway, I know how
+
+00:41:57.320 --> 00:41:58.480
+time it Sorry, each highway, I know how much time it's going to take to go
+
+00:41:58.480 --> 00:42:01.600
+much time it's going to take to go across it, given when I start,
+
+00:42:01.600 --> 00:42:03.880
+across it, given when I start, and I know how much fuel I'm going to
+
+00:42:03.880 --> 00:42:04.920
+and I know how much fuel I'm going to consume.
+
+00:42:04.920 --> 00:42:06.600
+consume. By the way, edges are directed now, just
+
+00:42:06.600 --> 00:42:08.600
+By the way, edges are directed now, just to make our life easy. So,
+
+00:42:08.600 --> 00:42:12.430
+to make our life easy. So, this is this graph is going to be
+
+00:42:13.550 --> 00:42:15.960
+like this. Let's see if I can get this right.
+
+00:42:15.960 --> 00:42:17.360
+Let's see if I can get this right. It's actually like Boston where they've
+
+00:42:17.360 --> 00:42:19.760
+It's actually like Boston where they've got one-ways everywhere.
+
+00:42:19.760 --> 00:42:21.400
+got one-ways everywhere. Well, so the real reason I'm having this
+
+00:42:21.400 --> 00:42:23.320
+Well, so the real reason I'm having this is uh the
+
+00:42:23.320 --> 00:42:24.960
+is uh the the time to go across the street might
+
+00:42:24.960 --> 00:42:26.800
+the time to go across the street might be different across highway might be
+
+00:42:26.800 --> 00:42:28.960
+be different across highway might be different depending which way you go.
+
+00:42:28.960 --> 00:42:30.640
+different depending which way you go. Oh, so you see Getting into Boston in
+
+00:42:30.640 --> 00:42:32.440
+Oh, so you see Getting into Boston in the morning versus getting into Boston
+
+00:42:32.440 --> 00:42:34.480
+the morning versus getting into Boston in the evening, which one's easier?
+
+00:42:34.480 --> 00:42:35.720
+in the evening, which one's easier? Sorry, versus getting out of Boston in
+
+00:42:35.720 --> 00:42:37.600
+Sorry, versus getting out of Boston in the morning.
+
+00:42:37.600 --> 00:42:38.680
+the morning. Intuitively, I'd say it's probably
+
+00:42:38.680 --> 00:42:40.080
+Intuitively, I'd say it's probably harder to get in in the morning as
+
+00:42:40.080 --> 00:42:41.720
+harder to get in in the morning as people are going to work.
+
+00:42:41.720 --> 00:42:43.320
+people are going to work. And it's easier to get out. But yeah, I
+
+00:42:43.320 --> 00:42:45.320
+And it's easier to get out. But yeah, I don't know either. No, the 95 tolls are
+
+00:42:45.320 --> 00:42:46.800
+don't know either. No, the 95 tolls are brutal.
+
+00:42:46.800 --> 00:42:47.640
+brutal. Okay,
+
+00:42:47.640 --> 00:42:50.280
+Okay, we have an answer.
+
+00:42:50.280 --> 00:42:52.640
+we have an answer. Okay, so our edges are going to be
+
+00:42:52.640 --> 00:42:53.880
+Okay, so our edges are going to be oriented,
+
+00:42:53.880 --> 00:42:55.520
+oriented, and
+
+00:42:55.520 --> 00:42:57.680
+and I want a road that So, I want a final
+
+00:42:57.680 --> 00:42:59.640
+I want a road that So, I want a final itinerary that gives me that satisfies
+
+00:42:59.640 --> 00:43:03.150
+itinerary that gives me that satisfies two constraints.
+
+00:43:04.870 --> 00:43:05.760
+Yeah, that's not good, right? Okay.
+
+00:43:05.760 --> 00:43:07.880
+Okay. New York and New York.
+
+00:43:07.880 --> 00:43:09.840
+New York and New York. So,
+
+00:43:09.840 --> 00:43:11.560
+So, if So, I want to see how fast I can get
+
+00:43:11.560 --> 00:43:12.920
+if So, I want to see how fast I can get to my destination. That's my top
+
+00:43:12.920 --> 00:43:15.840
+to my destination. That's my top priority. If I can get if I can get to
+
+00:43:15.840 --> 00:43:18.000
+priority. If I can get if I can get to to New York at 5:00 p.m., I want to get
+
+00:43:18.000 --> 00:43:19.440
+to New York at 5:00 p.m., I want to get there at 5:00 p.m.
+
+00:43:19.440 --> 00:43:20.880
+there at 5:00 p.m. But if I have three I don't want to get
+
+00:43:20.880 --> 00:43:23.080
+But if I have three I don't want to get there at 5:01, for example.
+
+00:43:23.080 --> 00:43:24.880
+there at 5:01, for example. But if I have three ways to get there at
+
+00:43:24.880 --> 00:43:27.080
+But if I have three ways to get there at 5:00 p.m., I want to choose the way
+
+00:43:27.080 --> 00:43:29.200
+5:00 p.m., I want to choose the way that's the most eco-friendly. So, least
+
+00:43:29.200 --> 00:43:32.230
+that's the most eco-friendly. So, least amount of fuel.
+
+00:43:34.310 --> 00:43:35.320
+So, of all possible ways, the fastest way,
+
+00:43:35.320 --> 00:43:38.080
+way, out of all possible fastest ways,
+
+00:43:38.080 --> 00:43:40.480
+out of all possible fastest ways, the way that consumes the least fuel.
+
+00:43:40.480 --> 00:43:42.640
+the way that consumes the least fuel. Least fuel.
+
+00:43:42.640 --> 00:43:44.680
+Least fuel. Go.
+
+00:43:44.680 --> 00:43:48.440
+Go. You have 2 minutes. Nice. Maybe five.
+
+00:43:48.440 --> 00:43:49.640
+You have 2 minutes. Nice. Maybe five. Maybe five. And do we have the same
+
+00:43:49.640 --> 00:43:51.840
+Maybe five. And do we have the same costs for the
+
+00:43:51.840 --> 00:43:54.320
+costs for the So, each edge always has the same fuel
+
+00:43:54.320 --> 00:43:56.200
+So, each edge always has the same fuel cost. Oh, it always But depending on
+
+00:43:56.200 --> 00:43:58.000
+cost. Oh, it always But depending on when you start going across it, it's
+
+00:43:58.000 --> 00:44:00.600
+when you start going across it, it's going to take a different time to So, we
+
+00:44:00.600 --> 00:44:02.680
+going to take a different time to So, we don't know what those times are.
+
+00:44:02.680 --> 00:44:03.840
+don't know what those times are. They're going to be different for each
+
+00:44:03.840 --> 00:44:05.200
+They're going to be different for each edge. Mhm.
+
+00:44:05.200 --> 00:44:07.600
+edge. Mhm. One guess, take Dijkstra, find the
+
+00:44:07.600 --> 00:44:09.040
+One guess, take Dijkstra, find the shortest path length, and then look for
+
+00:44:09.040 --> 00:44:12.200
+shortest path length, and then look for all path lengths through that length.
+
+00:44:12.200 --> 00:44:14.000
+all path lengths through that length. I don't know. Uh so, we have the issue
+
+00:44:14.000 --> 00:44:15.920
+I don't know. Uh so, we have the issue that I I might still have it. Oh, no,
+
+00:44:15.920 --> 00:44:18.000
+that I I might still have it. Oh, no, never mind. Sorry, I erased it, so it's
+
+00:44:18.000 --> 00:44:19.720
+never mind. Sorry, I erased it, so it's not on your mind anymore. We have those
+
+00:44:19.720 --> 00:44:21.359
+not on your mind anymore. We have those diamonds that show you that there are
+
+00:44:21.359 --> 00:44:22.800
+diamonds that show you that there are there might be an exponential number of
+
+00:44:22.800 --> 00:44:24.840
+there might be an exponential number of paths with the same length
+
+00:44:24.840 --> 00:44:25.960
+paths with the same length or the same distance.
+
+00:44:25.960 --> 00:44:28.080
+or the same distance. it doesn't help that we know we should
+
+00:44:28.080 --> 00:44:30.600
+it doesn't help that we know we should cut off it. Nope. Yeah. So, we need to
+
+00:44:30.600 --> 00:44:32.600
+cut off it. Nope. Yeah. So, we need to do the process that I just erased. So,
+
+00:44:32.600 --> 00:44:35.400
+do the process that I just erased. So, transform the graph in Right.
+
+00:44:35.400 --> 00:44:36.560
+transform the graph in Right. So, the thing is now you're missing
+
+00:44:36.560 --> 00:44:38.320
+So, the thing is now you're missing state, right? This misses state. This
+
+00:44:38.320 --> 00:44:40.640
+state, right? This misses state. This tells you how many edges you have to get
+
+00:44:40.640 --> 00:44:42.560
+tells you how many edges you have to get from source to destination. But we're
+
+00:44:42.560 --> 00:44:44.480
+from source to destination. But we're not keeping track of some state that is
+
+00:44:44.480 --> 00:44:45.760
+not keeping track of some state that is vital.
+
+00:44:45.760 --> 00:44:47.480
+vital. So, transform the graph the graph to
+
+00:44:47.480 --> 00:44:50.920
+So, transform the graph the graph to keep track of state, run say Dijkstra,
+
+00:44:50.920 --> 00:44:55.590
+keep track of state, run say Dijkstra, and then interpret the output.
+
+00:44:57.110 --> 00:44:57.600
+So, what state do we need? Let's think of that.
+
+00:44:57.600 --> 00:45:00.480
+of that. Fuel cost, I think.
+
+00:45:00.480 --> 00:45:02.280
+Fuel cost, I think. Sorry? Fuel cost is the same for each
+
+00:45:02.280 --> 00:45:03.440
+Sorry? Fuel cost is the same for each edge.
+
+00:45:03.440 --> 00:45:04.240
+edge. Mhm.
+
+00:45:04.240 --> 00:45:06.760
+Mhm. Just the time is different.
+
+00:45:06.760 --> 00:45:08.120
+Just the time is different. With the traffic.
+
+00:45:08.120 --> 00:45:09.960
+With the traffic. But like don't you want to keep because
+
+00:45:09.960 --> 00:45:11.880
+But like don't you want to keep because like once you have found the fastest
+
+00:45:11.880 --> 00:45:15.359
+like once you have found the fastest path, then you want to like see like
+
+00:45:15.359 --> 00:45:17.520
+path, then you want to like see like according to our fuel cost rating.
+
+00:45:17.520 --> 00:45:20.070
+according to our fuel cost rating. Yep.
+
+00:45:21.270 --> 00:45:23.520
+take So, won't we like
+
+00:45:23.520 --> 00:45:24.680
+So, won't we like So, like
+
+00:45:24.680 --> 00:45:26.000
+So, like thinking about the priority, our
+
+00:45:26.000 --> 00:45:29.000
+thinking about the priority, our priority is time. Yep. So, we want to
+
+00:45:29.000 --> 00:45:30.480
+priority is time. Yep. So, we want to like
+
+00:45:30.480 --> 00:45:34.520
+like save fuel like I view like as a state
+
+00:45:34.520 --> 00:45:38.359
+save fuel like I view like as a state to check it. Uh
+
+00:45:38.359 --> 00:45:40.040
+to check it. Uh So, the problem is I don't even know if
+
+00:45:40.040 --> 00:45:42.240
+So, the problem is I don't even know if fuel costs are integers, I can't keep
+
+00:45:42.240 --> 00:45:44.320
+fuel costs are integers, I can't keep fuel as a state.
+
+00:45:44.320 --> 00:45:46.080
+fuel as a state. So, how many copies would I have? For
+
+00:45:46.080 --> 00:45:47.359
+So, how many copies would I have? For each vertex, how many copies would I
+
+00:45:47.359 --> 00:45:51.120
+each vertex, how many copies would I have if fuel is a state? Who knows?
+
+00:45:51.120 --> 00:45:53.120
+have if fuel is a state? Who knows? So, let's try something else.
+
+00:45:53.120 --> 00:45:55.000
+So, let's try something else. But you're on the right track.
+
+00:45:55.000 --> 00:46:01.830
+But you're on the right track. Let's take a variable and make it state.
+
+00:46:05.630 --> 00:46:09.990
+So, for every vertex can you keep track of
+
+00:46:12.230 --> 00:46:15.400
+how was the shortest time it took to get there?
+
+00:46:15.400 --> 00:46:16.840
+time it took to get there? What's the shortest time it took to get
+
+00:46:16.840 --> 00:46:17.880
+What's the shortest time it took to get there?
+
+00:46:17.880 --> 00:46:19.359
+there? Uh
+
+00:46:19.359 --> 00:46:20.400
+Uh So, how would you keep track of that?
+
+00:46:20.400 --> 00:46:22.560
+So, how would you keep track of that? Would you make that state or how would
+
+00:46:22.560 --> 00:46:27.430
+Would you make that state or how would you keep track of that?
+
+00:46:28.430 --> 00:46:30.280
+I'm not disagreeing. I'm trying to understand your So, like for example,
+
+00:46:30.280 --> 00:46:32.000
+understand your So, like for example, like
+
+00:46:32.000 --> 00:46:34.480
+like let's say if you have B, right?
+
+00:46:34.480 --> 00:46:34.840
+let's say if you have B, right? Okay.
+
+00:46:34.840 --> 00:46:36.680
+Okay. say at vertex B, if you let's say it
+
+00:46:36.680 --> 00:46:39.480
+say at vertex B, if you let's say it takes like one one hour to go from A to
+
+00:46:39.480 --> 00:46:40.240
+takes like one one hour to go from A to B.
+
+00:46:40.240 --> 00:46:41.760
+B. And so, when you when you So, it depends
+
+00:46:41.760 --> 00:46:43.680
+And so, when you when you So, it depends when you start, by the way.
+
+00:46:43.680 --> 00:46:45.320
+when you start, by the way. So, Right. how much time it takes
+
+00:46:45.320 --> 00:46:47.000
+So, Right. how much time it takes depends on when you start. So, like if
+
+00:46:47.000 --> 00:46:48.640
+depends on when you start. So, like if you start at 8:00 a.m., it might be an
+
+00:46:48.640 --> 00:46:50.720
+you start at 8:00 a.m., it might be an hour. If you start at 8:00 at 9:00 a.m.,
+
+00:46:50.720 --> 00:46:53.920
+hour. If you start at 8:00 at 9:00 a.m., it might be 2 hours. Right.
+
+00:46:53.920 --> 00:46:55.600
+it might be 2 hours. Right. Do you need to have a finite number of
+
+00:46:55.600 --> 00:46:57.160
+Do you need to have a finite number of states?
+
+00:46:57.160 --> 00:46:59.560
+states? Uh it's nice if it's not infinite, but
+
+00:46:59.560 --> 00:47:01.240
+Uh it's nice if it's not infinite, but it doesn't have to be constant like we
+
+00:47:01.240 --> 00:47:02.960
+it doesn't have to be constant like we had before. It can be more than
+
+00:47:02.960 --> 00:47:05.560
+had before. It can be more than constant, for sure.
+
+00:47:05.560 --> 00:47:07.440
+constant, for sure. So, what are you thinking?
+
+00:47:07.440 --> 00:47:10.480
+So, what are you thinking? I want to use time as a state. I like
+
+00:47:10.480 --> 00:47:13.600
+I want to use time as a state. I like that idea. Let's try to do it.
+
+00:47:13.600 --> 00:47:16.200
+that idea. Let's try to do it. So, we're going to use time as a state.
+
+00:47:16.200 --> 00:47:18.000
+So, we're going to use time as a state. How many vertices am I going to have for
+
+00:47:18.000 --> 00:47:19.880
+How many vertices am I going to have for each vertex?
+
+00:47:19.880 --> 00:47:21.480
+each vertex? So, for each original vertex, how many
+
+00:47:21.480 --> 00:47:22.880
+So, for each original vertex, how many vertices am I going to have in my new
+
+00:47:22.880 --> 00:47:25.990
+vertices am I going to have in my new graph?
+
+00:47:26.710 --> 00:47:27.960
+Three or four or zero.
+
+00:47:27.960 --> 00:47:30.440
+or four or zero. I feel like it grows exponentially.
+
+00:47:30.440 --> 00:47:33.910
+I feel like it grows exponentially. Well, I
+
+00:47:36.110 --> 00:47:37.960
+So, if if I say, "Hey, I'm at this vertex at this time,"
+
+00:47:37.960 --> 00:47:39.880
+vertex at this time," then I'm going to have M vertices for
+
+00:47:39.880 --> 00:47:42.160
+then I'm going to have M vertices for each original vertex, right?
+
+00:47:42.160 --> 00:47:43.040
+each original vertex, right? Right.
+
+00:47:43.040 --> 00:47:44.800
+Right. So, I promised that the resolution of
+
+00:47:44.800 --> 00:47:46.440
+So, I promised that the resolution of time is minutes.
+
+00:47:46.440 --> 00:47:47.880
+time is minutes. So, I promised that
+
+00:47:47.880 --> 00:47:49.400
+So, I promised that this thing gives you an integer number
+
+00:47:49.400 --> 00:47:51.080
+this thing gives you an integer number of minutes.
+
+00:47:51.080 --> 00:47:53.120
+of minutes. Can't be like
+
+00:47:53.120 --> 00:47:55.680
+Can't be like in the days, though.
+
+00:47:55.680 --> 00:47:57.000
+in the days, though. Suppose
+
+00:47:57.000 --> 00:47:58.480
+Suppose uh suppose you can get from source to
+
+00:47:58.480 --> 00:48:01.440
+uh suppose you can get from source to destination in one day.
+
+00:48:01.440 --> 00:48:02.680
+destination in one day. So, let's see how it build this graph
+
+00:48:02.680 --> 00:48:05.120
+So, let's see how it build this graph first, and then we can uh figure out the
+
+00:48:05.120 --> 00:48:07.440
+first, and then we can uh figure out the rest of the things. So, for each node,
+
+00:48:07.440 --> 00:48:10.600
+rest of the things. So, for each node, I'm going to make M copies of it.
+
+00:48:10.600 --> 00:48:12.200
+I'm going to make M copies of it. So, suppose in my original graph I had a
+
+00:48:12.200 --> 00:48:13.600
+So, suppose in my original graph I had a node,
+
+00:48:13.600 --> 00:48:16.120
+node, I'm going to have M copies of that node,
+
+00:48:16.120 --> 00:48:18.760
+I'm going to have M copies of that node, and each copy has the original vertex
+
+00:48:18.760 --> 00:48:21.000
+and each copy has the original vertex and the time when I'm there.
+
+00:48:21.000 --> 00:48:23.520
+and the time when I'm there. Right? So, there are V of these, and
+
+00:48:23.520 --> 00:48:24.640
+Right? So, there are V of these, and there are
+
+00:48:24.640 --> 00:48:27.510
+there are M of these.
+
+00:48:28.590 --> 00:48:31.320
+Yes? So, that makes sense. It's a great idea.
+
+00:48:31.320 --> 00:48:32.680
+So, that makes sense. It's a great idea. Yeah, you had it.
+
+00:48:32.680 --> 00:48:33.840
+Yeah, you had it. Great idea.
+
+00:48:33.840 --> 00:48:37.790
+Great idea. So far, so good. So,
+
+00:48:39.910 --> 00:48:41.440
+Yeah, so let's see how we do that. Let's do that. So,
+
+00:48:41.440 --> 00:48:43.400
+Let's do that. So, suppose we have an edge
+
+00:48:43.400 --> 00:48:45.240
+suppose we have an edge from U to V,
+
+00:48:45.240 --> 00:48:47.720
+from U to V, and
+
+00:48:47.720 --> 00:48:49.480
+and uh yeah, how are we going to connect
+
+00:48:49.480 --> 00:48:50.800
+uh yeah, how are we going to connect this? How are we going to transform
+
+00:48:50.800 --> 00:48:52.800
+this? How are we going to transform this?
+
+00:48:52.800 --> 00:48:54.160
+this? How many edges are we going to make from
+
+00:48:54.160 --> 00:48:55.760
+How many edges are we going to make from that edge?
+
+00:48:55.760 --> 00:48:58.470
+that edge? So, you need
+
+00:49:00.670 --> 00:49:02.120
+You should only make Oh my goodness. Like do you have to do
+
+00:49:02.120 --> 00:49:03.920
+Oh my goodness. Like do you have to do it from every start time? Like I guess.
+
+00:49:03.920 --> 00:49:05.160
+it from every start time? Like I guess. Yeah. Yeah.
+
+00:49:05.160 --> 00:49:05.640
+Yeah. Yeah. So,
+
+00:49:05.640 --> 00:49:08.480
+So, M edges is Okay.
+
+00:49:08.480 --> 00:49:10.440
+M edges is Okay. M edges. So, from U
+
+00:49:10.440 --> 00:49:13.320
+M edges. So, from U and a start time to
+
+00:49:13.320 --> 00:49:15.400
+and a start time to V and what?
+
+00:49:15.400 --> 00:49:19.120
+V and what? Uh T plus TC of T.
+
+00:49:19.120 --> 00:49:22.800
+Uh T plus TC of T. T plus TC of going through that edge,
+
+00:49:22.800 --> 00:49:24.120
+T plus TC of going through that edge, right? Mhm.
+
+00:49:24.120 --> 00:49:30.430
+right? Mhm. TC of going from U to V at this time.
+
+00:49:31.750 --> 00:49:33.000
+Right. Yeah.
+
+00:49:33.000 --> 00:49:35.040
+Yeah. Yeah, like this.
+
+00:49:35.040 --> 00:49:36.680
+Yeah, like this. So, you start from a time. So, the edge
+
+00:49:36.680 --> 00:49:38.960
+So, you start from a time. So, the edge points from the time that you start up
+
+00:49:38.960 --> 00:49:40.800
+points from the time that you start up until the time when you'd be able to
+
+00:49:40.800 --> 00:49:42.520
+until the time when you'd be able to finish.
+
+00:49:42.520 --> 00:49:44.800
+finish. So up until the time where you'd be off
+
+00:49:44.800 --> 00:49:47.400
+So up until the time where you'd be off the highway and done in the next city.
+
+00:49:47.400 --> 00:49:49.120
+the highway and done in the next city. And we need one more type of edges.
+
+00:49:49.120 --> 00:49:50.800
+And we need one more type of edges. There's one more tiny trick.
+
+00:49:50.800 --> 00:49:54.680
+There's one more tiny trick. So if I'm somewhere in Massachusetts and
+
+00:49:54.680 --> 00:49:56.680
+So if I'm somewhere in Massachusetts and I know that it's really bad now, I might
+
+00:49:56.680 --> 00:49:58.520
+I know that it's really bad now, I might prefer to wait out for a few minutes, go
+
+00:49:58.520 --> 00:50:00.240
+prefer to wait out for a few minutes, go to a bar and then come and drive. Okay,
+
+00:50:00.240 --> 00:50:02.560
+to a bar and then come and drive. Okay, not to a bar. Go to a food place and
+
+00:50:02.560 --> 00:50:04.120
+not to a bar. Go to a food place and then drive later.
+
+00:50:04.120 --> 00:50:06.560
+then drive later. So edges that
+
+00:50:06.560 --> 00:50:08.160
+So edges that represent waiting.
+
+00:50:08.160 --> 00:50:10.440
+represent waiting. Yeah, they have one minute between them.
+
+00:50:10.440 --> 00:50:12.840
+Yeah, they have one minute between them. Okay, so how do I do that?
+
+00:50:12.840 --> 00:50:17.200
+Okay, so how do I do that? So from A from U to U Okay. with a cost
+
+00:50:17.200 --> 00:50:18.800
+So from A from U to U Okay. with a cost of one.
+
+00:50:18.800 --> 00:50:20.440
+of one. From U to U
+
+00:50:20.440 --> 00:50:22.960
+From U to U Uh well, so from U at time T
+
+00:50:22.960 --> 00:50:24.640
+Uh well, so from U at time T at time at time T
+
+00:50:24.640 --> 00:50:26.640
+at time at time T to U at time T plus one. Okay, I like
+
+00:50:26.640 --> 00:50:27.840
+to U at time T plus one. Okay, I like this better.
+
+00:50:27.840 --> 00:50:29.040
+this better. And
+
+00:50:29.040 --> 00:50:31.680
+And what's the fuel cost of this?
+
+00:50:31.680 --> 00:50:33.040
+what's the fuel cost of this? zero cost
+
+00:50:33.040 --> 00:50:35.520
+zero cost Okay. So here is this edge has fuel cost
+
+00:50:35.520 --> 00:50:37.080
+Okay. So here is this edge has fuel cost of C and then you're just going to have
+
+00:50:37.080 --> 00:50:39.160
+of C and then you're just going to have fuel cost
+
+00:50:39.160 --> 00:50:42.040
+fuel cost for the ones on the top.
+
+00:50:42.040 --> 00:50:44.440
+for the ones on the top. Is it proportional to minutes? Speed?
+
+00:50:44.440 --> 00:50:46.000
+Is it proportional to minutes? Speed? It's the same.
+
+00:50:46.000 --> 00:50:48.240
+It's the same. It's just FC. So FC stays the same no
+
+00:50:48.240 --> 00:50:49.760
+It's just FC. So FC stays the same no matter when we go through the highway.
+
+00:50:49.760 --> 00:50:52.000
+matter when we go through the highway. FC is a function of the distance of the
+
+00:50:52.000 --> 00:50:54.000
+FC is a function of the distance of the road.
+
+00:50:54.000 --> 00:50:56.680
+road. So this edge becomes M edges with the
+
+00:50:56.680 --> 00:50:58.280
+So this edge becomes M edges with the same cost.
+
+00:50:58.280 --> 00:51:00.120
+same cost. And then I have to have vertical waiting
+
+00:51:00.120 --> 00:51:02.830
+And then I have to have vertical waiting edges.
+
+00:51:04.350 --> 00:51:06.120
+So if we have the if we have the holographic display that I talked about
+
+00:51:06.120 --> 00:51:07.960
+holographic display that I talked about earlier, you'd have
+
+00:51:07.960 --> 00:51:10.320
+earlier, you'd have M sheets of paper this time.
+
+00:51:10.320 --> 00:51:12.200
+M sheets of paper this time. You start at time zero at your source
+
+00:51:12.200 --> 00:51:13.320
+You start at time zero at your source and then
+
+00:51:13.320 --> 00:51:16.760
+and then your edges go represent the moves that
+
+00:51:16.760 --> 00:51:18.440
+your edges go represent the moves that you could make. So you could start in
+
+00:51:18.440 --> 00:51:21.280
+you could make. So you could start in Boston at 8:00 a.m. and you could take
+
+00:51:21.280 --> 00:51:23.800
+Boston at 8:00 a.m. and you could take I-90 and end up in
+
+00:51:23.800 --> 00:51:25.600
+I-90 and end up in I don't know. I don't know Massachusetts
+
+00:51:25.600 --> 00:51:28.560
+I don't know. I don't know Massachusetts city names. Albuquerque at
+
+00:51:28.560 --> 00:51:30.800
+city names. Albuquerque at 9:00 a.m.? Okay, I don't know. Sorry. I
+
+00:51:30.800 --> 00:51:31.880
+9:00 a.m.? Okay, I don't know. Sorry. I don't
+
+00:51:31.880 --> 00:51:33.920
+don't Amherst. Okay. So you start in Boston
+
+00:51:33.920 --> 00:51:35.880
+Amherst. Okay. So you start in Boston 8:00 a.m. You end up at Amherst at I
+
+00:51:35.880 --> 00:51:37.760
+8:00 a.m. You end up at Amherst at I don't know, 9:00 10:00 a.m. Right? So
+
+00:51:37.760 --> 00:51:39.200
+don't know, 9:00 10:00 a.m. Right? So this is one edge.
+
+00:51:39.200 --> 00:51:41.280
+this is one edge. So the edges represent the moves that
+
+00:51:41.280 --> 00:51:45.990
+So the edges represent the moves that you could make in this graph.
+
+00:51:47.070 --> 00:51:49.720
+Does this make sense? Wait, I I understand the two last lines
+
+00:51:49.720 --> 00:51:52.200
+Wait, I I understand the two last lines there. What was the I don't really get
+
+00:51:52.200 --> 00:51:53.720
+there. What was the I don't really get what you're you were doing there. Can
+
+00:51:53.720 --> 00:51:55.480
+what you're you were doing there. Can you explain to Okay, so let's see what
+
+00:51:55.480 --> 00:51:56.800
+you explain to Okay, so let's see what we're trying to do here. So we're saying
+
+00:51:56.800 --> 00:51:59.880
+we're trying to do here. So we're saying that if I'm a node U Mhm. and
+
+00:51:59.880 --> 00:52:01.720
+that if I'm a node U Mhm. and I'm starting at time T. Yeah, so it's
+
+00:52:01.720 --> 00:52:04.880
+I'm starting at time T. Yeah, so it's like one one piece paper. Yep. Okay. So
+
+00:52:04.880 --> 00:52:06.320
+like one one piece paper. Yep. Okay. So this is I'm going to go on the road,
+
+00:52:06.320 --> 00:52:06.720
+this is I'm going to go on the road, right?
+
+00:52:06.720 --> 00:52:08.560
+right? Mhm. I'm going to go on the road from U
+
+00:52:08.560 --> 00:52:09.840
+Mhm. I'm going to go on the road from U to V. Mhm.
+
+00:52:09.840 --> 00:52:11.960
+to V. Mhm. So where am I going to arrive?
+
+00:52:11.960 --> 00:52:13.600
+So where am I going to arrive? There at V at some time. Right?
+
+00:52:13.600 --> 00:52:15.360
+There at V at some time. Right? Right. So we now we have to figure out
+
+00:52:15.360 --> 00:52:17.360
+Right. So we now we have to figure out what time we're going to arrive at.
+
+00:52:17.360 --> 00:52:19.120
+what time we're going to arrive at. So the time that we arrive at is the
+
+00:52:19.120 --> 00:52:20.560
+So the time that we arrive at is the original time
+
+00:52:20.560 --> 00:52:22.200
+original time plus whatever time I'm going to spend on
+
+00:52:22.200 --> 00:52:24.360
+plus whatever time I'm going to spend on the road. Mhm. What's the time I spend
+
+00:52:24.360 --> 00:52:26.200
+the road. Mhm. What's the time I spend on the road? It's not constant because I
+
+00:52:26.200 --> 00:52:28.280
+on the road? It's not constant because I have that timetable that includes
+
+00:52:28.280 --> 00:52:30.440
+have that timetable that includes traffic. Yeah. So this is what this
+
+00:52:30.440 --> 00:52:31.440
+traffic. Yeah. So this is what this tells me.
+
+00:52:31.440 --> 00:52:33.080
+tells me. This is what this big ugly formula is
+
+00:52:33.080 --> 00:52:34.560
+This is what this big ugly formula is all about.
+
+00:52:34.560 --> 00:52:36.880
+all about. It says the timetable for this edge
+
+00:52:36.880 --> 00:52:39.360
+It says the timetable for this edge assuming you start at time T. That's all
+
+00:52:39.360 --> 00:52:40.400
+assuming you start at time T. That's all there is. Nothing else.
+
+00:52:40.400 --> 00:52:41.840
+there is. Nothing else. What's the second line there?
+
+00:52:41.840 --> 00:52:43.840
+What's the second line there? So the second line is waiting.
+
+00:52:43.840 --> 00:52:47.120
+So the second line is waiting. Mhm. So if I don't have this then I'm
+
+00:52:47.120 --> 00:52:49.120
+Mhm. So if I don't have this then I'm constrained in that I have to drive all
+
+00:52:49.120 --> 00:52:50.400
+constrained in that I have to drive all the time.
+
+00:52:50.400 --> 00:52:52.880
+the time. Right? I go from here to Amherst then I
+
+00:52:52.880 --> 00:52:54.280
+Right? I go from here to Amherst then I have to go from Amherst to somewhere
+
+00:52:54.280 --> 00:52:55.600
+have to go from Amherst to somewhere else and keep going keep going keep
+
+00:52:55.600 --> 00:52:55.960
+else and keep going keep going keep going.
+
+00:52:55.960 --> 00:52:58.080
+going. saying you need to use this is the this
+
+00:52:58.080 --> 00:52:59.960
+saying you need to use this is the this is the pausing. Yeah, this is where I
+
+00:52:59.960 --> 00:53:02.160
+is the pausing. Yeah, this is where I wait for a minute. Okay. So if I wait
+
+00:53:02.160 --> 00:53:03.800
+wait for a minute. Okay. So if I wait for a minute, I don't consume any fuel
+
+00:53:03.800 --> 00:53:06.480
+for a minute, I don't consume any fuel and I go from time T time T plus one.
+
+00:53:06.480 --> 00:53:08.280
+and I go from time T time T plus one. It's half. Okay.
+
+00:53:08.280 --> 00:53:10.640
+It's half. Okay. Does this make sense?
+
+00:53:10.640 --> 00:53:12.160
+Does this make sense? Uh do we want to analyze the running
+
+00:53:12.160 --> 00:53:15.120
+Uh do we want to analyze the running time for this really quickly? Sure.
+
+00:53:15.120 --> 00:53:19.190
+time for this really quickly? Sure. So how many edges?
+
+00:53:22.070 --> 00:53:24.240
+E times M Okay, let's do vertices because vertices is quick.
+
+00:53:24.240 --> 00:53:27.400
+because vertices is quick. E times M Okay. So edges is you're
+
+00:53:27.400 --> 00:53:31.240
+E times M Okay. So edges is you're saying E times M.
+
+00:53:31.240 --> 00:53:33.600
+saying E times M. Almost. Pause there. Okay, so there's a
+
+00:53:33.600 --> 00:53:35.760
+Almost. Pause there. Okay, so there's a pause, right? How many pause edges do I
+
+00:53:35.760 --> 00:53:37.920
+pause, right? How many pause edges do I have? Um
+
+00:53:37.920 --> 00:53:40.760
+have? Um Oh, V.
+
+00:53:40.760 --> 00:53:45.110
+Oh, V. Um M
+
+00:53:46.950 --> 00:53:49.280
+Okay, so this is how many vertices, this is how many edges. Plug this into which
+
+00:53:49.280 --> 00:53:52.280
+is how many edges. Plug this into which algorithm? Dijkstra or Bellman-Ford?
+
+00:53:52.280 --> 00:53:56.280
+algorithm? Dijkstra or Bellman-Ford? Dijkstra. All positive. Done.
+
+00:53:56.280 --> 00:53:58.240
+Dijkstra. All positive. Done. Yay, we solved a hard problem. How do
+
+00:53:58.240 --> 00:53:59.000
+Yay, we solved a hard problem. How do you
+
+00:53:59.000 --> 00:54:00.760
+you How do you ensure that the time's right?
+
+00:54:00.760 --> 00:54:02.480
+How do you ensure that the time's right? So do you have to go through
+
+00:54:02.480 --> 00:54:04.200
+So do you have to go through and see if there's a path? How do you
+
+00:54:04.200 --> 00:54:05.600
+and see if there's a path? How do you read the solution? That's good. That's a
+
+00:54:05.600 --> 00:54:07.200
+read the solution? That's good. That's a good question. I like that.
+
+00:54:07.200 --> 00:54:09.000
+good question. I like that. So we're going to have
+
+00:54:09.000 --> 00:54:12.320
+So we're going to have M vertices at the destination, right?
+
+00:54:12.320 --> 00:54:13.280
+M vertices at the destination, right? Let's see how they're going to look
+
+00:54:13.280 --> 00:54:15.480
+Let's see how they're going to look like. First off, if you start at 8:00
+
+00:54:15.480 --> 00:54:16.920
+like. First off, if you start at 8:00 a.m., maybe you're not going to make it
+
+00:54:16.920 --> 00:54:18.800
+a.m., maybe you're not going to make it to New York at 8:01 a.m.
+
+00:54:18.800 --> 00:54:20.800
+to New York at 8:01 a.m. So the verti- the vertex that says New
+
+00:54:20.800 --> 00:54:22.560
+So the verti- the vertex that says New York at 8:01 a.m. is probably going to
+
+00:54:22.560 --> 00:54:25.880
+York at 8:01 a.m. is probably going to have a cost of plus infinity.
+
+00:54:25.880 --> 00:54:28.000
+have a cost of plus infinity. So first off, the really early times are
+
+00:54:28.000 --> 00:54:29.359
+So first off, the really early times are going to have a cost of plus infinity.
+
+00:54:29.359 --> 00:54:31.720
+going to have a cost of plus infinity. Not going to happen. Then at some point,
+
+00:54:31.720 --> 00:54:34.160
+Not going to happen. Then at some point, the cost is going to become finite.
+
+00:54:34.160 --> 00:54:35.920
+the cost is going to become finite. That's the fastest way you can get from
+
+00:54:35.920 --> 00:54:37.560
+That's the fastest way you can get from Boston to New York.
+
+00:54:37.560 --> 00:54:39.720
+Boston to New York. And in the shortest time. Uh sorry,
+
+00:54:39.720 --> 00:54:41.680
+And in the shortest time. Uh sorry, using the least amount of fuel.
+
+00:54:41.680 --> 00:54:43.160
+using the least amount of fuel. So the cost that you have there is the
+
+00:54:43.160 --> 00:54:45.320
+So the cost that you have there is the answer to our problem.
+
+00:54:45.320 --> 00:54:46.920
+answer to our problem. So basically when you get the result,
+
+00:54:46.920 --> 00:54:49.400
+So basically when you get the result, you have to iterate through all M
+
+00:54:49.400 --> 00:54:51.880
+you have to iterate through all M all M vertices that correspond to the
+
+00:54:51.880 --> 00:54:52.640
+all M vertices that correspond to the destination.
+
+00:54:52.640 --> 00:54:55.120
+destination. Right. Okay, so what I like about this
+
+00:54:55.120 --> 00:54:56.880
+Right. Okay, so what I like about this is
+
+00:54:56.880 --> 00:54:58.080
+is so the costs are going to look like
+
+00:54:58.080 --> 00:54:59.560
+so the costs are going to look like this. They're going to be infinity
+
+00:54:59.560 --> 00:55:02.240
+this. They're going to be infinity infinity infinity all the way up until
+
+00:55:02.240 --> 00:55:03.359
+infinity infinity all the way up until some point. And here you're going to
+
+00:55:03.359 --> 00:55:06.760
+some point. And here you're going to have your final answer. The cost to get
+
+00:55:06.760 --> 00:55:09.240
+have your final answer. The cost to get there the fastest, say you can get there
+
+00:55:09.240 --> 00:55:10.800
+there the fastest, say you can get there at 3:00 p.m.
+
+00:55:10.800 --> 00:55:12.560
+at 3:00 p.m. This is how much fuel you're willing to
+
+00:55:12.560 --> 00:55:13.720
+This is how much fuel you're willing to you have to spend to get there at 3:00
+
+00:55:13.720 --> 00:55:15.560
+you have to spend to get there at 3:00 p.m. But if you want to if you're
+
+00:55:15.560 --> 00:55:18.280
+p.m. But if you want to if you're willing to wait until 3:01 p.m.
+
+00:55:18.280 --> 00:55:19.920
+willing to wait until 3:01 p.m. you're going to have the cost the
+
+00:55:19.920 --> 00:55:21.520
+you're going to have the cost the fastest cost you can have for that. If
+
+00:55:21.520 --> 00:55:24.359
+fastest cost you can have for that. If you're willing to wait until 3:02
+
+00:55:24.359 --> 00:55:25.480
+you're willing to wait until 3:02 you're going to have the answer for
+
+00:55:25.480 --> 00:55:26.560
+you're going to have the answer for that, too.
+
+00:55:26.560 --> 00:55:27.840
+that, too. So here you're going to get the whole
+
+00:55:27.840 --> 00:55:30.080
+So here you're going to get the whole trade-off curve of if you're willing to
+
+00:55:30.080 --> 00:55:31.920
+trade-off curve of if you're willing to wait for a few minutes or if you're
+
+00:55:31.920 --> 00:55:33.240
+wait for a few minutes or if you're willing to wait for an extra hour, how
+
+00:55:33.240 --> 00:55:38.670
+willing to wait for an extra hour, how much fuel you can save.
+
+00:55:39.950 --> 00:55:41.359
+So I think that's cool about that's cool about your
+
+00:55:41.359 --> 00:55:42.359
+cool about that's cool about your question.
+
+00:55:42.359 --> 00:55:44.440
+question. Okay. You had a question, too.
+
+00:55:44.440 --> 00:55:48.240
+Okay. You had a question, too. Why did we have V times M in the E prime
+
+00:55:48.240 --> 00:55:50.520
+Why did we have V times M in the E prime expression?
+
+00:55:50.520 --> 00:55:52.800
+expression? So first off, we have E times M, right?
+
+00:55:52.800 --> 00:55:54.520
+So first off, we have E times M, right? We're good with these.
+
+00:55:54.520 --> 00:55:56.840
+We're good with these. These are the waiting edges.
+
+00:55:56.840 --> 00:55:59.359
+These are the waiting edges. So you have waiting like after every
+
+00:55:59.359 --> 00:56:03.200
+So you have waiting like after every minute or what? So the waiting edges are
+
+00:56:03.200 --> 00:56:05.920
+minute or what? So the waiting edges are vertex time to vertex time plus one. How
+
+00:56:05.920 --> 00:56:08.120
+vertex time to vertex time plus one. How many vertices?
+
+00:56:08.120 --> 00:56:09.960
+many vertices? V. How many times?
+
+00:56:09.960 --> 00:56:14.670
+V. How many times? M Okay, so it's V times M.
+
+00:56:16.310 --> 00:56:18.000
+Because at each minute you can be at a certain city and decide to wait one more
+
+00:56:18.000 --> 00:56:22.990
+certain city and decide to wait one more minute to stay in the same city.
+
+00:56:25.910 --> 00:56:27.160
+Okay. Does this make sense? Thank you guys. I'm really happy we
+
+00:56:27.160 --> 00:56:31.200
+Thank you guys. I'm really happy we solved a hard problem. That's good.
