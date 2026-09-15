@@ -107,7 +107,7 @@ export default function Chat({ lang, messages, live, streaming, speakingSentence
         {messages.map((m, i) => {
           const isLast = i === messages.length - 1;
           return (
-            <div key={m.id != null ? `db-${m.id}` : `new-${i}`} className={`msg ${m.role}`}>
+            <div key={m.id ?? i} className={`msg ${m.role}`}>
               <div className="bubble" dir="auto" lang={m.lang}>
                 {m.role === "assistant"
                   ? <Body text={m.content} citations={m.citations} speaking={isLast ? speakingSentence : null} onJump={onJump} lang={lang} />

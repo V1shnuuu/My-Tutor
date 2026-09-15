@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Avatar, { type AvatarState } from "./components/Avatar";
 import Chat, { type LiveState } from "./components/Chat";
 import Curriculum from "./components/Curriculum";
 import LiveAvatarPanel, { type LiveAvatarHandle } from "./components/LiveAvatarPanel";
@@ -32,9 +33,6 @@ export default function App() {
   const [budget, setBudget] = useState<{ used: number; cap: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [videoCollapsed, setVideoCollapsed] = useState(false);
-  // The notebook theme is designed light-first; default to it regardless of the OS
-  // preference so the app reads as intended, but remember an explicit choice to go dark.
-  const [theme, setThemeState] = useState<"light" | "dark">((getPref("theme") as "light" | "dark") || "light");
   // Whether to stream HeyGen instead of the local face. The server decides — it holds the
   // key — so there is nothing to configure in the web app. Until /me answers, no.
   const [liveAvatarOn, setLiveAvatarOn] = useState(false);
@@ -97,13 +95,13 @@ export default function App() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
   useEffect(() => { document.documentElement.dir = dirOf(lang); document.documentElement.lang = lang; }, [lang]);
-  useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
-  const toggleTheme = () => { const th = theme === "light" ? "dark" : "light"; setThemeState(th); setPref("theme", th); };
 
   const ensureUnlocked = useCallback(() => {
     if (!isUnlocked()) setUnlocked(unlockAudio());
     else setUnlocked(true);
   }, []);
+
+  const getViseme = useCallback(() => speaker.current_viseme(), []);
 
   // Which engine says this sentence out loud.
   //
@@ -146,9 +144,7 @@ export default function App() {
     const update = (patch: Partial<StoredMessage>) => setMessages((m) => { const c = [...m]; c[c.length - 1] = { ...c[c.length - 1], ...patch }; return c; });
     try {
       // Spoken answers get a much shorter register; a muted session keeps the reading length.
-      // force_lang pins text + voice to the AR/EN/FR button the student tapped, regardless
-      // of what script the question itself is written in.
-      for await (const ev of chatApi(token, text, history, lang, voiceOn, lang)) {
+      for await (const ev of chatApi(token, text, history, lang, voiceOn)) {
         if (ev.type === "meta") {
           asst.lang = ev.lang; setLang(ev.lang); setPref("lang", ev.lang); setBudget(ev.budget); update({ lang: ev.lang });
         } else if (ev.type === "status") {
@@ -256,7 +252,7 @@ export default function App() {
 
   useEffect(() => { if (toast) { const id = setTimeout(() => setToast(null), 5000); return () => clearTimeout(id); } }, [toast]);
 
-  const avatarState: "idle" | "listening" | "thinking" | "speaking" | "muted" = useMemo(() => {
+  const avatarState: AvatarState = useMemo(() => {
     if (listening) return "listening";
     if (speakerState === "speaking") return "speaking";
     if (streaming) return "thinking";
@@ -280,7 +276,6 @@ export default function App() {
         </button>
       </span>
       <span className="pill"><button onClick={newChat}>{t("new_chat", lang)}</button></span>
-      <span className="pill"><button onClick={toggleTheme}>{theme === "light" ? t("theme_dark", lang) : t("theme_light", lang)}</button></span>
       <span className="pill">
         {(["ar", "en", "fr"] as Lang[]).map((l) => <button key={l} onClick={() => { setLang(l); setPref("lang", l); }} style={{ fontWeight: l === lang ? 700 : 400 }}>{l.toUpperCase()}</button>)}
       </span>
@@ -290,9 +285,10 @@ export default function App() {
 
   const avatar = (
     <section className="panel panel-avatar" aria-label={t("avatar_label", lang)}>
-      {/* No 2D/3D face fallback: HeyGen is the only avatar now. When there's no session
-          (no key yet, sandbox timeout, outage) the panel is blank — speech itself still
-          falls back to Piper/the OS voice, this just stops rendering a face for it. */}
+      {/* Once the session is gone, swap the dead <video> for the local face: it lip-syncs the
+          Piper/OS voice that speech has already fallen back to, so the tutor keeps a talking
+          head instead of an error caption. Not re-mounted afterwards — a sandbox session
+          cannot be resumed, and retrying would loop. */}
       {liveAvatarOn && !liveDown ? (
         <LiveAvatarPanel
           ref={liveAvatar}
@@ -307,12 +303,7 @@ export default function App() {
           onUnavailable={onLiveUnavailable}
         />
       ) : (
-        <div className="avatar-wrap avatar-blank">
-          <span className={`avatar-state ${avatarState}`} aria-hidden="true">{t(`state_${avatarState}` as const, lang)}</span>
-          {avatarState === "muted" && (
-            <button className="mute-badge" onClick={() => { ensureUnlocked(); if (!voiceOn) toggleVoice(); }}>{t("enable_voice", lang)}</button>
-          )}
-        </div>
+        <Avatar state={avatarState} getViseme={getViseme} label={t("avatar_label", lang)} stateLabel={t(`state_${avatarState}` as const, lang)} muteLabel={t("enable_voice", lang)} onUnmute={() => { ensureUnlocked(); if (!voiceOn) toggleVoice(); }} />
       )}
     </section>
   );

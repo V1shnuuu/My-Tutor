@@ -173,9 +173,6 @@ class ChatIn(BaseModel):
     message: str = Field(min_length=1, max_length=800)
     history: list[dict] = Field(default_factory=list)
     prev_lang: str | None = None
-    # Set when the student tapped an AR/EN/FR button: pins the answer (text and voice) to
-    # that language regardless of what script the message itself is written in.
-    force_lang: str | None = Field(default=None, pattern="^(ar|en|fr)$")
     # True when the client will speak this answer, which wants a much shorter register
     # than the same answer being read. Defaults to the reading length.
     spoken: bool = False
@@ -184,7 +181,7 @@ class ChatIn(BaseModel):
 @app.post("/chat")
 async def chat(body: ChatIn, student=auth.Student):
     budget = auth.check_fair_share(student["sub"])
-    gen = run_chat(student["sub"], body.message, body.history, body.prev_lang, budget, body.spoken, body.force_lang)
+    gen = run_chat(student["sub"], body.message, body.history, body.prev_lang, budget, body.spoken)
     return StreamingResponse(gen, media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 

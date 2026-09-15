@@ -134,13 +134,10 @@ def sse(obj: dict) -> str:
     return f"data: {json.dumps(obj, ensure_ascii=False)}\n\n"
 
 
-async def run_chat(student_id: str, message: str, history: list[dict], prev_lang: str | None, budget: dict, spoken: bool = False, force_lang: str | None = None) -> AsyncIterator[str]:
+async def run_chat(student_id: str, message: str, history: list[dict], prev_lang: str | None, budget: dict, spoken: bool = False) -> AsyncIterator[str]:
     t0 = time.time()
     det = detect(message, prev_lang)
-    # A student who tapped AR/EN/FR wants everything — text and voice — pinned to that
-    # language, not just hinted. Detection still runs (for the Arabizi flag, which widens
-    # retrieval), but a forced choice always wins over what the message text looks like.
-    lang = force_lang if force_lang in ("ar", "en", "fr") else det.lang
+    lang = det.lang
     yield sse({"type": "meta", "lang": lang, "arabizi": det.arabizi, "budget": budget})
     if is_blocked(message):
         answer = REFUSAL[lang]

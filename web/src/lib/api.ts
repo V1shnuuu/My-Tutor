@@ -93,9 +93,9 @@ export async function stt(token: string, blob: Blob, langHint?: Lang): Promise<{
 }
 
 /** POST /chat and yield parsed SSE events. */
-export async function* chat(token: string, message: string, history: { role: string; content: string }[], prevLang: Lang | null, spoken = false, forceLang: Lang | null = null, signal?: AbortSignal): AsyncGenerator<ChatEvent> {
+export async function* chat(token: string, message: string, history: { role: string; content: string }[], prevLang: Lang | null, spoken = false, signal?: AbortSignal): AsyncGenerator<ChatEvent> {
   const r = await check(
-    await fetch(`${API}/chat`, { method: "POST", headers: headers(token), body: JSON.stringify({ message, history, prev_lang: prevLang, spoken, force_lang: forceLang }), signal }),
+    await fetch(`${API}/chat`, { method: "POST", headers: headers(token), body: JSON.stringify({ message, history, prev_lang: prevLang, spoken }), signal }),
   );
   const reader = r.body!.getReader();
   const dec = new TextDecoder();

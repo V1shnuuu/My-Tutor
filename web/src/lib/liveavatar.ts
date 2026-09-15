@@ -29,7 +29,6 @@ export class LiveAvatarSession {
   private room = new Room();
   private sessionId: string | null = null;
   private token: string;
-  private videoEl: HTMLVideoElement | null = null;
   state: LiveAvatarState = "connecting";
   onState: (s: LiveAvatarState) => void = () => {};
 
@@ -41,11 +40,8 @@ export class LiveAvatarSession {
     if (s !== this.state) { this.state = s; this.onState(s); }
   }
 
-  /** Connects, waits for the avatar participant, and attaches its tracks to `video`.
-   *  `muted` starts the audio track silenced — used while pre-warming a replacement
-   *  session in the background so it doesn't talk over the one currently on screen;
-   *  call `unmute()` once it takes over. */
-  async start(lang: Lang, video: HTMLVideoElement, muted = false): Promise<{ sandbox: boolean; maxSessionDuration: number }> {
+  /** Connects, waits for the avatar participant, and attaches its tracks to `video`. */
+  async start(lang: Lang, video: HTMLVideoElement): Promise<{ sandbox: boolean }> {
     const r = await fetch(`${API}/avatar/live/session`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${this.token}` },
@@ -54,16 +50,10 @@ export class LiveAvatarSession {
     if (!r.ok) throw new Error(`live avatar session: HTTP ${r.status}`);
     const s: SessionResp = await r.json();
     this.sessionId = s.session_id;
-    this.videoEl = video;
-    video.muted = muted;
 
-    // Video and audio arrive as two separate LiveKit tracks. Attaching audio with no element
-    // makes LiveKit create its own independent <audio> element — a second playback clock
-    // that drifts from the video's over time and is exactly what reads as bad lip sync.
-    // Attaching both tracks to the *same* <video> element combines them onto one MediaStream
-    // so the browser keeps them on a single clock, the way a real A/V stream would be.
     this.room.on(RoomEvent.TrackSubscribed, (track) => {
-      if (track.kind === Track.Kind.Video || track.kind === Track.Kind.Audio) track.attach(video);
+      if (track.kind === Track.Kind.Video) track.attach(video);
+      else if (track.kind === Track.Kind.Audio) track.attach();
     });
     this.room.on(RoomEvent.DataReceived, (payload, _p, _k, topic) => {
       if (topic !== "agent-response") return;
@@ -86,11 +76,8 @@ export class LiveAvatarSession {
     }
     if (this.room.remoteParticipants.size === 0) throw new Error("live avatar: agent never joined");
     this.setState("idle");
-    return { sandbox: s.sandbox, maxSessionDuration: s.max_session_duration };
+    return { sandbox: s.sandbox };
   }
-
-  /** Un-silences a session that was pre-warmed muted, once it becomes the visible one. */
-  unmute() { if (this.videoEl) this.videoEl.muted = false; }
 
   private publish(eventType: string, extra: Record<string, unknown> = {}) {
     if (!this.sessionId) return;
