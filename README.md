@@ -31,6 +31,22 @@ cd web && npm i && npm run dev                 # http://localhost:5173 → paste
 
 ## Add the course's videos
 
+Point `add_videos.py` at a folder of clips and it registers every one of them, copies them
+where the player can reach them, and writes `pipeline/videos.yaml`. Then `ingest.py`
+transcribes and indexes them, and they appear in the lesson column down the side of the app.
+
+```bash
+python pipeline/add_videos.py --dir "C:/Users/priya/Downloads/icon/uploads/uploads" --lang ar --week 1 --dry-run
+python pipeline/add_videos.py --dir "C:/Users/priya/Downloads/icon/uploads/uploads" --lang ar --week 1
+python pipeline/ingest.py
+```
+
+`--dry-run` first: it prints the id and title it would give each clip without touching
+anything. `--lang` primes Whisper and `--week` groups the clips in the lesson column — run
+it once per week's folder to get the grouping. Forward slashes work fine on Windows.
+
+### The registry by hand
+
 Edit `pipeline/videos.yaml` — one entry per lecture (`source: youtube` + `youtube_id`, or
 `source: file` + `url`), choose `transcript: whisper | auto | file`, set `lang` — then run
 `python pipeline/ingest.py` (or push: the `ingest` workflow does it and hot-reloads the core).

@@ -4,9 +4,11 @@ from __future__ import annotations
 import csv
 import io
 import json
+import threading
 import time
 from pathlib import Path
 
+import httpx
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, Response, StreamingResponse
@@ -46,6 +48,11 @@ def _startup() -> None:
         embed_queries(["warmup"])
     except Exception as e:  # model download may be pending on first boot
         print("embedding warmup failed:", e)
+    # Warm the local model. Ollama loads several GB on the first request and unloads again
+    # after idling, so without this the first student of a session waits for the load on top
+    # of their answer. Set OLLAMA_KEEP_ALIVE so it stays resident afterwards.
+    if settings.local_llm_enabled:
+        threading.Thread(target=_warm_local_llm, daemon=True).start()
     # Warm server voices so the first spoken answer does not pay the ONNX load.
     for lang, ok in tts.availability().items():
         if ok:
@@ -54,6 +61,25 @@ def _startup() -> None:
                 tts.prepare_text("warmup", lang)
             except Exception as e:
                 print("tts warmup failed:", lang, e)
+
+
+def _warm_local_llm() -> None:
+    """Load the model into the server's memory, off the startup path.
+
+    One token is enough to force the load; the answer is thrown away. Failure is normal and
+    silent-ish here — no Ollama running is a supported state, and `doctor` is where that
+    gets reported properly.
+    """
+    try:
+        httpx.post(
+            f"{settings.local_llm_base_url}/chat/completions",
+            json={"model": settings.local_llm_model, "max_tokens": 1,
+                  "messages": [{"role": "user", "content": "hi"}]},
+            headers={"Authorization": "Bearer local"},
+            timeout=180.0,
+        )
+    except Exception as e:
+        print("local llm warmup skipped:", type(e).__name__, e)
 
 
 # ---------------------------------------------------------------- health / meta
@@ -107,7 +133,16 @@ def me(student=auth.Student):
     day = auth.today()
     rows = query("SELECT messages FROM usage WHERE student_id = ? AND day = ?", (student["sub"], day))
     used = rows[0]["messages"] if rows else 0
-    return {"id": student["sub"], "budget": {"used": used, "cap": settings.student_daily_cap}, "stt": stt.budget()["available"], "tts": tts.availability()}
+    return {
+        "id": student["sub"],
+        "budget": {"used": used, "cap": settings.student_daily_cap},
+        "stt": stt.budget()["available"],
+        "tts": tts.availability(),
+        # Whether to stream the HeyGen avatar instead of the local 2D face. The server owns
+        # this: it holds the key, and a build-time flag in the web app was a second place to
+        # configure it that silently disagreed with core/.env.
+        "avatar": bool(settings.liveavatar_enabled and settings.liveavatar_api_key),
+    }
 
 
 # ---------------------------------------------------------------- corpus
