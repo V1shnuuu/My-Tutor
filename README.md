@@ -29,6 +29,20 @@ cd core && .venv/Scripts/python -m app.cli codes 3      # prints enrollment code
 cd web && npm i && npm run dev                 # http://localhost:5173 → paste a code
 ```
 
+## Enrollment codes
+
+```bash
+cd core && python -m app.cli codes 400 --labels roster.csv   # one per student
+cd core && python -m app.cli codes 1 --reusable              # one for you
+```
+
+Codes never expire. An ordinary one **binds to the first device that redeems it** — a second
+browser gets `code_already_used`, which is what stops one code being passed around a cohort.
+
+`--reusable` turns that off for a single code: it works on a phone, a laptop and a lecture-hall
+machine, indefinitely. Use it for yourself and for demos. Don't hand it to students — everyone
+redeeming it shares one student identity, so they share one daily budget and one history.
+
 ## Add the course's videos
 
 Point `add_videos.py` at a folder of clips and it registers every one of them, copies them
