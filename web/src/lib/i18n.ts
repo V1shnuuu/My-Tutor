@@ -23,18 +23,29 @@ const S = {
   voice_off: { ar: "الصوت مقفول", en: "Voice off", fr: "Voix désactivée" },
   voice_on: { ar: "الصوت شغال", en: "Voice on", fr: "Voix activée" },
   new_chat: { ar: "محادثة جديدة", en: "New chat", fr: "Nouvelle discussion" },
-  view: { ar: "العرض", en: "view", fr: "vue" },
   handsfree_on: { ar: "المايك شغال", en: "Hands-free", fr: "Mains libres" },
   handsfree_off: { ar: "المايك مقفول", en: "Push to talk", fr: "Appuyer pour parler" },
-  view_notebook: { ar: "دفتر", en: "Notebook", fr: "Cahier" },
-  view_split: { ar: "مقسوم", en: "Split", fr: "Divisé" },
-  view_hint: { ar: "دوس T", en: "press T", fr: "touche T" },
   budget: { ar: "أسئلة النهارده", en: "Questions today", fr: "Questions aujourd'hui" },
   daily_cap: { ar: "خلّصت أسئلة النهارده. كمّل بكرة!", en: "You've used today's questions. Come back tomorrow!", fr: "Tu as utilisé tes questions du jour. À demain !" },
   minute_cap: { ar: "على مهلك شوية 🙂 استنى دقيقة.", en: "Slow down a little 🙂 wait a minute.", fr: "Doucement 🙂 attends une minute." },
   offline: { ar: "المُدرّس بيعمل ريستارت. جرّب كمان دقيقة.", en: "The tutor is restarting. Try again in a minute.", fr: "Le tuteur redémarre. Réessaie dans une minute." },
   stt_fallback: { ar: "بستخدم التعرّف على الصوت من المتصفح", en: "Using the browser's speech recognition", fr: "Reconnaissance vocale du navigateur" },
   stt_unavailable: { ar: "الصوت مش متاح في المتصفح ده — اكتب سؤالك.", en: "Voice isn't available in this browser — type your question.", fr: "La voix n'est pas disponible ici — écris ta question." },
+  // Brave and some privacy browsers ship no Web Speech API at all, so when the server lane
+  // is also off there is nothing left. Blaming the browser alone sent people hunting through
+  // browser settings for a switch that does not exist; the server lane is the fixable half.
+  stt_server_off: {
+    ar: "الصوت محتاج السيرفر: المتصفح ده مفيهوش تعرّف صوت. شغّل faster-whisper في core.",
+    en: "Voice needs the server lane: this browser has no speech recognition. Install faster-whisper in core.",
+    fr: "La voix passe par le serveur : ce navigateur n'a pas de reconnaissance vocale. Installe faster-whisper dans core.",
+  },
+  curriculum: { ar: "المنهج", en: "Lessons", fr: "Leçons" },
+  curriculum_empty: {
+    ar: "مفيش محاضرات لسه. شغّل add_videos.py وبعدها ingest.py.",
+    en: "No lectures indexed yet. Run add_videos.py, then ingest.py.",
+    fr: "Aucun cours indexé. Lance add_videos.py, puis ingest.py.",
+  },
+  week: { ar: "أسبوع", en: "Week", fr: "Semaine" },
   no_video: { ar: "مفيش فيديوهات لسه", en: "No videos yet", fr: "Pas encore de vidéos" },
   captions: { ar: "ترجمة", en: "CC", fr: "ST" },
   speed: { ar: "سرعة", en: "Speed", fr: "Vitesse" },

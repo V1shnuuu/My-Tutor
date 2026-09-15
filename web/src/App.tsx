@@ -1,14 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Avatar, { type AvatarState } from "./components/Avatar";
 import Chat, { type LiveState } from "./components/Chat";
+import Curriculum from "./components/Curriculum";
 import LiveAvatarPanel, { type LiveAvatarHandle } from "./components/LiveAvatarPanel";
 import Login from "./components/Login";
 import VideoPlayer, { type PlayerHandle } from "./components/VideoPlayer";
 import { ApiError, chat as chatApi, listVideos, me, type Citation, type Lang, type Video } from "./lib/api";
 
-// Local/dev-only: HeyGen LiveAvatar bills per minute from its own cloud, so it can't be the
-// free default — opt in with VITE_LIVE_AVATAR=1 in web/.env.local. See core/app/liveavatar.py.
-const LIVE_AVATAR = import.meta.env.VITE_LIVE_AVATAR === "1";
 import { dirOf, t } from "./lib/i18n";
 import { SentenceSplitter, Speaker, hasSpeech, isUnlocked, resumeAudio, unlockAudio } from "./lib/speech";
 import { startListening, type ListenSession } from "./lib/stt";
@@ -35,7 +33,9 @@ export default function App() {
   const [budget, setBudget] = useState<{ used: number; cap: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [videoCollapsed, setVideoCollapsed] = useState(false);
-  const [view, setView] = useState<"notebook" | "split">((getPref("view") as "notebook" | "split") || "split");
+  // Whether to stream HeyGen instead of the local face. The server decides — it holds the
+  // key — so there is nothing to configure in the web app. Until /me answers, no.
+  const [liveAvatarOn, setLiveAvatarOn] = useState(false);
   // LiveAvatar is an enhancement, never a dependency: a sandbox session stops itself after
   // ~60s and a failed one never starts, so speech re-checks this before every sentence and
   // falls back to Piper/the OS voice. `liveUp` is a ref because the streaming callbacks below
@@ -65,7 +65,7 @@ export default function App() {
       try {
         const m = await me(token);
         if (!alive) return;
-        setBudget(m.budget); setSttServer(m.stt);
+        setBudget(m.budget); setSttServer(m.stt); setLiveAvatarOn(!!m.avatar);
         speaker.configure(token, m.tts || {});
         const vs = await listVideos(token);
         if (!alive) return;
@@ -95,17 +95,6 @@ export default function App() {
     return () => document.removeEventListener("visibilitychange", onVis);
   }, []);
   useEffect(() => { document.documentElement.dir = dirOf(lang); document.documentElement.lang = lang; }, [lang]);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "t" && e.key !== "T") return;
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      const el = e.target as HTMLElement | null;
-      if (el && (el.isContentEditable || /^(input|textarea|select)$/i.test(el.tagName))) return;
-      setView((v) => { const next = v === "split" ? "notebook" : "split"; setPref("view", next); return next; });
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
 
   const ensureUnlocked = useCallback(() => {
     if (!isUnlocked()) setUnlocked(unlockAudio());
@@ -120,7 +109,7 @@ export default function App() {
   // liveavatar.py still sends persona.language, so HeyGen speaks the answer's language in
   // its own voice rather than an English one. Piper stays as the fallback for when no
   // session can be held at all.
-  const avatarSpeaks = (_l: Lang) => LIVE_AVATAR && liveUp.current;
+  const avatarSpeaks = (_l: Lang) => liveAvatarOn && liveUp.current;
   // Interrupting an inactive engine is a no-op, so stop both rather than guessing which
   // one is mid-sentence when a session drops.
   const stopSpeech = useCallback(() => { liveAvatar.current?.interrupt(); speaker.stop(); }, []);
@@ -219,11 +208,11 @@ export default function App() {
       onError: (code) => {
         setListening(false); setInterim(""); session.current = null;
         // Hands-free would otherwise retry a broken mic forever, one attempt per gap.
-        if (code === "mic_denied" || code === "stt_unavailable") {
+        if (code === "mic_denied" || code === "stt_unavailable" || code === "stt_server_off") {
           setHandsFree(false);
           setPref("handsfree", "off");
         }
-        setToast(code === "stt_unavailable" ? t("stt_unavailable", lang) : code === "mic_denied" ? "🎙 ✗" : t("stt_unavailable", lang));
+        setToast(code === "mic_denied" ? "🎙 ✗" : t(code === "stt_server_off" ? "stt_server_off" : "stt_unavailable", lang));
       },
     });
   }, [token, lang, sttServer, send, ensureUnlocked]);
@@ -254,7 +243,6 @@ export default function App() {
   const jump = useCallback((c: Citation) => {
     stopSpeech();
     setVideoCollapsed(false);
-    setView("split"); setPref("view", "split");
     player.current?.jump(c.video_id, c.t);
     document.querySelector(".panel-video")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
@@ -288,17 +276,6 @@ export default function App() {
         </button>
       </span>
       <span className="pill"><button onClick={newChat}>{t("new_chat", lang)}</button></span>
-      <span className="viewtoggle">
-        <span className="label">{t("view", lang)}</span>
-        <span className="segmented" role="group" aria-label={t("view", lang)}>
-          {(["notebook", "split"] as const).map((v) => (
-            <button key={v} aria-pressed={view === v} onClick={() => { setView(v); setPref("view", v); }}>
-              {t(v === "notebook" ? "view_notebook" : "view_split", lang)}
-            </button>
-          ))}
-        </span>
-        <span className="kbd-hint">{t("view_hint", lang)}</span>
-      </span>
       <span className="pill">
         {(["ar", "en", "fr"] as Lang[]).map((l) => <button key={l} onClick={() => { setLang(l); setPref("lang", l); }} style={{ fontWeight: l === lang ? 700 : 400 }}>{l.toUpperCase()}</button>)}
       </span>
@@ -312,7 +289,7 @@ export default function App() {
           Piper/OS voice that speech has already fallen back to, so the tutor keeps a talking
           head instead of an error caption. Not re-mounted afterwards — a sandbox session
           cannot be resumed, and retrying would loop. */}
-      {LIVE_AVATAR && !liveDown ? (
+      {liveAvatarOn && !liveDown ? (
         <LiveAvatarPanel
           ref={liveAvatar}
           token={token}
@@ -337,7 +314,7 @@ export default function App() {
   );
 
   return (
-    <div className={`app view-${view}`} lang={lang}>
+    <div className="app" lang={lang}>
       <div className={`top ${videoCollapsed ? "video-collapsed" : ""}`} >
         {avatar}
         {video}
@@ -345,6 +322,9 @@ export default function App() {
       <section className="panel panel-chat" aria-label="Chat">
         {topbar}
         <Chat lang={lang} messages={messages} live={live} streaming={streaming} speakingSentence={speakingSentence} interim={interim} listening={listening} sttMode={sttMode} onSend={send} onMic={mic} onStop={stopMic} onJump={jump} />
+      </section>
+      <section className="panel panel-curriculum" aria-label={t("curriculum", lang)}>
+        <Curriculum videos={videos} activeId={activeVideo} lang={lang} onPick={setActiveVideo} />
       </section>
     </div>
   );

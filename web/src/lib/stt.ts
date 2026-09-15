@@ -12,7 +12,7 @@ export interface ListenOpts {
   serverAvailable: boolean;
   onInterim: (text: string) => void;
   onFinal: (text: string, lang: Lang | null) => void;
-  onError: (code: "stt_unavailable" | "mic_denied" | "stt_failed") => void;
+  onError: (code: "stt_unavailable" | "stt_server_off" | "mic_denied" | "stt_failed") => void;
   onLevel?: (rms: number) => void;
   onMode?: (mode: "server" | "browser") => void;
   /** Is the tutor talking right now? While it is, the mic stays open but the bar to count
@@ -53,7 +53,10 @@ export async function startListening(o: ListenOpts): Promise<ListenSession> {
     }
   }
   if (WebSpeech) return browserRecognize(o);
-  o.onError("stt_unavailable");
+  // Nothing left. Brave and other privacy browsers ship no Web Speech API at all, so when
+  // the server lane is off too there is no voice input — and the fixable half is the
+  // server, not a browser setting the student will never find.
+  o.onError(o.serverAvailable ? "stt_unavailable" : "stt_server_off");
   return noop;
 }
 const noop: ListenSession = { stop: () => {}, cancel: () => {} };
