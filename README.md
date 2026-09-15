@@ -29,6 +29,11 @@ cd core && .venv/Scripts/python -m app.cli codes 3      # prints enrollment code
 cd web && npm i && npm run dev                 # http://localhost:5173 → paste a code
 ```
 
+## Changing things with an AI
+
+`CLAUDE.md` is read automatically by Claude Code sessions in this repo. For any other AI,
+paste `docs/MASTER_PROMPT.md` and write the change you want at the bottom of it.
+
 ## Enrollment codes
 
 ```bash
