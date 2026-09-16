@@ -2,24 +2,40 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Chat, { type LiveState } from "./components/Chat";
 import Curriculum from "./components/Curriculum";
 import LiveAvatarPanel, { type LiveAvatarHandle } from "./components/LiveAvatarPanel";
+import Sessions from "./components/Sessions";
+import SignIn from "./components/SignIn";
 import VideoPlayer, { type PlayerHandle } from "./components/VideoPlayer";
-import { ApiError, chat as chatApi, listVideos, me, type Citation, type Lang, type Video } from "./lib/api";
+import {
+  ApiError, chat as chatApi, createConversation, getConversation, listVideos, me,
+  type AuthInfo, type Citation, type Lang, type UserProfile, type Video,
+} from "./lib/api";
+import { getSessionToken, setSessionToken, signOut, type User } from "./lib/auth";
 
 import { dirOf, t } from "./lib/i18n";
 import { SentenceSplitter, Speaker, isUnlocked, resumeAudio, unlockAudio } from "./lib/speech";
 import { startListening, type ListenSession } from "./lib/stt";
+import { EMPTY_TRANSCRIPT, type LiveTranscript } from "./lib/transcript";
 import { db, getPref, setPref, type StoredMessage } from "./lib/store";
 
 const speaker = new Speaker();
 
-// No login/enrollment gate: every visitor is this one fixed anonymous identity. The value
-// only has to be a non-empty string — the backend no longer checks it at all (core/app/main.py).
-const TOKEN = "anon";
+// What an anonymous visitor sends. The backend accepts it as "no user" and answers anyway —
+// signing in buys saved history, not access.
+const ANON_TOKEN = "anon";
 
 type Theme = "light" | "dark";
 
 export default function App() {
-  const token = TOKEN;
+  // The session token when signed in, the anonymous stand-in otherwise. Everything below
+  // passes this straight to the API layer, so most of the app never has to know which it is.
+  const [sessionToken, setSession] = useState<string | null>(getSessionToken());
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [authInfo, setAuthInfo] = useState<AuthInfo | null>(null);
+  // Sign-in is a screen you land on, not a wall: dismissed once, it stays dismissed.
+  const [skippedSignIn, setSkippedSignIn] = useState(getPref("signin.skipped") === "1");
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [sessionsKey, setSessionsKey] = useState(0);
+  const token = sessionToken || ANON_TOKEN;
   const [theme, setTheme] = useState<Theme>((getPref("theme") as Theme) || "light");
   const [lang, setLang] = useState<Lang>((getPref("lang") as Lang) || (navigator.language.startsWith("ar") ? "ar" : navigator.language.startsWith("fr") ? "fr" : "en"));
   const [videos, setVideos] = useState<Video[]>([]);
@@ -31,7 +47,10 @@ export default function App() {
   const [speakingSentence, setSpeakingSentence] = useState<string | null>(null);
   const [voiceOn, setVoiceOn] = useState(getPref("voice") !== "off");
   const [listening, setListening] = useState(false);
-  const [interim, setInterim] = useState("");
+  // The live transcript, split into settled and in-flight halves so the composer can render
+  // them differently. Replaced wholesale on every recogniser event — never appended to, which
+  // is what keeps a replayed result from duplicating words.
+  const [transcript, setTranscript] = useState<LiveTranscript>(EMPTY_TRANSCRIPT);
   const [sttMode, setSttMode] = useState<"server" | "browser" | null>(null);
   const [sttServer, setSttServer] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -64,22 +83,27 @@ export default function App() {
   const sentences = useRef<Map<number, string>>(new Map());
   const liveAvatar = useRef<LiveAvatarHandle>(null);
 
-  // ---- bootstrap after login
+  // ---- bootstrap
+  //
+  // Every load starts a new chat, signed in or not: the welcome line, an empty transcript and
+  // no conversation id. Past chats are reached deliberately, through the Sessions drawer —
+  // which is also why nothing here reads the previous session's IndexedDB history any more.
   useEffect(() => {
-    if (!token) return;
     let alive = true;
     (async () => {
       try {
         const m = await me(token);
         if (!alive) return;
         setSttServer(m.stt); setLiveAvatarOn(!!m.avatar);
+        setAuthInfo(m.auth); setUser(m.user);
+        // A token the server no longer accepts (expired, or JWT_SECRET rotated) comes back
+        // as user: null. Drop it rather than letting every later call 401 silently.
+        if (sessionToken && !m.user) { setSessionToken(null); setSession(null); }
         speaker.configure(token, m.tts || {});
         const vs = await listVideos(token);
         if (!alive) return;
         setVideos(vs); setActiveVideo((a) => a || vs[0]?.id || null);
-        const hist = await db.messages.orderBy("ts").toArray();
-        if (!alive) return;
-        setMessages(hist.length ? hist : [{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]);
+        setMessages([{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]);
       } catch (e) {
         console.error("bootstrap: /me or /videos failed —", e instanceof ApiError ? { status: e.status, code: e.code } : e);
         setToast(t("offline", lang));
@@ -174,18 +198,33 @@ export default function App() {
     ensureUnlocked();
     stopSpeech();
     sentences.current.clear();
+    // A signed-in chat gets its conversation the moment it has something to say — created
+    // here rather than on load, so opening the app and never asking anything leaves no
+    // empty row in the history list.
+    let convId = conversationId;
+    if (sessionToken && !convId) {
+      try {
+        convId = (await createConversation(sessionToken)).id;
+        setConversationId(convId);
+      } catch (e) {
+        // Saving is a bonus, not a precondition: answer anyway, just without history.
+        console.error("could not start a saved conversation —", e);
+      }
+    }
     const userMsg: StoredMessage = { role: "user", content: text, lang, citations: [], ts: Date.now() };
     userMsg.id = await db.messages.add(userMsg);
     const asst: StoredMessage = { role: "assistant", content: "", lang, citations: [], ts: Date.now() };
     setMessages((m) => [...m, userMsg, asst]);
     setStreaming(true); setLive({ stage: "retrieving" });
+    // Signed in, the server reads this conversation's own history from the database and
+    // ignores what we send; this local slice is what an anonymous session runs on.
     const history = messages.slice(-6).map((m) => ({ role: m.role, content: m.content }));
     const splitter = new SentenceSplitter((s) => speakSentence(s, asst.lang));
     let content = "";
     const update = (patch: Partial<StoredMessage>) => setMessages((m) => { const c = [...m]; c[c.length - 1] = { ...c[c.length - 1], ...patch }; return c; });
     try {
       // Spoken answers get a much shorter register; a muted session keeps the reading length.
-      for await (const ev of chatApi(token, text, history, lang, voiceOn)) {
+      for await (const ev of chatApi(token, text, history, lang, voiceOn, undefined, convId)) {
         if (ev.type === "meta") {
           asst.lang = ev.lang; setLang(ev.lang); setPref("lang", ev.lang); update({ lang: ev.lang });
         } else if (ev.type === "status") {
@@ -221,31 +260,37 @@ export default function App() {
       setStreaming(false); setLive({ stage: "idle" });
       asst.content = asst.content || content;
       asst.id = await db.messages.add({ ...asst });
+      // The server just wrote this turn (and, on the first one, the conversation's title),
+      // so the drawer's list is now stale.
+      if (convId) setSessionsKey((k) => k + 1);
     }
-  }, [token, streaming, lang, messages, ensureUnlocked]);
+  }, [token, sessionToken, conversationId, streaming, lang, messages, ensureUnlocked]);
 
   // ---- voice input
   const mic = useCallback(async () => {
     if (!token) return;
     ensureUnlocked();
     stopSpeech();
-    setInterim(""); setListening(true);
+    setTranscript(EMPTY_TRANSCRIPT); setListening(true);
     session.current = await startListening({
       token, langHint: lang, serverAvailable: sttServer,
-      onInterim: setInterim,
+      // Preview only. This is the one callback that must never reach the question pipeline:
+      // an interim result is a guess the recogniser is still free to revise.
+      onInterim: setTranscript,
       tutorSpeaking: () => speakerStateRef.current === "speaking",
       // Barge-in: the student started talking over the answer, so drop it mid-sentence.
       onSpeechStart: () => { if (speakerStateRef.current === "speaking") stopSpeech(); },
       // A mode switch is the STT layer reporting that the server lane is done for this
       // session; drop serverAvailable too or every later attempt retries the same failure.
       onMode: (m) => { setSttMode(m); if (m === "browser") setSttServer(false); },
+      // The only path into the pipeline, and only ever with finalised text.
       onFinal: (text, l) => {
-        setListening(false); setInterim(""); session.current = null;
+        setListening(false); setTranscript(EMPTY_TRANSCRIPT); session.current = null;
         if (l) setLang(l);
-        if (text.trim()) void send(text.trim());
+        if (text.trim()) void send(text.trim());   // an empty utterance asks the model nothing
       },
       onError: (code) => {
-        setListening(false); setInterim(""); session.current = null;
+        setListening(false); setTranscript(EMPTY_TRANSCRIPT); session.current = null;
         // Hands-free would otherwise retry a broken mic forever, one attempt per gap.
         if (code === "mic_denied" || code === "stt_unavailable" || code === "stt_server_off") {
           setHandsFree(false);
@@ -286,7 +331,58 @@ export default function App() {
     document.querySelector(".panel-video")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, []);
 
-  const newChat = async () => { stopSpeech(); await db.messages.clear(); setMessages([{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]); };
+  const newChat = useCallback(async () => {
+    stopSpeech();
+    await db.messages.clear();
+    // Dropping the id is what makes it a new conversation: the next message creates a fresh
+    // one server-side. The old one stays saved and reachable from the drawer.
+    setConversationId(null);
+    setMessages([{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]);
+  }, [lang, stopSpeech]);
+
+  /** Load a past conversation and continue it. */
+  const resumeConversation = useCallback(async (id: string) => {
+    if (!sessionToken || streaming) return;
+    stopSpeech();
+    try {
+      const conv = await getConversation(sessionToken, id);
+      await db.messages.clear();
+      const restored: StoredMessage[] = conv.messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+        lang: (m.lang || lang) as Lang,
+        citations: m.citations || [],
+        source: m.source || undefined,
+        ts: m.ts * 1000,
+      }));
+      await db.messages.bulkAdd(restored);
+      setMessages(restored);
+      setConversationId(id);
+    } catch (e) {
+      console.error("could not open that conversation —", e);
+      setToast(t("offline", lang));
+    }
+  }, [sessionToken, streaming, lang, stopSpeech]);
+
+  const onSignedIn = useCallback((tok: string, u: User) => {
+    setSession(tok);
+    setUser(u);
+    setConversationId(null);
+  }, []);
+
+  const doSignOut = useCallback(async () => {
+    stopSpeech();
+    signOut();
+    setSession(null);
+    setUser(null);
+    setConversationId(null);
+    // The local transcript is the signed-out student's, not the next person's.
+    await db.messages.clear();
+    setMessages([{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]);
+    setSkippedSignIn(false);
+    setPref("signin.skipped", "0");
+  }, [lang, stopSpeech]);
+
   const toggleVoice = () => { ensureUnlocked(); const v = !voiceOn; setVoiceOn(v); setPref("voice", v ? "on" : "off"); };
 
   useEffect(() => { if (toast) { const id = setTimeout(() => setToast(null), 5000); return () => clearTimeout(id); } }, [toast]);
@@ -312,6 +408,16 @@ export default function App() {
           {theme === "dark" ? "🌙" : "☀️"}
         </button>
       </span>
+      {user ? (
+        <span className="pill account" title={user.email}>
+          {user.picture
+            ? <img className="avatar-chip" src={user.picture} alt="" referrerPolicy="no-referrer" />
+            : <span className="avatar-chip placeholder" aria-hidden="true">{(user.name || user.email)[0]?.toUpperCase()}</span>}
+          <button onClick={doSignOut}>{t("sign_out", lang)}</button>
+        </span>
+      ) : authInfo?.enabled ? (
+        <span className="pill"><button onClick={() => { setSkippedSignIn(false); setPref("signin.skipped", "0"); }}>{t("signin_title", lang)}</button></span>
+      ) : null}
       {toast && <span className="pill danger" role="status">{toast}</span>}
     </div>
   );
@@ -345,6 +451,20 @@ export default function App() {
     </section>
   );
 
+  // Sign-in is offered once per browser and only when the server has a client id configured.
+  // It is never a wall: "continue without an account" and every keyless install land here too.
+  if (authInfo?.enabled && !sessionToken && !skippedSignIn) {
+    return (
+      <SignIn
+        lang={lang}
+        clientId={authInfo.google_client_id}
+        onLang={setLang}
+        onSignedIn={onSignedIn}
+        onSkip={() => { setSkippedSignIn(true); setPref("signin.skipped", "1"); }}
+      />
+    );
+  }
+
   return (
     <div className="app" lang={lang}>
       <div className={`top ${videoCollapsed ? "video-collapsed" : ""}`} >
@@ -353,11 +473,20 @@ export default function App() {
       </div>
       <section className="panel panel-chat" aria-label="Chat">
         {topbar}
-        <Chat lang={lang} messages={messages} live={live} streaming={streaming} speakingSentence={speakingSentence} interim={interim} listening={listening} sttMode={sttMode} onSend={send} onMic={mic} onStop={stopMic} onJump={jump} />
+        <Chat lang={lang} messages={messages} live={live} streaming={streaming} speakingSentence={speakingSentence} transcript={transcript} listening={listening} sttMode={sttMode} onSend={send} onMic={mic} onStop={stopMic} onJump={jump} />
       </section>
       <section className="panel panel-curriculum" aria-label={t("curriculum", lang)}>
         <Curriculum videos={videos} activeId={activeVideo} lang={lang} onPick={setActiveVideo} />
       </section>
+      {sessionToken && (
+        <Sessions
+          token={sessionToken}
+          lang={lang}
+          refreshKey={sessionsKey}
+          activeId={conversationId}
+          onResume={resumeConversation}
+        />
+      )}
     </div>
   );
 }

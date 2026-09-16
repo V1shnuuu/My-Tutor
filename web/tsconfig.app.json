@@ -22,5 +22,9 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  /* Tests run on Node's own TypeScript support (`npm test`), not through the app build, so
+     they are checked there rather than here — this keeps @types/node out of the app's
+     dependency surface for the sake of two imports. */
+  "include": ["src"],
+  "exclude": ["src/**/*.test.ts"]
 }

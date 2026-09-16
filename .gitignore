@@ -13,6 +13,9 @@ corpus/media/
 # far too big for the repo. Only corpus/ transcripts and index shards get committed.
 web/public/media/
 pipeline/.work/
+web/test-results/
+web/playwright-report/
+web/blob-report/
 *.log
 .DS_Store
 infra/.env

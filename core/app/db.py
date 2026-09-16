@@ -57,6 +57,34 @@ CREATE TABLE IF NOT EXISTS events (
   ms INTEGER,
   detail TEXT
 );
+CREATE TABLE IF NOT EXISTS users (
+  email TEXT PRIMARY KEY,        -- verified Google account, the identity everything hangs off
+  name TEXT,
+  picture TEXT,
+  created_at INTEGER NOT NULL,
+  last_seen_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS conversations (
+  id TEXT PRIMARY KEY,           -- uuid4 hex, generated server-side
+  user_email TEXT NOT NULL,
+  title TEXT NOT NULL DEFAULT '',-- first question, trimmed; shown in the history list
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY (user_email) REFERENCES users (email) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations (user_email, updated_at DESC);
+CREATE TABLE IF NOT EXISTS conv_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  conversation_id TEXT NOT NULL,
+  role TEXT NOT NULL,            -- user | assistant
+  content TEXT NOT NULL,
+  lang TEXT,
+  citations TEXT NOT NULL DEFAULT '[]',  -- JSON, so a resumed chat still has its timestamps
+  source TEXT,                   -- llm | cache | floor | refusal
+  ts INTEGER NOT NULL,
+  FOREIGN KEY (conversation_id) REFERENCES conversations (id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_conv_messages ON conv_messages (conversation_id, id);
 """
 
 

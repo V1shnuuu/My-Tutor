@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import asyncio
 import io
+import os
+import platform
 import threading
 import time
 
@@ -54,11 +56,35 @@ def budget() -> dict:
     }
 
 
+def _add_cuda_dll_dir() -> None:
+    """faster-whisper's backend (ctranslate2) loads cuBLAS/cuDNN from the system PATH at
+    runtime and does not bundle them itself — unlike torch, which ships its own copies. On a
+    machine with a GPU but no separately-installed CUDA Toolkit (the common case: torch was
+    pip-installed and "just worked", so there was never a reason to install the toolkit too),
+    ctranslate2 fails with "cublas64_12.dll is not found" even though CUDA plainly works.
+    Pointing it at torch's bundled copy — already on disk, already the right version, since
+    both were built against the same CUDA release — avoids asking anyone to install the
+    several-GB Toolkit just to satisfy a second library that happens to want its own copy.
+    Windows-only: add_dll_directory doesn't exist elsewhere, and it isn't needed elsewhere —
+    Linux resolves shared libraries via rpath/LD_LIBRARY_PATH instead.
+    """
+    if platform.system() != "Windows" or not hasattr(os, "add_dll_directory"):
+        return
+    try:
+        import torch
+
+        os.add_dll_directory(os.path.join(os.path.dirname(torch.__file__), "lib"))
+    except Exception:
+        pass  # no GPU path needed, or torch missing/relocated — cuda simply won't load, same as before this existed
+
+
 def _local_whisper():
     global _local_model
     if _local_model is None:
         with _local_lock:
             if _local_model is None:
+                if settings.local_stt_device == "cuda":
+                    _add_cuda_dll_dir()
                 from faster_whisper import WhisperModel
 
                 _local_model = WhisperModel(

@@ -1,6 +1,15 @@
-"""Enrollment-code auth. The college hands each student one code (generated from the
-roster with `python -m app.cli codes`). Redeeming a code once issues a long-lived JWT
-bound to the redeeming device; no email, no SSO, no third-party quota."""
+"""Identity and per-student accounting.
+
+Two independent things live here:
+
+1. Google Sign-In (`verify_google_id_token` → `issue_user_token` → `CurrentUser`). The
+   browser gets an ID token from Google, we verify its signature against Google's published
+   JWKS and swap it for our own JWT. Only GOOGLE_CLIENT_ID is needed and it is public by
+   design, so there is no secret to leak; with it unset, sign-in is simply unavailable and
+   the app runs anonymously (see `OptionalUser`).
+2. Enrollment codes (`create_students` / `redeem`), the pre-SSO scheme. No API route uses
+   them any more, but `python -m app.cli codes` and its tests still do.
+"""
 from __future__ import annotations
 
 import secrets
@@ -12,6 +21,10 @@ from fastapi import Depends, HTTPException, Request
 
 from .config import settings
 from .db import query, tx
+
+GOOGLE_ISSUERS = ("accounts.google.com", "https://accounts.google.com")
+GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs"
+_jwks_client: "jwt.PyJWKClient | None" = None
 
 CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no 0/O/1/I
 
@@ -83,6 +96,95 @@ async def current_student(request: Request) -> dict:
     return decode_token(auth[7:])
 
 
+# ---------------------------------------------------------------- Google Sign-In
+def google_enabled() -> bool:
+    return bool(settings.google_client_id)
+
+
+def _jwks() -> "jwt.PyJWKClient":
+    """Google's signing keys, fetched once and cached (they rotate every few days; PyJWKClient
+    re-fetches on an unknown kid, which is exactly the rotation case)."""
+    global _jwks_client
+    if _jwks_client is None:
+        _jwks_client = jwt.PyJWKClient(GOOGLE_JWKS_URL, cache_keys=True)
+    return _jwks_client
+
+
+def verify_google_id_token(id_token: str) -> dict:
+    """Verify a Google ID token and return its claims. Raises 401 on anything suspect.
+
+    Signature, audience (our client id), issuer and expiry are all checked — skipping any one
+    of them would let a token minted for a different app, or an unsigned one, sign someone in.
+    """
+    if not google_enabled():
+        raise HTTPException(503, "google_signin_not_configured")
+    try:
+        key = _jwks().get_signing_key_from_jwt(id_token).key
+        claims = jwt.decode(
+            id_token,
+            key,
+            algorithms=["RS256"],
+            audience=settings.google_client_id,
+            options={"require": ["exp", "iat", "aud", "iss", "sub"]},
+        )
+    except jwt.PyJWTError as e:
+        raise HTTPException(401, "invalid_google_token") from e
+    except Exception as e:  # JWKS unreachable, malformed token header, etc.
+        raise HTTPException(503, "google_verification_unavailable") from e
+    if claims.get("iss") not in GOOGLE_ISSUERS:
+        raise HTTPException(401, "invalid_google_issuer")
+    email = (claims.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(401, "google_token_has_no_email")
+    if claims.get("email_verified") is False:
+        raise HTTPException(403, "google_email_unverified")
+    return {"email": email, "name": claims.get("name") or "", "picture": claims.get("picture") or ""}
+
+
+def upsert_user(email: str, name: str, picture: str) -> dict:
+    now = int(time.time())
+    with tx() as c:
+        c.execute(
+            "INSERT INTO users (email, name, picture, created_at, last_seen_at) VALUES (?, ?, ?, ?, ?)"
+            " ON CONFLICT(email) DO UPDATE SET name = excluded.name, picture = excluded.picture,"
+            " last_seen_at = excluded.last_seen_at",
+            (email, name, picture, now, now),
+        )
+    return {"email": email, "name": name, "picture": picture}
+
+
+def issue_user_token(email: str) -> str:
+    now = int(time.time())
+    payload = {"sub": email, "typ": "user", "iat": now, "exp": now + settings.jwt_days * 86400}
+    return jwt.encode(payload, settings.jwt_secret, algorithm="HS256")
+
+
+async def current_user(request: Request) -> dict:
+    """Require a signed-in user. Every conversation route depends on this."""
+    auth = request.headers.get("authorization", "")
+    if not auth.lower().startswith("bearer "):
+        raise HTTPException(401, "missing_token")
+    claims = decode_token(auth[7:])
+    if claims.get("typ") != "user" or not claims.get("sub"):
+        raise HTTPException(401, "invalid_token")
+    return {"email": claims["sub"]}
+
+
+async def optional_user(request: Request) -> dict | None:
+    """The signed-in user, or None. Lets /chat keep answering anonymously (no history saved)
+    so the tutor still works before sign-in and on a keyless install."""
+    auth = request.headers.get("authorization", "")
+    if not auth.lower().startswith("bearer "):
+        return None
+    try:
+        claims = decode_token(auth[7:])
+    except HTTPException:
+        return None
+    if claims.get("typ") != "user" or not claims.get("sub"):
+        return None
+    return {"email": claims["sub"]}
+
+
 def today() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -126,3 +228,5 @@ def require_admin(request: Request) -> None:
 
 
 Student = Depends(current_student)
+CurrentUser = Depends(current_user)
+OptionalUser = Depends(optional_user)

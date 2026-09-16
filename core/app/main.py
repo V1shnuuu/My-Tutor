@@ -1,6 +1,7 @@
 """Adaptive Tutor core API."""
 from __future__ import annotations
 
+import asyncio
 import csv
 import io
 import json
@@ -14,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
-from . import auth, liveavatar, stt, tts
+from . import auth, conversations, liveavatar, stt, tts
 from .cache import semantic_cache
 from .chat import run_chat
 from .config import settings
@@ -53,6 +54,12 @@ def _startup() -> None:
     # of their answer. Set OLLAMA_KEEP_ALIVE so it stays resident afterwards.
     if settings.local_llm_enabled:
         threading.Thread(target=_warm_local_llm, daemon=True).start()
+    # Same reasoning for local STT: loading a CUDA model in particular is several seconds
+    # (weights to VRAM, cuDNN/cuBLAS init) that the first student to speak would otherwise pay
+    # on top of their question. Backgrounded like the LLM warmup, since it can be slow enough
+    # to matter and must not delay the server accepting requests.
+    if settings.local_stt_enabled:
+        threading.Thread(target=_warm_local_stt, daemon=True).start()
     # Warm server voices so the first spoken answer does not pay the ONNX load.
     for lang, ok in tts.availability().items():
         if ok:
@@ -80,6 +87,16 @@ def _warm_local_llm() -> None:
         )
     except Exception as e:
         print("local llm warmup skipped:", type(e).__name__, e)
+
+
+def _warm_local_stt() -> None:
+    """Load faster-whisper into memory, off the startup path. No GPU / faster-whisper missing
+    is a supported state (falls back to Groq or the browser's own recognizer), so a failure
+    here is logged, not raised."""
+    try:
+        stt._local_whisper()
+    except Exception as e:
+        print("local stt warmup skipped:", type(e).__name__, e)
 
 
 # ---------------------------------------------------------------- health / meta
@@ -116,15 +133,36 @@ def metrics():
     return "\n".join(lines) + "\n"
 
 
-# No per-student login: every visitor shares one anonymous identity for usage logging.
-# There is deliberately no enrollment-code gate any more — see git history for the JWT/
-# redeem flow this replaced (core/app/auth.py still holds the admin-token check used below;
-# create_students/redeem are now unused by the API but left for any offline/CLI use).
+# Usage logging for anyone not signed in. Signing in is optional — it buys saved history,
+# not access — so the tutor still answers without it and a keyless install still works.
 ANON_ID = "anon"
 
 
+# ---------------------------------------------------------------- auth
+class GoogleSignInIn(BaseModel):
+    credential: str = Field(min_length=16, max_length=8192)  # the ID token from Google
+
+
+@app.get("/auth/config")
+def auth_config():
+    """What the sign-in button needs. The client id is public by design; with it empty the
+    web app hides sign-in and stays in anonymous/browser-local mode."""
+    return {"google_client_id": settings.google_client_id, "enabled": auth.google_enabled()}
+
+
+@app.post("/auth/google")
+def auth_google(body: GoogleSignInIn):
+    profile = auth.verify_google_id_token(body.credential)
+    user = auth.upsert_user(profile["email"], profile["name"], profile["picture"])
+    return {"token": auth.issue_user_token(user["email"]), "user": user}
+
+
 @app.get("/me")
-def me():
+def me(user=auth.OptionalUser):
+    profile = None
+    if user:
+        rows = query("SELECT email, name, picture FROM users WHERE email = ?", (user["email"],))
+        profile = dict(rows[0]) if rows else {"email": user["email"], "name": "", "picture": ""}
     return {
         "stt": stt.budget()["available"],
         "tts": tts.availability(),
@@ -132,7 +170,46 @@ def me():
         # this: it holds the key, and a build-time flag in the web app was a second place to
         # configure it that silently disagreed with core/.env.
         "avatar": bool(settings.liveavatar_enabled and settings.liveavatar_api_key),
+        "auth": {"google_client_id": settings.google_client_id, "enabled": auth.google_enabled()},
+        "user": profile,
     }
+
+
+# ---------------------------------------------------------------- conversations (signed in only)
+class ConversationIn(BaseModel):
+    title: str = Field(default="", max_length=200)
+
+
+@app.get("/conversations")
+def list_conversations(user=auth.CurrentUser):
+    return {"conversations": conversations.list_for(user["email"])}
+
+
+@app.post("/conversations")
+def new_conversation(body: ConversationIn, user=auth.CurrentUser):
+    return conversations.create(user["email"], body.title)
+
+
+@app.get("/conversations/{conversation_id}")
+def get_conversation(conversation_id: str, user=auth.CurrentUser):
+    meta = conversations.owned_or_404(conversation_id, user["email"])
+    return {**meta, "messages": conversations.messages(conversation_id, user["email"])}
+
+
+@app.patch("/conversations/{conversation_id}")
+def patch_conversation(conversation_id: str, body: ConversationIn, user=auth.CurrentUser):
+    return conversations.rename(conversation_id, user["email"], body.title)
+
+
+@app.delete("/conversations/{conversation_id}")
+def delete_conversation(conversation_id: str, user=auth.CurrentUser):
+    conversations.delete(conversation_id, user["email"])
+    return {"ok": True}
+
+
+@app.delete("/conversations")
+def delete_all_conversations(user=auth.CurrentUser):
+    return {"deleted": conversations.delete_all(user["email"])}
 
 
 # ---------------------------------------------------------------- corpus
@@ -166,11 +243,56 @@ class ChatIn(BaseModel):
     # True when the client will speak this answer, which wants a much shorter register
     # than the same answer being read. Defaults to the reading length.
     spoken: bool = False
+    # Signed-in only. Given one, the turn is appended to that conversation and its prior
+    # turns — read from the database, not from `history` — are what the model sees.
+    conversation_id: str | None = None
+
+
+async def _persisted(gen, conversation_id: str, message: str, lang_hint: str | None):
+    """Pass the SSE stream through untouched while recording the turn.
+
+    The user message is written up front so a disconnect mid-answer still leaves the question
+    in the history; the assistant row is written from the `done` event, which carries the
+    final (possibly citation-corrected) answer rather than the raw token stream.
+    """
+    conversations.add_message(conversation_id, "user", message, lang_hint)
+    lang, citations = lang_hint, []
+    try:
+        async for chunk in gen:
+            for line in chunk.splitlines():
+                if not line.startswith("data: "):
+                    continue
+                try:
+                    ev = json.loads(line[6:])
+                except ValueError:
+                    continue
+                if ev.get("type") == "meta":
+                    lang = ev.get("lang", lang)
+                elif ev.get("type") == "citations":
+                    citations = ev.get("items", [])
+                elif ev.get("type") == "done":
+                    conversations.add_message(
+                        conversation_id, "assistant", ev.get("answer", ""),
+                        lang, citations, ev.get("source"),
+                    )
+            yield chunk
+    except asyncio.CancelledError:
+        # The student closed the tab mid-answer. Their question is already saved; there is no
+        # assistant row to write, and re-raising keeps the disconnect semantics intact.
+        raise
 
 
 @app.post("/chat")
-async def chat(body: ChatIn):
-    gen = run_chat(ANON_ID, body.message, body.history, body.prev_lang, {}, body.spoken)
+async def chat(body: ChatIn, user=auth.OptionalUser):
+    history, conversation_id = body.history, None
+    if user and body.conversation_id:
+        conversations.owned_or_404(body.conversation_id, user["email"])
+        conversation_id = body.conversation_id
+        history = conversations.history_for_llm(conversation_id, user["email"])
+    student_id = user["email"] if user else ANON_ID
+    gen = run_chat(student_id, body.message, history, body.prev_lang, {}, body.spoken)
+    if conversation_id:
+        gen = _persisted(gen, conversation_id, body.message, body.prev_lang)
     return StreamingResponse(gen, media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 

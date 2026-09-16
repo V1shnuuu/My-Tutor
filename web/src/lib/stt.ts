@@ -5,12 +5,15 @@
  *   3. Neither available → caller shows "type your question"
  */
 import { ApiError, stt as sttApi, type Lang } from "./api";
+import { reconcile, type LiveTranscript } from "./transcript";
+
+export type { LiveTranscript } from "./transcript";
 
 export interface ListenOpts {
   token: string;
   langHint: Lang;
   serverAvailable: boolean;
-  onInterim: (text: string) => void;
+  onInterim: (t: LiveTranscript) => void;
   onFinal: (text: string, lang: Lang | null) => void;
   onError: (code: "stt_unavailable" | "stt_server_off" | "mic_denied" | "stt_failed") => void;
   onLevel?: (rms: number) => void;
@@ -39,6 +42,12 @@ const WebSpeech: SR | undefined = w.SpeechRecognition || w.webkitSpeechRecogniti
 
 export const browserSttAvailable = () => !!WebSpeech;
 const LOCALE: Record<Lang, string> = { ar: "ar-EG", en: "en-US", fr: "fr-FR" };
+
+/** Verbose STT tracing. Off unless VITE_DEBUG_STT=1, so a student's words never land in a
+ *  production console — the interim transcript is the sentence they are speaking out loud. */
+const DEBUG = import.meta.env.VITE_DEBUG_STT === "1";
+const trace = (...args: unknown[]) => { if (DEBUG) console.log("[stt]", ...args); };
+
 
 export async function startListening(o: ListenOpts): Promise<ListenSession> {
   if (o.serverAvailable && !!navigator.mediaDevices && typeof MediaRecorder !== "undefined") {
@@ -98,41 +107,6 @@ async function recordAndUpload(o: ListenOpts): Promise<ListenSession> {
   const chunks: Blob[] = [];
   rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
 
-  // The server upload only yields text once transcription finishes, which reads as a dead
-  // mic for the several seconds it takes. Web Speech (when present) streams interim words
-  // as they're spoken, so run it purely as a live caption — its text never reaches onFinal,
-  // the server's Whisper pass still produces the answer that actually gets sent.
-  let liveCaption: SRInstance | null = null;
-  if (WebSpeech) {
-    try {
-      liveCaption = new WebSpeech();
-      liveCaption.lang = LOCALE[o.langHint];
-      liveCaption.interimResults = true;
-      liveCaption.continuous = true;
-      liveCaption.maxAlternatives = 1;
-      let finalText = "";
-      liveCaption.onresult = (e: SpeechRecognitionEvent) => {
-        let interim = "";
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          const r = e.results[i];
-          if (r.isFinal) finalText += r[0].transcript;
-          else interim += r[0].transcript;
-        }
-        o.onInterim(finalText + interim);
-      };
-      // Best-effort only — the server transcript is what actually gets sent — but silent
-      // failures here are indistinguishable from "the browser doesn't support this at all",
-      // so log the reason (network unreachable, mic already claimed exclusively by the
-      // MediaRecorder stream above, no-speech, etc.) rather than swallowing it blind.
-      liveCaption.onerror = (e: SpeechRecognitionErrorEvent) => console.warn("live caption: recognition error —", e.error);
-      liveCaption.onend = () => console.warn("live caption: recognition ended early");
-      liveCaption.start();
-      console.log("live caption: started —", LOCALE[o.langHint]);
-    } catch (e) { console.warn("live caption: failed to start —", e); liveCaption = null; }
-  } else {
-    console.warn("live caption: no WebSpeech in this browser — interim text disabled on the server lane");
-  }
-
   // Simple energy VAD: stop 1.1 s after speech ends (Arabic speakers pause longer than English).
   const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!AC) {
@@ -172,6 +146,61 @@ async function recordAndUpload(o: ListenOpts): Promise<ListenSession> {
     if (!spoke && now - startedAt > 8000) { cancel(); o.onFinal("", null); return; }
     requestAnimationFrame(tick);
   };
+
+  // The server upload only yields text once transcription finishes, which reads as a dead
+  // mic for the several seconds it takes. Web Speech (when present) streams interim words
+  // as they're spoken, so run it purely as a live caption — its text never reaches onFinal,
+  // the server's Whisper pass still produces the answer that actually gets sent.
+  //
+  // Chrome silently ends a `continuous: true` session after a long pause (a documented
+  // quirk, not an error — `onend` fires with no matching `onerror`), which would otherwise
+  // freeze the caption for the rest of the utterance while recording carries on underneath.
+  // `armLiveCaption` restarts it whenever that happens and we are still actually recording.
+  // Each restart is a new recognizer with its own result list starting over from nothing, so
+  // `carry` holds what was already committed before the restart — without it, the caption
+  // would visibly lose everything said before the pause.
+  let liveCaption: SRInstance | null = null;
+  let carry = "";
+  const armLiveCaption = () => {
+    if (!WebSpeech || stopped) return;
+    try {
+      const lc = new WebSpeech();
+      lc.lang = LOCALE[o.langHint];
+      lc.interimResults = true;
+      lc.continuous = true;
+      lc.maxAlternatives = 1;
+      let lastCommitted = "";
+      lc.onresult = (e: SpeechRecognitionEvent) => {
+        const t = reconcile(e.results);
+        lastCommitted = t.committed;
+        const committed = carry && t.committed ? `${carry} ${t.committed}` : carry || t.committed;
+        const text = committed && t.interim ? `${committed} ${t.interim}` : committed || t.interim;
+        trace("interim:", t.interim, "| committed:", committed);
+        o.onInterim({ text, committed, interim: t.interim });
+      };
+      // Best-effort only — the server transcript is what actually gets sent — but silent
+      // failures here are indistinguishable from "the browser doesn't support this at all",
+      // so surface the reason (network unreachable, mic already claimed exclusively by the
+      // MediaRecorder stream above, no-speech, etc.) rather than swallowing it blind.
+      // `network` in particular is what a privacy browser blocking Google's speech endpoint
+      // looks like, and it is the one failure a student can actually act on.
+      lc.onerror = (e: SpeechRecognitionErrorEvent) => {
+        if (e.error !== "no-speech" && e.error !== "aborted") console.warn("live caption: recognition error —", e.error);
+      };
+      lc.onend = () => {
+        trace("live caption ended");
+        liveCaption = null;
+        if (stopped) return;
+        carry = carry && lastCommitted ? `${carry} ${lastCommitted}` : carry || lastCommitted;
+        armLiveCaption();
+      };
+      lc.start();
+      liveCaption = lc;
+      trace("live caption (re)started —", LOCALE[o.langHint]);
+    } catch (e) { console.warn("live caption: failed to start —", e); liveCaption = null; }
+  };
+  if (WebSpeech) armLiveCaption();
+  else trace("no WebSpeech in this browser — interim text disabled on the server lane");
 
   const cleanup = () => {
     stopped = true;
@@ -216,15 +245,15 @@ function browserRecognize(o: ListenOpts): ListenSession {
   rec.continuous = false;
   rec.maxAlternatives = 1;
   o.onMode?.("browser");
+  // On this lane the committed half is not just a preview — it is the question that gets
+  // sent, so a duplicated word here would reach the model. `reconcile` recomputes rather
+  // than accumulates precisely so a replayed result cannot corrupt it.
   let finalText = "";
   rec.onresult = (e: SpeechRecognitionEvent) => {
-    let interim = "";
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      const r = e.results[i];
-      if (r.isFinal) finalText += r[0].transcript;
-      else interim += r[0].transcript;
-    }
-    o.onInterim(finalText + interim);
+    const t = reconcile(e.results);
+    finalText = t.committed;
+    trace("interim:", t.interim, "| committed:", t.committed);
+    o.onInterim(t);
   };
   rec.onerror = (e: SpeechRecognitionErrorEvent) => {
     if (e.error === "not-allowed") o.onError("mic_denied");

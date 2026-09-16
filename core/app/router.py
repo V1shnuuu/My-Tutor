@@ -150,8 +150,13 @@ class Router:
                 await on_wait(self.queue_depth, int(deadline - time.time()))
             await asyncio.sleep(1.0)
 
-    async def stream(self, provider: Provider, messages: list[dict], est_tokens: int) -> AsyncIterator[str]:
-        """Stream text deltas from an OpenAI-compatible chat/completions endpoint."""
+    async def stream(self, provider: Provider, messages: list[dict], prompt_tokens: int) -> AsyncIterator[str]:
+        """Stream text deltas from an OpenAI-compatible chat/completions endpoint.
+
+        `prompt_tokens` is an estimate of the request alone — unlike the est_tokens passed to
+        `pick()`, it must NOT include a max_output_tokens allowance, since this method adds the
+        real measured completion size (`out_tokens`) itself before recording usage.
+        """
         cfg = provider.cfg
         url = cfg["base_url"].rstrip("/") + "/chat/completions"
         headers = {"Authorization": f"Bearer {cfg['api_key']}", "Content-Type": "application/json"}
@@ -195,7 +200,7 @@ class Router:
             raise ProviderError(f"{cfg['id']} network: {e}") from e
         finally:
             provider.inflight -= 1
-            provider.record(est_tokens + out_tokens, ok)
+            provider.record(prompt_tokens + out_tokens, ok)
 
     def snapshot(self) -> dict:
         return {"queue_depth": self.queue_depth, "providers": [p.snapshot() for p in self.providers]}

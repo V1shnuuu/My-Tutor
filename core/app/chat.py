@@ -225,7 +225,13 @@ async def run_chat(student_id: str, message: str, history: list[dict], prev_lang
         role = "assistant" if turn.get("role") == "assistant" else "user"
         messages.append({"role": role, "content": str(turn.get("content", ""))[:400]})
     messages.append({"role": "user", "content": message[:800]})
-    est_tokens = sum(len(m["content"]) for m in messages) // 3 + settings.max_output_tokens
+    prompt_tokens = sum(len(m["content"]) for m in messages) // 3
+    # A worst-case (prompt + a full max_output_tokens) estimate for the pre-flight headroom
+    # check only — router.stream() is given prompt_tokens alone, since it adds the actual
+    # measured completion size itself; passing this bigger estimate there too would double
+    # count the output on every single request (once as this budget reservation, again as
+    # the real tokens streamed back).
+    est_tokens = prompt_tokens + settings.max_output_tokens
 
     provider = None
     if router.enabled:
@@ -262,7 +268,7 @@ async def run_chat(student_id: str, message: str, history: list[dict], prev_lang
     tried = {provider.id}
     while True:
         try:
-            async for delta in router.stream(provider, messages, est_tokens):
+            async for delta in router.stream(provider, messages, prompt_tokens):
                 buf.append(delta)
                 yield sse({"type": "token", "text": delta})
             break

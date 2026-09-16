@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { Citation, Lang } from "../lib/api";
 import { t } from "../lib/i18n";
 import type { StoredMessage } from "../lib/store";
+import type { LiveTranscript } from "../lib/transcript";
 
 export interface LiveState {
   stage: "idle" | "retrieving" | "queued" | "generating" | "cached" | "floor" | "refusal";
@@ -15,7 +16,8 @@ interface Props {
   live: LiveState;
   streaming: boolean;
   speakingSentence: string | null;
-  interim: string;
+  /** Live speech preview. Never submitted as-is — see App's onFinal for what actually gets sent. */
+  transcript: LiveTranscript;
   listening: boolean;
   sttMode: "server" | "browser" | null;
   onSend: (text: string) => void;
@@ -67,15 +69,22 @@ function Body({ text, citations, speaking, onJump, lang }: { text: string; citat
   );
 }
 
-export default function Chat({ lang, messages, live, streaming, speakingSentence, interim, listening, sttMode, onSend, onMic, onStop, onJump }: Props) {
+export default function Chat({ lang, messages, live, streaming, speakingSentence, transcript, listening, sttMode, onSend, onMic, onStop, onJump }: Props) {
   const [draft, setDraft] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const liveRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = listRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, live, interim]);
+  }, [messages, live, transcript.text]);
+
+  // A long dictation scrolls inside its own box, so the newest words stay in view.
+  useEffect(() => {
+    const el = liveRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [transcript.text]);
 
   const submit = () => {
     const text = draft.trim();
@@ -123,17 +132,38 @@ export default function Chat({ lang, messages, live, streaming, speakingSentence
         })}
       </div>
       {listening && (
-        <div className="interim" dir="auto">
-          🎙 {t("listening", lang)}{sttMode === "browser" ? ` · ${t("stt_fallback", lang)}` : ""}
+        <div className="live-transcript" dir="auto" ref={liveRef} data-testid="live-transcript" data-empty={!transcript.text || undefined}>
+          <span className="live-dot" aria-hidden="true" />
+          <span className="live-text">
+            {transcript.text ? (
+              <>
+                {/* Settled words render solid; the tail the recogniser may still revise is
+                    dimmed, so the student can see which part is not final yet. */}
+                <span className="committed" data-testid="live-committed">{transcript.committed}</span>
+                {transcript.committed && transcript.interim ? " " : ""}
+                <span className="pending" data-testid="live-interim">{transcript.interim}</span>
+              </>
+            ) : (
+              <span className="muted">{t("listening", lang)}…</span>
+            )}
+          </span>
+          <span className="live-label">
+            {t("listening", lang)}{sttMode === "browser" ? ` · ${t("stt_fallback", lang)}` : ""}
+          </span>
         </div>
       )}
+      {/* The transcript is announced politely rather than rendered into a live region on every
+          keystroke-equivalent, which would make a screen reader read each partial guess. */}
+      <div className="sr-only" aria-live="polite">
+        {listening && transcript.committed ? transcript.committed : ""}
+      </div>
       <div className="composer">
-        <button className={`btn ${listening ? "rec" : ""}`} onClick={listening ? onStop : onMic} aria-label={listening ? t("stop", lang) : t("mic", lang)} disabled={streaming && !listening}>
+        <button className={`btn ${listening ? "rec" : ""}`} onClick={listening ? onStop : onMic} aria-label={listening ? t("stop", lang) : t("mic", lang)} data-testid="mic-button" data-listening={listening || undefined} disabled={streaming && !listening}>
           {listening ? "■" : "🎙"}
         </button>
         <textarea
           ref={taRef}
-          value={listening ? interim : draft}
+          value={listening ? transcript.text : draft}
           onChange={(e) => { if (!listening) setDraft(e.target.value); }}
           onKeyDown={onKey}
           placeholder={listening ? t("listening", lang) : t("placeholder", lang)}

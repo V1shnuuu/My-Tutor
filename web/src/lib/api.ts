@@ -63,9 +63,58 @@ async function check(r: Response): Promise<Response> {
   throw new ApiError(r.status, code);
 }
 
+export interface AuthInfo { google_client_id: string; enabled: boolean }
+export interface UserProfile { email: string; name: string; picture: string }
+
 export async function me(token: string) {
   const r = await check(await fetch(`${API}/me`, { headers: headers(token) }));
-  return r.json() as Promise<{ stt: boolean; tts?: Partial<Record<Lang, boolean>>; avatar?: boolean }>;
+  return r.json() as Promise<{
+    stt: boolean; tts?: Partial<Record<Lang, boolean>>; avatar?: boolean;
+    auth: AuthInfo; user: UserProfile | null;
+  }>;
+}
+
+// ---------------------------------------------------------------- conversations (signed in)
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  created_at: number;
+  updated_at: number;
+  message_count: number;
+}
+export interface StoredTurn {
+  role: "user" | "assistant";
+  content: string;
+  lang: Lang | null;
+  citations: Citation[];
+  source: "llm" | "cache" | "floor" | "refusal" | null;
+  ts: number;
+}
+
+export async function listConversations(token: string): Promise<ConversationSummary[]> {
+  const r = await check(await fetch(`${API}/conversations`, { headers: headers(token) }));
+  return (await r.json()).conversations;
+}
+
+export async function createConversation(token: string): Promise<ConversationSummary> {
+  const r = await check(await fetch(`${API}/conversations`, { method: "POST", headers: headers(token), body: "{}" }));
+  return r.json();
+}
+
+export async function getConversation(token: string, id: string): Promise<ConversationSummary & { messages: StoredTurn[] }> {
+  const r = await check(await fetch(`${API}/conversations/${id}`, { headers: headers(token) }));
+  return r.json();
+}
+
+export async function deleteConversation(token: string, id: string): Promise<void> {
+  await check(await fetch(`${API}/conversations/${id}`, { method: "DELETE", headers: headers(token) }));
+}
+
+export async function renameConversation(token: string, id: string, title: string): Promise<ConversationSummary> {
+  const r = await check(await fetch(`${API}/conversations/${id}`, {
+    method: "PATCH", headers: headers(token), body: JSON.stringify({ title }),
+  }));
+  return r.json();
 }
 
 export async function listVideos(token: string): Promise<Video[]> {
@@ -87,10 +136,19 @@ export async function stt(token: string, blob: Blob, langHint?: Lang): Promise<{
   return r.json();
 }
 
-/** POST /chat and yield parsed SSE events. */
-export async function* chat(token: string, message: string, history: { role: string; content: string }[], prevLang: Lang | null, spoken = false, signal?: AbortSignal): AsyncGenerator<ChatEvent> {
+/** POST /chat and yield parsed SSE events.
+ *
+ * With `conversationId` the server owns the history: it appends this turn to that
+ * conversation and feeds the model that conversation's own prior turns, ignoring `history`.
+ * Without one (anonymous), `history` is what the client remembers locally. */
+export async function* chat(token: string, message: string, history: { role: string; content: string }[], prevLang: Lang | null, spoken = false, signal?: AbortSignal, conversationId?: string | null): AsyncGenerator<ChatEvent> {
   const r = await check(
-    await fetch(`${API}/chat`, { method: "POST", headers: headers(token), body: JSON.stringify({ message, history, prev_lang: prevLang, spoken }), signal }),
+    await fetch(`${API}/chat`, {
+      method: "POST",
+      headers: headers(token),
+      body: JSON.stringify({ message, history, prev_lang: prevLang, spoken, conversation_id: conversationId ?? null }),
+      signal,
+    }),
   );
   const reader = r.body!.getReader();
   const dec = new TextDecoder();

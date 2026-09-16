@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     jwt_secret: str = "change-me-in-production"
     admin_token: str = "change-me-admin"
     jwt_days: int = 30
+    # Google Sign-In. Only the client ID, which is public by design (it ships inside the web
+    # bundle); Google ID tokens are verified against Google's published JWKS, so there is no
+    # client *secret* to hold. Empty = sign-in is off and the app runs anonymously with
+    # browser-local history, which is what keeps a keyless install working.
+    google_client_id: str = ""
 
     # Models
     embed_model: str = "intfloat/multilingual-e5-base"
