@@ -53,10 +53,15 @@ providers:
     tpd: 1000000
     concurrency: 4
 
-  - id: groq-llama70b
+  # llama-3.3-70b-versatile / llama-3.1-8b-instant, previously configured here, were
+  # retired from Groq's catalog (confirmed via GET /v1/models against a real key — this
+  # is exactly the "free-tier numbers are the most volatile input" risk the top of this
+  # file warns about). gpt-oss needs reasoning_effort set or it burns the whole token
+  # budget on hidden reasoning and returns empty content, same failure mode as Qwen3.
+  - id: groq-gptoss120b
     key_env: GROQ_API_KEY
     base_url: https://api.groq.com/openai/v1
-    model: llama-3.3-70b-versatile
+    model: openai/gpt-oss-120b
     tier: A
     langs: [ar, en, fr]
     rpm: 30
@@ -64,11 +69,13 @@ providers:
     tpm: 12000
     tpd: 100000
     concurrency: 3
+    extra_body:
+      reasoning_effort: low
 
-  - id: groq-llama8b
+  - id: groq-gptoss20b
     key_env: GROQ_API_KEY
     base_url: https://api.groq.com/openai/v1
-    model: llama-3.1-8b-instant
+    model: openai/gpt-oss-20b
     tier: B
     langs: [en, fr]
     rpm: 30
@@ -76,6 +83,8 @@ providers:
     tpm: 6000
     tpd: 500000
     concurrency: 3
+    extra_body:
+      reasoning_effort: low
 
   - id: mistral-small
     key_env: MISTRAL_API_KEY

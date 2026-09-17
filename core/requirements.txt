@@ -3,6 +3,13 @@ uvicorn[standard]==0.30.*
 httpx==0.27.*
 numpy<2
 bm25s==0.2.*
+# transformers is sentence-transformers' own dependency, not imported directly here — pinned
+# because newer releases (confirmed on 4.57.6, aarch64) trip a real torch._dynamo bug during
+# model load ("Duplicate dispatch rule for <built-in function intern>..."): transformers'
+# flex_attention integration imports torch.compiler.disable, which re-imports
+# torch._dynamo.polyfills and re-registers a dispatch rule that's already registered.
+# 4.44.2 is confirmed working; re-verify before bumping.
+transformers==4.44.2
 sentence-transformers>=3.0,<4
 PyJWT[crypto]==2.9.*
 python-multipart==0.0.9
