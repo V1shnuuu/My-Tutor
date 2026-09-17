@@ -1,0 +1,6 @@
+# Replace api.YOURDOMAIN.com with your real subdomain (e.g. api.example.com), pointed at
+# this server's public IP via an A record at your registrar (Hostinger). Caddy handles
+# HTTPS automatically (Let's Encrypt) — no cert setup needed beyond DNS being correct.
+api.YOURDOMAIN.com {
+	reverse_proxy 127.0.0.1:8000
+}

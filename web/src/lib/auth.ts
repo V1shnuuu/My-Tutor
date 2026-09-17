@@ -59,6 +59,21 @@ function safeRemove(key: string) {
 export const getSessionToken = () => safeGet(TOKEN_KEY);
 export const setSessionToken = (t: string | null) => (t ? safeSet(TOKEN_KEY, t) : safeRemove(TOKEN_KEY));
 
+const ANON_ID_KEY = "tutor.anon_id";
+/** A stable per-browser id for students who never sign in — sent as X-Anon-Id so the server
+ * can give each anonymous visitor their own daily/minute budget instead of lumping every
+ * signed-out student into one shared bucket (see core/app/main.py's /chat). Minted once and
+ * reused; a private/incognito window that clears storage just gets a fresh one next time,
+ * which is fine — it's a fairness cap, not an identity anything else depends on. */
+export function getAnonId(): string {
+  let id = safeGet(ANON_ID_KEY);
+  if (!id) {
+    id = (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    safeSet(ANON_ID_KEY, id);
+  }
+  return id;
+}
+
 let gsiReady: Promise<void> | null = null;
 /** Loads Google's script once. Rejects rather than hanging when it is blocked (offline, an
  *  ad blocker, a privacy browser), so the caller can show sign-in as unavailable. */

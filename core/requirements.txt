@@ -11,3 +11,4 @@ pydantic-settings==2.*
 langdetect==1.0.9
 mishkal
 piper-tts
+yt-dlp

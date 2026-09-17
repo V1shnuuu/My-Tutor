@@ -29,6 +29,10 @@ class Settings(BaseSettings):
     # client *secret* to hold. Empty = sign-in is off and the app runs anonymously with
     # browser-local history, which is what keeps a keyless install working.
     google_client_id: str = ""
+    # Who the Admin Dashboard trusts, checked fresh on every admin request rather than
+    # trusted from a token claim or a DB column — so revoking access is editing one line and
+    # restarting, not finding and fixing a stale row. Comma-separated Google account emails.
+    admin_emails: str = ""
 
     # Models
     embed_model: str = "intfloat/multilingual-e5-base"

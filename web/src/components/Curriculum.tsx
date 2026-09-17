@@ -21,16 +21,19 @@ export default function Curriculum({ videos, activeId, lang, onPick }: Props) {
   const weeks = [...new Set(videos.map((v) => v.week).filter((w): w is number => w != null))].sort((a, b) => a - b);
   const loose = videos.filter((v) => v.week == null);
 
+  // An admin-authored lesson with no video assigned yet: still shown (the syllabus is real,
+  // the recording just isn't linked), just not clickable into an empty player.
   const row = (v: Video, n: number) => (
     <li key={v.id}>
       <button
-        className={`lesson ${v.id === activeId ? "active" : ""}`}
-        onClick={() => onPick(v.id)}
+        className={`lesson ${v.id === activeId ? "active" : ""} ${v.unassigned ? "unassigned" : ""}`}
+        onClick={() => !v.unassigned && onPick(v.id)}
         aria-current={v.id === activeId ? "true" : undefined}
+        aria-disabled={v.unassigned || undefined}
       >
         <span className="n">{n}</span>
         <span className="title" dir="auto">{v.title}</span>
-        {v.duration ? <span className="dur">{mins(v.duration)}</span> : null}
+        {v.unassigned ? <span className="dur">{t("video_unassigned", lang)}</span> : v.duration ? <span className="dur">{mins(v.duration)}</span> : null}
       </button>
     </li>
   );

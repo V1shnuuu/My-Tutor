@@ -10,12 +10,12 @@ import time
 from pathlib import Path
 
 import httpx
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
-from . import auth, conversations, liveavatar, stt, tts
+from . import auth, captions_translate, content, course_ingest, conversations, liveavatar, stt, syllabus_ai, tts, youtube
 from .cache import semantic_cache
 from .chat import run_chat
 from .config import settings
@@ -219,7 +219,14 @@ def videos():
 
 
 @app.get("/videos/{video_id}/captions.vtt")
-def captions(video_id: str):
+async def captions(video_id: str, lang: str | None = None):
+    if lang:
+        try:
+            cues = await captions_translate.get_cues(video_id, lang)
+        except captions_translate.TranslateError as e:
+            status = {"no_transcript": 404, "captions_translate_bad_lang": 422, "captions_translate_busy": 429}.get(e.code, 502)
+            raise HTTPException(status, e.code) from e
+        return Response(captions_translate.cues_to_vtt(cues), media_type="text/vtt")
     path = settings.corpus_dir / "transcripts" / f"{video_id}.vtt"
     if not path.exists():
         raise HTTPException(404, "no_captions")
@@ -227,12 +234,32 @@ def captions(video_id: str):
 
 
 @app.get("/videos/{video_id}/transcript")
-def transcript(video_id: str):
-    """Cue list for the in-app caption overlay (works with the YouTube IFrame too)."""
+async def transcript(video_id: str, lang: str | None = None):
+    """Cue list for the in-app caption overlay (works with the YouTube IFrame too).
+
+    `lang` ("en" or "ar") returns captions translated to that language regardless of what
+    the video is actually spoken in — an admin-connected playlist can be in any language —
+    via captions_translate.py. Omitted, this is the original untranslated transcript,
+    unchanged from before that existed."""
+    if lang:
+        try:
+            return await captions_translate.get_cues(video_id, lang)
+        except captions_translate.TranslateError as e:
+            status = {"no_transcript": 404, "captions_translate_bad_lang": 422, "captions_translate_busy": 429}.get(e.code, 502)
+            raise HTTPException(status, e.code) from e
     path = settings.corpus_dir / "transcripts" / f"{video_id}.cues.json"
     if not path.exists():
         raise HTTPException(404, "no_transcript")
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+@app.get("/course")
+def get_published_course():
+    """The admin-authored course (weeks → lessons → mapped video), or null if none is
+    published yet — same no-auth-required shape as /videos, which this is meant to sit
+    alongside rather than replace: a fresh install with no course published falls back to
+    the static corpus/ videos the way it always has."""
+    return content.student_course_tree()
 
 
 # ---------------------------------------------------------------- chat
@@ -283,13 +310,19 @@ async def _persisted(gen, conversation_id: str, message: str, lang_hint: str | N
 
 
 @app.post("/chat")
-async def chat(body: ChatIn, user=auth.OptionalUser):
+async def chat(body: ChatIn, user=auth.OptionalUser, x_anon_id: str | None = Header(None, alias="X-Anon-Id")):
     history, conversation_id = body.history, None
     if user and body.conversation_id:
         conversations.owned_or_404(body.conversation_id, user["email"])
         conversation_id = body.conversation_id
         history = conversations.history_for_llm(conversation_id, user["email"])
-    student_id = user["email"] if user else ANON_ID
+    # A signed-in student is identified by their email; an anonymous one by a per-browser id
+    # the client mints once and reuses (see web/src/lib/auth.ts's getAnonId) — falling back to
+    # a single shared bucket only for callers that never send one (older cached bundles, curl).
+    # Without this, every anonymous visitor would share one daily/minute budget with everyone
+    # else who hasn't signed in, which is not a fair-use cap, it's an outage waiting to happen.
+    student_id = user["email"] if user else (x_anon_id or ANON_ID)
+    auth.check_fair_share(student_id)
     gen = run_chat(student_id, body.message, history, body.prev_lang, {}, body.spoken)
     if conversation_id:
         gen = _persisted(gen, conversation_id, body.message, body.prev_lang)
@@ -404,3 +437,220 @@ def admin_status(request: Request):
         "cache_entries": query("SELECT COUNT(*) AS n FROM cache")[0]["n"],
         "students": query("SELECT COUNT(*) AS n, SUM(redeemed_at IS NOT NULL) AS redeemed FROM students")[0],
     }
+
+
+# ---------------------------------------------------------------- admin: course content
+# Every route below requires auth.AdminUser — a signed-in Google account whose email is in
+# ADMIN_EMAILS (core/app/auth.py), checked fresh on every request. Distinct from the
+# x-admin-token routes above, which predate Google Sign-In and cover ops/CLI actions.
+class CourseIn(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    description: str = Field(default="", max_length=4000)
+
+
+class TitleIn(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+
+
+class ReorderIn(BaseModel):
+    ids: list[str]
+
+
+class VideoAssignIn(BaseModel):
+    video_id: str | None = None
+
+
+class PlaylistIn(BaseModel):
+    url: str = Field(min_length=1, max_length=2000)
+
+
+class SyllabusWeekIn(BaseModel):
+    title: str
+    lessons: list[str]
+
+
+class SyllabusBulkIn(BaseModel):
+    weeks: list[SyllabusWeekIn]
+
+
+class SyllabusTextIn(BaseModel):
+    text: str = Field(min_length=1, max_length=20000)
+
+
+@app.get("/admin/course/is_admin")
+def am_i_course_admin(user=auth.OptionalUser):
+    """So the web app can decide whether to offer the Admin Dashboard at all, without
+    guessing — the actual gate on every route below is still server-side per-request."""
+    return {"is_admin": bool(user) and auth.is_course_admin(user["email"])}
+
+
+@app.get("/admin/course/courses")
+def admin_list_courses(admin=auth.AdminUser):
+    return {"courses": content.list_courses()}
+
+
+@app.post("/admin/course/courses")
+def admin_create_course(body: CourseIn, admin=auth.AdminUser):
+    return content.create_course(admin["email"], body.title, body.description)
+
+
+@app.get("/admin/course/courses/{course_id}")
+def admin_get_course(course_id: str, admin=auth.AdminUser):
+    return content.admin_course_tree(course_id)
+
+
+@app.patch("/admin/course/courses/{course_id}")
+def admin_update_course(course_id: str, body: CourseIn, admin=auth.AdminUser):
+    return content.update_course(course_id, body.title, body.description)
+
+
+@app.delete("/admin/course/courses/{course_id}")
+def admin_delete_course(course_id: str, admin=auth.AdminUser):
+    content.delete_course(course_id)
+    return {"ok": True}
+
+
+@app.post("/admin/course/courses/{course_id}/publish")
+def admin_publish_course(course_id: str, admin=auth.AdminUser):
+    return content.publish_course(course_id, True)
+
+
+@app.post("/admin/course/courses/{course_id}/unpublish")
+def admin_unpublish_course(course_id: str, admin=auth.AdminUser):
+    return content.publish_course(course_id, False)
+
+
+@app.post("/admin/course/courses/{course_id}/weeks")
+def admin_add_week(course_id: str, body: TitleIn, admin=auth.AdminUser):
+    return content.add_week(course_id, body.title)
+
+
+@app.post("/admin/course/courses/{course_id}/weeks/reorder")
+def admin_reorder_weeks(course_id: str, body: ReorderIn, admin=auth.AdminUser):
+    content.reorder_weeks(course_id, body.ids)
+    return {"ok": True}
+
+
+@app.patch("/admin/course/weeks/{week_id}")
+def admin_rename_week(week_id: str, body: TitleIn, admin=auth.AdminUser):
+    content.rename_week(week_id, body.title)
+    return {"ok": True}
+
+
+@app.delete("/admin/course/weeks/{week_id}")
+def admin_delete_week(week_id: str, admin=auth.AdminUser):
+    content.delete_week(week_id)
+    return {"ok": True}
+
+
+@app.post("/admin/course/weeks/{week_id}/lessons")
+def admin_add_lesson(week_id: str, body: TitleIn, admin=auth.AdminUser):
+    return content.add_lesson(week_id, body.title)
+
+
+@app.post("/admin/course/weeks/{week_id}/lessons/reorder")
+def admin_reorder_lessons(week_id: str, body: ReorderIn, admin=auth.AdminUser):
+    content.reorder_lessons(week_id, body.ids)
+    return {"ok": True}
+
+
+@app.patch("/admin/course/lessons/{lesson_id}")
+def admin_rename_lesson(lesson_id: str, body: TitleIn, admin=auth.AdminUser):
+    content.rename_lesson(lesson_id, body.title)
+    return {"ok": True}
+
+
+@app.delete("/admin/course/lessons/{lesson_id}")
+def admin_delete_lesson(lesson_id: str, admin=auth.AdminUser):
+    content.delete_lesson(lesson_id)
+    return {"ok": True}
+
+
+@app.post("/admin/course/lessons/{lesson_id}/video")
+def admin_assign_video(lesson_id: str, body: VideoAssignIn, admin=auth.AdminUser):
+    content.assign_video(lesson_id, body.video_id)
+    # A freshly-assigned video that has never been ingested anywhere starts transcription
+    # right away rather than waiting for a separate "ingest now" click — assigning it to a
+    # lesson is the moment it became something a student can ask the Tutor about.
+    if body.video_id:
+        rows = query("SELECT youtube_video_id, title, ingest_status FROM youtube_videos WHERE id = ?", (body.video_id,))
+        if rows and rows[0]["ingest_status"] == "pending":
+            course_ingest.ingest_video_in_background(body.video_id, rows[0]["youtube_video_id"], rows[0]["title"])
+    return {"ok": True}
+
+
+@app.post("/admin/course/syllabus/ai_parse")
+async def admin_ai_parse_syllabus(body: SyllabusTextIn, admin=auth.AdminUser):
+    """Fallback for pasted text the plain regex parser (syllabus.ts) can't make sense of —
+    not tied to a course, since it's a pure text→structure transform the admin reviews
+    before anything is saved, same as the regex path."""
+    try:
+        weeks = await syllabus_ai.ai_parse_syllabus(body.text)
+    except syllabus_ai.SyllabusAIError as e:
+        status = {"syllabus_ai_unavailable": 503, "syllabus_ai_busy": 429}.get(e.code, 502)
+        raise HTTPException(status, e.code) from e
+    return {"weeks": weeks}
+
+
+@app.post("/admin/course/courses/{course_id}/syllabus/bulk")
+def admin_bulk_syllabus(course_id: str, body: SyllabusBulkIn, admin=auth.AdminUser):
+    """Creates every week/lesson from an already-client-parsed syllabus paste in one call,
+    rather than one round trip per week/lesson. The admin reviews/edits the parse client-side
+    before this ever fires — see web/src/lib/syllabus.ts."""
+    content.get_course(course_id)
+    created_weeks = []
+    for w in body.weeks:
+        week = content.add_week(course_id, w.title)
+        lessons = [content.add_lesson(week["id"], t) for t in w.lessons]
+        created_weeks.append({**week, "lessons": lessons})
+    return {"weeks": created_weeks}
+
+
+def _youtube_status(code: str) -> int:
+    """Every youtube.YouTubeError code, mapped to the specific status it actually is — not a
+    blanket catch-all, matching how core/app/stt.py distinguishes stt_budget (429) from
+    stt_local_failed (503) rather than raising one generic "something went wrong" status."""
+    return {
+        "invalid_playlist_url": 422,       # the admin's input, not YouTube's fault
+        "playlist_not_found": 404,
+    }.get(code, 502)                       # anything else: yt-dlp genuinely couldn't read it
+
+
+@app.post("/admin/course/courses/{course_id}/playlist")
+async def admin_connect_playlist(course_id: str, body: PlaylistIn, admin=auth.AdminUser):
+    content.get_course(course_id)
+    try:
+        playlist_id = youtube.extract_playlist_id(body.url)
+        meta = await youtube.fetch_playlist(playlist_id)
+        videos = await youtube.fetch_playlist_videos(playlist_id)
+    except youtube.YouTubeError as e:
+        raise HTTPException(_youtube_status(e.code), e.code) from e
+    if not videos:
+        raise HTTPException(422, "playlist_has_no_videos")
+    playlist = content.set_playlist(course_id, meta)
+    sync_result = content.sync_videos(playlist["id"], videos)
+    return {"playlist": playlist, "sync": sync_result}
+
+
+@app.post("/admin/course/courses/{course_id}/playlist/sync")
+async def admin_sync_playlist(course_id: str, admin=auth.AdminUser):
+    playlist = content.get_playlist(course_id)
+    if not playlist:
+        raise HTTPException(404, "no_playlist_connected")
+    try:
+        videos = await youtube.fetch_playlist_videos(playlist["youtube_playlist_id"])
+    except youtube.YouTubeError as e:
+        raise HTTPException(_youtube_status(e.code), e.code) from e
+    sync_result = content.sync_videos(playlist["id"], videos)
+    return {"sync": sync_result}
+
+
+@app.get("/admin/course/courses/{course_id}/playlist/videos")
+def admin_list_playlist_videos(course_id: str, admin=auth.AdminUser):
+    """Every video in the connected playlist, assigned or not — what the per-lesson video
+    picker offers, since re-assigning a video already used by another lesson must work too,
+    not just picking from the leftover unassigned ones."""
+    playlist = content.get_playlist(course_id)
+    if not playlist:
+        return {"videos": []}
+    return {"videos": content.list_videos(playlist["id"])}

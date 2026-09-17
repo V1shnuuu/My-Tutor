@@ -222,6 +222,9 @@ button { cursor: pointer; }
 .lesson .n { font: 500 12px/1 var(--font-mono); color: var(--ink-3); min-width: 1.4em; flex: none; }
 .lesson .title { flex: 1; overflow-wrap: break-word; hyphens: auto; }
 .lesson .dur { font: 500 12px/1 var(--font-mono); color: var(--ink-3); flex: none; }
+.lesson.unassigned { cursor: default; opacity: .55; }
+.lesson.unassigned:hover { background: none; }
+.lesson.unassigned .dur { font-style: italic; }
 /* The lecture being watched is marked the way you'd run a highlighter over the line. */
 .lesson.active { background: var(--highlighter); color: var(--highlighter-ink); }
 .lesson.active .n, .lesson.active .dur { color: inherit; opacity: .75; }
@@ -462,6 +465,52 @@ button { cursor: pointer; }
 .icon-btn:hover { color: var(--ink); background: var(--rule-2); }
 .icon-btn.danger:hover { color: var(--danger); }
 @media (prefers-reduced-motion: reduce) { .sessions-panel { transition: none; } }
+
+/* ---------------- admin dashboard ---------------- */
+.admin-shell {
+  max-width: 920px; margin: 0 auto; padding: 20px 16px 60px;
+  background: var(--paper); min-height: 100dvh;
+  background-image: repeating-linear-gradient(transparent 0 calc(var(--lh) - 1px), var(--rule-2) calc(var(--lh) - 1px) var(--lh));
+}
+.admin-topbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 0 16px; border-bottom: 1px solid var(--rule); margin-bottom: 18px; }
+.admin-topbar h1 { font: 700 30px/1 var(--font-hand); color: var(--ink-display); margin: 0; }
+.admin-topbar-actions { display: flex; gap: 8px; margin-inline-start: auto; flex-wrap: wrap; }
+.admin-err { background: rgba(180, 35, 24, .1); color: var(--danger); border: 1px solid var(--danger); border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 14px; }
+.admin-card { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; }
+.admin-card h2 { font: 700 22px/1 var(--font-hand); color: var(--ink-display); margin: 0 0 10px; }
+.admin-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.admin-row input[type="text"], .admin-row input:not([type]) { flex: 1; min-width: 200px; border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; background: var(--paper); font: inherit; }
+.admin-course-list { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.admin-course-list li { display: flex; align-items: center; gap: 4px; }
+.admin-course-row { flex: 1; display: flex; justify-content: space-between; align-items: center; text-align: start; border: 1px solid var(--rule); border-radius: 8px; padding: 10px 12px; background: var(--paper); }
+.admin-course-row:hover { background: var(--paper-2); }
+.admin-empty { color: var(--ink-3); font-size: 14px; padding: 8px 0; }
+.admin-status { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--rule); }
+.admin-status.published { color: var(--ok); border-color: var(--ok); }
+.admin-status.draft { color: var(--warn); border-color: var(--warn); }
+.admin-playlist-info { display: flex; align-items: center; gap: 12px; }
+.admin-playlist-info img { width: 80px; height: 45px; object-fit: cover; border-radius: 6px; background: var(--paper-2); }
+.admin-playlist-info > div { flex: 1; }
+.admin-unassigned { margin-top: 12px; font-size: 13px; }
+.admin-unassigned summary { cursor: pointer; color: var(--ink-2); }
+.admin-unassigned ul { list-style: none; margin: 8px 0 0; padding: 0; color: var(--ink-2); }
+.admin-bulk { width: 100%; font: 500 14px/1.5 var(--font-mono); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; background: var(--paper); resize: vertical; }
+.admin-preview { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.admin-preview-week { border: 1px dashed var(--rule); border-radius: 8px; padding: 10px; font-size: 13px; }
+.admin-preview-week ol { margin: 4px 0 0; padding-inline-start: 18px; }
+.admin-week { border-top: 1px solid var(--rule); padding: 14px 0; }
+.admin-week:first-of-type { border-top: 0; padding-top: 4px; }
+.admin-week-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.admin-week-actions { display: flex; gap: 2px; margin-inline-start: auto; }
+.admin-inline-title { flex: 1; border: 1px solid transparent; border-radius: 6px; padding: 4px 6px; background: none; font: inherit; }
+.admin-inline-title:hover, .admin-inline-title:focus { border-color: var(--rule); background: var(--paper); }
+.admin-lesson { display: flex; align-items: center; gap: 8px; padding: 4px 0 4px 18px; }
+.admin-lesson-n { font: 500 12px/1 var(--font-mono); color: var(--ink-3); min-width: 1.4em; }
+.admin-lesson select { flex: 1; min-width: 160px; max-width: 280px; border: 1px solid var(--rule); border-radius: 6px; padding: 4px 6px; background: var(--paper); font-size: 13px; }
+.admin-ingest { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--rule); white-space: nowrap; }
+.admin-ingest.ready { color: var(--ok); border-color: var(--ok); }
+.admin-ingest.ingesting, .admin-ingest.pending { color: var(--warn); border-color: var(--warn); }
+.admin-ingest.failed { color: var(--danger); border-color: var(--danger); }
 
 /* Last, so it wins over the base .composer rule above: at phone width the
    placeholder wraps to two lines and must not be clipped. */

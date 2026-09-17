@@ -191,7 +191,15 @@ def today() -> str:
 
 def check_fair_share(student_id: str, kind: str = "messages") -> dict:
     """Per-student daily/minute caps. Raises 429 with a friendly reason when exceeded.
-    Returns the remaining daily budget for the UI."""
+    Returns the remaining daily budget for the UI.
+
+    This reads the count now; the matching bump_usage() call happens later, after the whole
+    answer (possibly a multi-second LLM call) completes — and is skipped entirely for a free
+    gate-refusal, which must never cost budget. That gap is a real, accepted race under true
+    concurrency (enough simultaneous requests from the same identity could all pass the check
+    before any of them counts), same category as the minute check just below it. Closing it
+    fully would mean reserving atomically up front and refunding on a refusal, which is more
+    machinery than a fairness cap (not a security boundary) warrants here."""
     day = today()
     rows = query("SELECT * FROM usage WHERE student_id = ? AND day = ?", (student_id, day))
     used = rows[0][kind] if rows else 0
@@ -227,6 +235,26 @@ def require_admin(request: Request) -> None:
         raise HTTPException(403, "admin_only")
 
 
+# ---------------------------------------------------------------- course admin (Google account)
+# Distinct from require_admin above, which is a shared ops token for the CLI-facing /admin/*
+# routes (codes, reload, status) that predate Google Sign-In. This is "is the signed-in
+# Google account one of the course administrators" — checked fresh against the env allowlist
+# on every request, never cached on the user or embedded in their JWT, so revoking someone's
+# admin access is a one-line .env edit + restart, not a stale token floating around for
+# JWT_DAYS. A frontend-supplied role is never consulted; there is no role for it to supply.
+def is_course_admin(email: str) -> bool:
+    allowed = {e.strip().lower() for e in settings.admin_emails.split(",") if e.strip()}
+    return bool(allowed) and email.lower() in allowed
+
+
+async def current_admin_user(request: Request) -> dict:
+    user = await current_user(request)
+    if not is_course_admin(user["email"]):
+        raise HTTPException(403, "admin_only")
+    return user
+
+
 Student = Depends(current_student)
 CurrentUser = Depends(current_user)
 OptionalUser = Depends(optional_user)
+AdminUser = Depends(current_admin_user)

@@ -63,13 +63,19 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer({ token
   const pendingSeek = useRef<number | null>(null);
   const isYT = video?.source === "youtube" && !!video.youtube_id;
 
+  // Captions are always English or Arabic, never the video's own spoken language — an
+  // admin-connected YouTube playlist can be in anything (Tamil, French, whatever); the
+  // French UI still gets English captions rather than a third caption language nobody asked
+  // to support. See core/app/captions_translate.py for the actual translation.
+  const capLang: "en" | "ar" = lang === "ar" ? "ar" : "en";
+
   // transcript cues for the caption overlay
   useEffect(() => {
     if (!video) return;
     let alive = true;
-    fetchTranscript(token, video.id).then((c) => alive && setCues(c));
+    fetchTranscript(token, video.id, capLang).then((c) => alive && setCues(c));
     return () => { alive = false; };
-  }, [token, video]);
+  }, [token, video, capLang]);
 
   // YouTube player lifecycle
   useEffect(() => {
@@ -196,7 +202,7 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer({ token
           </>
         ) : (
           <video ref={html5} src={video.url || undefined} playsInline preload="metadata" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}>
-            <track kind="captions" src={`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/videos/${video.id}/captions.vtt`} srcLang={video.lang || "en"} default />
+            <track kind="captions" src={`${import.meta.env.VITE_API_URL || "http://127.0.0.1:8000"}/videos/${video.id}/captions.vtt?lang=${capLang}`} srcLang={capLang} default />
           </video>
         )}
         {cue && <div className="captions" aria-live="off"><span dir="auto">{cue.text}</span></div>}

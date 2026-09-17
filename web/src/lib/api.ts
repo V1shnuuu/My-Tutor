@@ -24,6 +24,8 @@ export interface Video {
   duration: number | null;
   lang: string | null;
   week: number | null;
+  /** True for an admin-authored lesson with no video mapped yet — see Curriculum.tsx. */
+  unassigned?: boolean;
 }
 
 export type ChatEvent =
@@ -45,13 +47,13 @@ export class ApiError extends Error {
   }
 }
 
-function headers(token?: string | null): HeadersInit {
+export function headers(token?: string | null): HeadersInit {
   const h: Record<string, string> = { "content-type": "application/json" };
   if (token) h.authorization = `Bearer ${token}`;
   return h;
 }
 
-async function check(r: Response): Promise<Response> {
+export async function check(r: Response): Promise<Response> {
   if (r.ok) return r;
   let code = `http_${r.status}`;
   try {
@@ -122,8 +124,12 @@ export async function listVideos(token: string): Promise<Video[]> {
   return (await r.json()).videos;
 }
 
-export async function transcript(token: string, videoId: string): Promise<{ start: number; end: number; text: string }[]> {
-  const r = await fetch(`${API}/videos/${videoId}/transcript`, { headers: headers(token) });
+/** `capLang` ("en" | "ar") returns captions translated to that language regardless of what
+ * the video is actually spoken in — see VideoPlayer.tsx, which is the only caller that
+ * passes it. Omitted, this is the original untranslated transcript. */
+export async function transcript(token: string, videoId: string, capLang?: "en" | "ar"): Promise<{ start: number; end: number; text: string }[]> {
+  const qs = capLang ? `?lang=${capLang}` : "";
+  const r = await fetch(`${API}/videos/${videoId}/transcript${qs}`, { headers: headers(token) });
   if (!r.ok) return [];
   return r.json();
 }
@@ -140,12 +146,16 @@ export async function stt(token: string, blob: Blob, langHint?: Lang): Promise<{
  *
  * With `conversationId` the server owns the history: it appends this turn to that
  * conversation and feeds the model that conversation's own prior turns, ignoring `history`.
- * Without one (anonymous), `history` is what the client remembers locally. */
-export async function* chat(token: string, message: string, history: { role: string; content: string }[], prevLang: Lang | null, spoken = false, signal?: AbortSignal, conversationId?: string | null): AsyncGenerator<ChatEvent> {
+ * Without one (anonymous), `history` is what the client remembers locally.
+ *
+ * `anonId` (from lib/auth.ts's getAnonId) gives each signed-out browser its own daily/minute
+ * budget server-side instead of one shared pool for every anonymous student — pass it
+ * whenever there's no signed-in session token. */
+export async function* chat(token: string, message: string, history: { role: string; content: string }[], prevLang: Lang | null, spoken = false, signal?: AbortSignal, conversationId?: string | null, anonId?: string): AsyncGenerator<ChatEvent> {
   const r = await check(
     await fetch(`${API}/chat`, {
       method: "POST",
-      headers: headers(token),
+      headers: anonId ? { ...headers(token), "X-Anon-Id": anonId } : headers(token),
       body: JSON.stringify({ message, history, prev_lang: prevLang, spoken, conversation_id: conversationId ?? null }),
       signal,
     }),

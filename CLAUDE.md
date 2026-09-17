@@ -29,6 +29,14 @@ streaming avatar. Everything else runs locally with no account:
   slow the answer is a bigger model on a GPU (`LOCAL_STT_MODEL=large-v3-turbo`,
   `LOCAL_STT_DEVICE=cuda`), not somebody's API.
 - Free and quota-free is a product requirement at 400 students, not a preference.
+- **Optional accounts follow the same rule.** `GOOGLE_CLIENT_ID` (saved chat history) and
+  `ADMIN_EMAILS` (who can reach `/admin/course/*`) are each independently optional — the
+  app runs with neither, students stay anonymous, and the admin dashboard simply has
+  nothing to authorize. Admin identity is checked fresh against `ADMIN_EMAILS` on every
+  request (`auth.is_course_admin`), never trusted from a request body or cached in a
+  token. "Connect playlist" needs no key at all — `core/app/youtube.py` reads a pasted
+  playlist URL with yt-dlp (already a dependency for lecture audio download), the same
+  thing anyone with the link can already see on youtube.com.
 
 ## 2. All three languages, everywhere
 
@@ -72,6 +80,18 @@ it** — never to make CI pass.
 
 `core/.env` is gitignored and stays that way. Never commit, echo, or paste a key. If one
 reaches a chat or a log, say so plainly and tell the user to rotate it.
+
+## 7. Every student, or no student — never a shared bucket
+
+`auth.check_fair_share` existed for a long time without ever being called from `/chat` —
+the daily/minute caps in `config.py` were configured, tested-for in the frontend
+(`daily_cap`/`minute_cap` in `i18n.ts`), and completely unenforced. Anyone could hit the
+LLM as fast as the network allowed. If you touch `/chat`'s auth/budget wiring in
+`main.py`, keep the call to `auth.check_fair_share(student_id)` before any real work
+starts, and keep `student_id` per-identity: a signed-in student's email, or an anonymous
+browser's own id (`X-Anon-Id`, minted once client-side — see `lib/auth.ts`'s `getAnonId`).
+Falling back to one shared id for every signed-out visitor means the first handful of
+anonymous questions each day exhaust the cap for everyone else who hasn't signed in.
 
 ## Commands
 

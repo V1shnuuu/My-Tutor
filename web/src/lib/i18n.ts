@@ -62,6 +62,18 @@ const S = {
     fr: "Aucun cours indexé. Lance add_videos.py, puis ingest.py.",
   },
   week: { ar: "أسبوع", en: "Week", fr: "Semaine" },
+  video_unassigned: { ar: "مفيش فيديو لسه", en: "Video not assigned yet", fr: "Vidéo non assignée" },
+  admin_not_authorized: {
+    ar: "الحساب ده مش مسجّل كأدمن للكورس ده.",
+    en: "This account isn't authorized as a course admin.",
+    fr: "Ce compte n'est pas autorisé en tant qu'administrateur du cours.",
+  },
+  admin_signin_not_configured: {
+    ar: "تسجيل الدخول للأدمن مش متفعّل على السيرفر ده. ضيف GOOGLE_CLIENT_ID في core/.env.",
+    en: "Admin sign-in isn't set up on this server yet. Add GOOGLE_CLIENT_ID to core/.env.",
+    fr: "La connexion admin n'est pas configurée sur ce serveur. Ajoute GOOGLE_CLIENT_ID dans core/.env.",
+  },
+  back_to_tutor: { ar: "ارجع للمُدرّس", en: "Back to the tutor", fr: "Retour au tuteur" },
   no_video: { ar: "مفيش فيديوهات لسه", en: "No videos yet", fr: "Pas encore de vidéos" },
   captions: { ar: "ترجمة", en: "CC", fr: "ST" },
   speed: { ar: "سرعة", en: "Speed", fr: "Vitesse" },

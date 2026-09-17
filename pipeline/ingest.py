@@ -107,7 +107,7 @@ def yt_auto_captions(youtube_id: str, lang: str, out_dir: Path) -> Path:
     return cands[0]
 
 
-def whisper_transcribe(audio: Path, lang: str | None, vocab: str) -> list[dict]:
+def whisper_transcribe(audio: Path, lang: str | None, vocab: str) -> tuple[list[dict], str | None]:
     from faster_whisper import WhisperModel
 
     model_name = os.environ.get("WHISPER_MODEL", "large-v3-turbo")
@@ -129,7 +129,7 @@ def whisper_transcribe(audio: Path, lang: str | None, vocab: str) -> list[dict]:
         if text:
             cues.append({"start": round(s.start, 2), "end": round(s.end, 2), "text": text})
     print(f"  detected language: {info.language} (p={info.language_probability:.2f}), {len(cues)} segments")
-    return cues
+    return cues, info.language
 
 
 # ------------------------------------------------------------------ VTT helpers
@@ -281,6 +281,7 @@ def ingest_video(v: dict, vocab: str, force: bool) -> bool:
     print(f"- {vid}: {v.get('title')}")
     t0 = time.time()
     mode = v.get("transcript", "whisper")
+    detected_lang: str | None = None
     if mode == "file":
         cues = parse_vtt(ROOT / v["transcript_file"])
     elif mode == "auto":
@@ -290,7 +291,7 @@ def ingest_video(v: dict, vocab: str, force: bool) -> bool:
             audio = yt_download_audio(v["youtube_id"], WORK / "audio")
         else:
             audio = source_media(v)
-        cues = whisper_transcribe(audio, v.get("lang"), vocab)
+        cues, detected_lang = whisper_transcribe(audio, v.get("lang"), vocab)
     if not cues:
         raise RuntimeError(f"{vid}: empty transcript")
 
@@ -306,7 +307,7 @@ def ingest_video(v: dict, vocab: str, force: bool) -> bool:
             f.write(json.dumps(c, ensure_ascii=False) + "\n")
     meta_path.write_text(json.dumps({
         "fingerprint": fp, "cues": len(cues), "chunks": len(chunks), "duration": cues[-1]["end"],
-        "ingested_at": int(time.time()), "mode": mode,
+        "ingested_at": int(time.time()), "mode": mode, "detected_lang": detected_lang,
     }), encoding="utf-8")
     print(f"  {len(cues)} cues → {len(chunks)} chunks in {time.time() - t0:.0f}s")
     return True
@@ -365,7 +366,10 @@ def write_manifest(videos: list[dict]) -> None:
         entries.append({
             "id": v["id"], "title": v.get("title", v["id"]), "source": v.get("source", "youtube"),
             "youtube_id": v.get("youtube_id"), "url": v.get("url"), "duration": meta.get("duration"),
-            "lang": v.get("lang"), "week": v.get("week"),
+            # An explicit hint (static corpus videos.yaml) wins; otherwise fall back to what
+            # Whisper actually detected — the only way admin-authored videos (no hint, source
+            # language unknown ahead of time) end up with a real lang instead of null.
+            "lang": v.get("lang") or meta.get("detected_lang"), "week": v.get("week"),
         })
     version = hashlib.sha256("|".join(sorted(parts)).encode()).hexdigest()[:10]
     (CORPUS / "manifest.json").write_text(json.dumps({"corpus_version": version, "videos": entries}, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")

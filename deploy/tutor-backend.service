@@ -1,0 +1,19 @@
+[Unit]
+Description=My-Tutor backend (FastAPI/uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+# Replace with whichever user owns /opt/mytutor (the default login user on most cloud
+# images, e.g. "ubuntu" — check with `whoami` after you SSH in).
+User=ubuntu
+WorkingDirectory=/opt/mytutor/core
+ExecStart=/opt/mytutor/venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=3
+# Bound to localhost only — Caddy (see deploy/Caddyfile) is what the internet actually
+# reaches, terminating TLS and reverse-proxying to this. The backend itself is never
+# directly exposed.
+
+[Install]
+WantedBy=multi-user.target

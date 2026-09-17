@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import AdminDashboard from "./components/AdminDashboard";
 import Chat, { type LiveState } from "./components/Chat";
 import Curriculum from "./components/Curriculum";
 import LiveAvatarPanel, { type LiveAvatarHandle } from "./components/LiveAvatarPanel";
@@ -9,7 +10,8 @@ import {
   ApiError, chat as chatApi, createConversation, getConversation, listVideos, me,
   type AuthInfo, type Citation, type Lang, type UserProfile, type Video,
 } from "./lib/api";
-import { getSessionToken, setSessionToken, signOut, type User } from "./lib/auth";
+import { getAnonId, getSessionToken, setSessionToken, signOut, type User } from "./lib/auth";
+import { amICourseAdmin, courseToVideos, getPublishedCourse } from "./lib/course";
 
 import { dirOf, t } from "./lib/i18n";
 import { SentenceSplitter, Speaker, isUnlocked, resumeAudio, unlockAudio } from "./lib/speech";
@@ -33,6 +35,10 @@ export default function App() {
   const [authInfo, setAuthInfo] = useState<AuthInfo | null>(null);
   // Sign-in is a screen you land on, not a wall: dismissed once, it stays dismissed.
   const [skippedSignIn, setSkippedSignIn] = useState(getPref("signin.skipped") === "1");
+  // No router in this app (one extra screen didn't justify the dependency) — /admin is
+  // recognised by its literal path, fixed for the page's lifetime.
+  const [isAdminRoute] = useState(() => window.location.pathname === "/admin");
+  const [isCourseAdmin, setIsCourseAdmin] = useState<boolean | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [sessionsKey, setSessionsKey] = useState(0);
   const token = sessionToken || ANON_TOKEN;
@@ -100,9 +106,19 @@ export default function App() {
         // as user: null. Drop it rather than letting every later call 401 silently.
         if (sessionToken && !m.user) { setSessionToken(null); setSession(null); }
         speaker.configure(token, m.tts || {});
-        const vs = await listVideos(token);
+        // A published, admin-authored course takes over the syllabus/player the existing
+        // components already render — reshaped into the same flat Video[] shape (see
+        // course.ts's courseToVideos), so Curriculum.tsx and VideoPlayer.tsx needed no
+        // changes to support it. No published course yet: the static corpus/ videos exactly
+        // as before, so a fresh install with nothing configured in the Admin Dashboard keeps
+        // working unchanged.
+        const [vs, course] = await Promise.all([listVideos(token), getPublishedCourse().catch(() => null)]);
         if (!alive) return;
-        setVideos(vs); setActiveVideo((a) => a || vs[0]?.id || null);
+        const finalVideos = course ? courseToVideos(course) : vs;
+        setVideos(finalVideos);
+        // Prefer the first lesson that actually has a video over blindly picking index 0 —
+        // an admin-authored course can start with unassigned lessons.
+        setActiveVideo((a) => a || finalVideos.find((v) => !v.unassigned)?.id || finalVideos[0]?.id || null);
         setMessages([{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]);
       } catch (e) {
         console.error("bootstrap: /me or /videos failed —", e instanceof ApiError ? { status: e.status, code: e.code } : e);
@@ -112,6 +128,17 @@ export default function App() {
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  // ---- /admin: is this signed-in account actually an admin? Only asked on that route, and
+  // purely for UX (show the dashboard vs. "not authorized") — every admin request is still
+  // independently checked server-side, so this check being skipped, stale, or spoofed changes
+  // nothing about what the account can actually do.
+  useEffect(() => {
+    if (!isAdminRoute || !sessionToken) { setIsCourseAdmin(null); return; }
+    let alive = true;
+    amICourseAdmin(sessionToken).then((r) => { if (alive) setIsCourseAdmin(r.is_admin); }).catch(() => { if (alive) setIsCourseAdmin(false); });
+    return () => { alive = false; };
+  }, [isAdminRoute, sessionToken]);
 
   // ---- speaker wiring
   useEffect(() => { speakerStateRef.current = speakerState; }, [speakerState]);
@@ -224,7 +251,7 @@ export default function App() {
     const update = (patch: Partial<StoredMessage>) => setMessages((m) => { const c = [...m]; c[c.length - 1] = { ...c[c.length - 1], ...patch }; return c; });
     try {
       // Spoken answers get a much shorter register; a muted session keeps the reading length.
-      for await (const ev of chatApi(token, text, history, lang, voiceOn, undefined, convId)) {
+      for await (const ev of chatApi(token, text, history, lang, voiceOn, undefined, convId, sessionToken ? undefined : getAnonId())) {
         if (ev.type === "meta") {
           asst.lang = ev.lang; setLang(ev.lang); setPref("lang", ev.lang); update({ lang: ev.lang });
         } else if (ev.type === "status") {
@@ -450,6 +477,38 @@ export default function App() {
       <VideoPlayer ref={player} token={token} videos={videos} lang={lang} activeId={activeVideo} onActiveChange={setActiveVideo} />
     </section>
   );
+
+  // The Admin Dashboard is a separate screen, not a separate app: /admin still needs a
+  // Google-signed-in session (reusing the same sign-in flow below), just gated on being an
+  // admin too — checked server-side on every admin request regardless of what this render
+  // shows, so this branch is about UX, not the actual security boundary.
+  if (isAdminRoute) {
+    if (authInfo?.enabled && !sessionToken) {
+      return <SignIn lang={lang} clientId={authInfo.google_client_id} onLang={setLang} onSignedIn={onSignedIn} onSkip={() => { window.location.href = "/"; }} />;
+    }
+    if (authInfo && !authInfo.enabled) {
+      // No GOOGLE_CLIENT_ID on the server — there is no sign-in flow to offer, so say that
+      // plainly instead of sitting on the loading state forever with no way forward.
+      return (
+        <div className="admin-shell">
+          <p>{t("admin_signin_not_configured", lang)}</p>
+          <a className="btn" href="/">{t("back_to_tutor", lang)}</a>
+        </div>
+      );
+    }
+    if (!sessionToken || isCourseAdmin === null) {
+      return <div className="admin-shell"><p>{t("loading", lang)}</p></div>;
+    }
+    if (!isCourseAdmin) {
+      return (
+        <div className="admin-shell">
+          <p>{t("admin_not_authorized", lang)}</p>
+          <a className="btn" href="/">{t("back_to_tutor", lang)}</a>
+        </div>
+      );
+    }
+    return <AdminDashboard token={sessionToken} onExit={() => { window.location.href = "/"; }} />;
+  }
 
   // Sign-in is offered once per browser and only when the server has a client id configured.
   // It is never a wall: "continue without an account" and every keyless install land here too.
