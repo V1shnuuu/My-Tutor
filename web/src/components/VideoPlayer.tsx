@@ -1,6 +1,7 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { transcript as fetchTranscript, type Lang, type Video } from "../lib/api";
 import { t } from "../lib/i18n";
+import QuizPanel from "./QuizPanel";
 
 export interface PlayerHandle {
   jump: (videoId: string, seconds: number) => void;
@@ -60,8 +61,12 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer({ token
   const [muted, setMuted] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [cues, setCues] = useState<Cue[]>([]);
+  const [showQuiz, setShowQuiz] = useState(false);
   const pendingSeek = useRef<number | null>(null);
   const isYT = video?.source === "youtube" && !!video.youtube_id;
+
+  // A new video means a new quiz, not the previous one's questions left on screen.
+  useEffect(() => { setShowQuiz(false); }, [video?.id]);
 
   // Captions are always English or Arabic, never the video's own spoken language — an
   // admin-connected YouTube playlist can be in anything (Tamil, French, whatever); the
@@ -217,7 +222,9 @@ const VideoPlayer = forwardRef<PlayerHandle, Props>(function VideoPlayer({ token
         <button onClick={() => setCc((v) => !v)} aria-pressed={cc} aria-label="Captions">{t("captions", lang)}</button>
         <button onClick={toggleMute} aria-pressed={muted} aria-label="Mute">{muted ? "🔇" : "🔊"}</button>
         <button onClick={toggleFullscreen} aria-pressed={fullscreen} aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen"}>{fullscreen ? "⤡" : "⛶"}</button>
+        <button onClick={() => setShowQuiz((v) => !v)} aria-pressed={showQuiz}>📝 {t("practice_questions", lang)}</button>
       </div>
+      {showQuiz && <QuizPanel videoId={video.id} lang={lang} onJump={(s) => seek(s, true)} />}
     </div>
   );
 });

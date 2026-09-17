@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   addLesson, addWeek, aiParseSyllabus, assignVideo, bulkSyllabus, connectPlaylist, createCourse,
-  deleteCourse, deleteLesson, deleteWeek, getAdminCourse, listCourses, listPlaylistVideos,
+  deleteCourse, deleteLesson, deleteWeek, getAdminCourse, getAnalytics, listCourses, listPlaylistVideos,
   publishCourse, renameLesson, renameWeek, reorderLessons, reorderWeeks, syncPlaylist, unpublishCourse,
-  type AdminCourseTree, type Course, type PlaylistVideo,
+  type AdminCourseTree, type Analytics, type Course, type PlaylistVideo,
 } from "../lib/course";
 import { parseSyllabus, type ParsedWeek } from "../lib/syllabus";
 
@@ -34,10 +34,13 @@ export default function AdminDashboard({ token, onExit }: Props) {
   const [bulkText, setBulkText] = useState("");
   const [parsed, setParsed] = useState<ParsedWeek[] | null>(null);
   const [parsing, setParsing] = useState(false);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
 
   const refreshCourses = useCallback(async () => {
     setCourses(await listCourses(token));
   }, [token]);
+
+  useEffect(() => { void getAnalytics(token).then(setAnalytics).catch(() => setAnalytics(null)); }, [token]);
 
   const refreshTree = useCallback(async (id: string) => {
     const t = await getAdminCourse(token, id);
@@ -128,6 +131,31 @@ export default function AdminDashboard({ token, onExit }: Props) {
             <button className="btn primary" disabled={busy || !newTitle.trim()} onClick={create}>+ Create Course</button>
           </div>
         </section>
+
+        {analytics && (
+          <section className="admin-card">
+            <h2>Last 24 Hours</h2>
+            <div className="admin-analytics-grid">
+              <div><strong>{analytics.questions_24h}</strong><span>questions answered</span></div>
+              <div><strong>{analytics.cache_hit_rate_24h != null ? `${Math.round(analytics.cache_hit_rate_24h * 100)}%` : "—"}</strong><span>cache hit rate</span></div>
+              <div><strong>{analytics.refusal_rate_24h != null ? `${Math.round(analytics.refusal_rate_24h * 100)}%` : "—"}</strong><span>off-topic refusals</span></div>
+              <div><strong>{analytics.floor_rate_24h != null ? `${Math.round(analytics.floor_rate_24h * 100)}%` : "—"}</strong><span>answered with no LLM (floor)</span></div>
+              <div><strong>{analytics.corpus.videos}</strong><span>videos indexed, {analytics.corpus.chunks} chunks</span></div>
+              <div><strong>{analytics.queue_depth}</strong><span>requests queued right now</span></div>
+            </div>
+            {analytics.providers.length > 0 && (
+              <table className="admin-provider-table">
+                <thead><tr><th>Provider</th><th>Tier</th><th>Used today</th><th>Errors</th></tr></thead>
+                <tbody>
+                  {analytics.providers.map((p) => (
+                    <tr key={p.id}><td>{p.id}</td><td>{p.tier}</td><td>{p.rpd_used}{p.rpd ? ` / ${p.rpd}` : ""}</td><td>{p.errors}</td></tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            <p className="muted">Speech-to-text: {analytics.stt.engine}{analytics.stt.cap ? ` (${analytics.stt.used}/${analytics.stt.cap} used today)` : ""}</p>
+          </section>
+        )}
       </div>
     );
   }

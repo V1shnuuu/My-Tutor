@@ -17,6 +17,7 @@ const S = {
   voice_off: { ar: "الصوت مقفول", en: "Voice off", fr: "Voix désactivée" },
   voice_on: { ar: "الصوت شغال", en: "Voice on", fr: "Voix activée" },
   new_chat: { ar: "محادثة جديدة", en: "New chat", fr: "Nouvelle discussion" },
+  export_notes: { ar: "تصدير الملاحظات", en: "Export notes", fr: "Exporter les notes" },
   signin_title: { ar: "أهلاً بيك", en: "Welcome", fr: "Bienvenue" },
   signin_help: {
     ar: "ادخل بحساب جوجل عشان محادثاتك تتحفظ وترجعلها في أي وقت.",
@@ -62,7 +63,13 @@ const S = {
     fr: "Aucun cours indexé. Lance add_videos.py, puis ingest.py.",
   },
   week: { ar: "أسبوع", en: "Week", fr: "Semaine" },
+  search_lectures: { ar: "دوّر في كل المحاضرات…", en: "Search all lectures…", fr: "Rechercher dans tous les cours…" },
+  search_no_results: { ar: "مفيش نتايج", en: "No results", fr: "Aucun résultat" },
   video_unassigned: { ar: "مفيش فيديو لسه", en: "Video not assigned yet", fr: "Vidéo non assignée" },
+  practice_questions: { ar: "أسئلة تدريب", en: "Practice questions", fr: "Questions d'entraînement" },
+  quiz_generating: { ar: "بجهّز أسئلة من المحاضرة…", en: "Writing questions from this lecture…", fr: "Je prépare des questions à partir du cours…" },
+  quiz_busy: { ar: "المُدرّس مشغول، جرب تاني بعد شوية.", en: "The tutor is busy right now — try again shortly.", fr: "Le tuteur est occupé — réessaie dans un instant." },
+  quiz_unavailable: { ar: "مقدرش أجهّز أسئلة للمحاضرة دي دلوقتي.", en: "Couldn't prepare questions for this lecture right now.", fr: "Impossible de préparer des questions pour ce cours pour le moment." },
   admin_not_authorized: {
     ar: "الحساب ده مش مسجّل كأدمن للكورس ده.",
     en: "This account isn't authorized as a course admin.",

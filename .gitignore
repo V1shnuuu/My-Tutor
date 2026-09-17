@@ -9,6 +9,11 @@ __pycache__/
 core/data/
 corpus/cache/
 corpus/media/
+# Generated on demand from the committed transcripts (captions_translate.py, quiz.py) —
+# regenerate anytime, no need to bloat the repo with derived, non-authoritative content.
+corpus/transcripts/*.ar.cues.json
+corpus/transcripts/*.en.cues.json
+corpus/quizzes/
 # Course clips registered by pipeline/add_videos.py: served to the player from here,
 # far too big for the repo. Only corpus/ transcripts and index shards get committed.
 web/public/media/

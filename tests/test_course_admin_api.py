@@ -40,6 +40,7 @@ def student_headers():
 
 # ---------------------------------------------------------------- the security boundary
 ADMIN_ROUTES = [
+    ("GET", "/admin/course/analytics", None),
     ("POST", "/admin/course/courses", {"title": "X"}),
     ("GET", "/admin/course/courses", None),
     ("PATCH", "/admin/course/courses/whatever", {"title": "X"}),
@@ -78,6 +79,25 @@ def test_a_forged_admin_email_in_the_request_body_is_ignored(client, student_hea
     verified email against ADMIN_EMAILS, checked server-side."""
     r = client.post("/admin/course/courses", json={"title": "X", "role": "admin", "is_admin": True}, headers=student_headers)
     assert r.status_code == 403
+
+
+def test_analytics_derives_rates_from_real_events(client, admin_headers):
+    from app.db import log_event
+
+    log_event("chat", "en", 500, "student-a")
+    log_event("chat", "en", 700, "student-a")
+    log_event("cache_hit", "en", 50, "student-a")
+    log_event("gate_refuse", "en", 100, "student-a best=0.10")
+    r = client.get("/admin/course/analytics", headers=admin_headers)
+    assert r.status_code == 200
+    data = r.json()
+    assert data["questions_24h"] >= 4
+    # Exact rate depends on other tests' events sharing the same 24h window (real ts, real
+    # DB) — assert the relationship holds rather than a brittle exact number.
+    assert 0 <= data["cache_hit_rate_24h"] <= 1
+    assert 0 <= data["refusal_rate_24h"] <= 1
+    assert "providers" in data and isinstance(data["providers"], list)
+    assert "stt" in data
 
 
 def test_admin_status_endpoint_reflects_reality(client, admin_headers, student_headers):

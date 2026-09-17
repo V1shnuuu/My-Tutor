@@ -1,4 +1,5 @@
-import type { Lang, Video } from "../lib/api";
+import { useState } from "react";
+import { searchLectures, type Citation, type Lang, type Video } from "../lib/api";
 import { t } from "../lib/i18n";
 
 interface Props {
@@ -6,6 +7,7 @@ interface Props {
   activeId: string | null;
   lang: Lang;
   onPick: (id: string) => void;
+  onJump: (c: Citation) => void;
 }
 
 const mins = (s: number | null) => (s ? `${Math.round(s / 60)}′` : "");
@@ -15,7 +17,18 @@ const mins = (s: number | null) => (s ? `${Math.round(s / 60)}′` : "");
  * with the one being watched marked. It is also the honest answer to "what can I ask
  * about?" — the tutor only knows what is on this list, so the list is worth showing.
  */
-export default function Curriculum({ videos, activeId, lang, onPick }: Props) {
+export default function Curriculum({ videos, activeId, lang, onPick, onJump }: Props) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Citation[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  const runSearch = (q: string) => {
+    setQuery(q);
+    if (!q.trim()) { setResults(null); return; }
+    setSearching(true);
+    searchLectures(q).then(setResults).finally(() => setSearching(false));
+  };
+
   // Weeks when the videos declare them, otherwise one flat list. Ingest leaves `week` null
   // unless videos.yaml sets it, and inventing numbers would misrepresent the course.
   const weeks = [...new Set(videos.map((v) => v.week).filter((w): w is number => w != null))].sort((a, b) => a - b);
@@ -41,7 +54,31 @@ export default function Curriculum({ videos, activeId, lang, onPick }: Props) {
   return (
     <nav className="curriculum" aria-label={t("curriculum", lang)}>
       <h2>{t("curriculum", lang)}</h2>
-      {videos.length === 0 ? (
+      <div className="curriculum-search">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => runSearch(e.target.value)}
+          placeholder={t("search_lectures", lang)}
+          aria-label={t("search_lectures", lang)}
+        />
+      </div>
+      {results !== null ? (
+        <div className="curriculum-results">
+          {searching && <p className="empty">{t("loading", lang)}</p>}
+          {!searching && results.length === 0 && <p className="empty">{t("search_no_results", lang)}</p>}
+          <ul>
+            {results.map((r, i) => (
+              <li key={`${r.video_id}-${i}`}>
+                <button className="search-result" onClick={() => onJump(r)}>
+                  <span className="title" dir="auto">{r.title}</span>
+                  <span className="snippet" dir="auto">{r.snippet}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : videos.length === 0 ? (
         <p className="empty">{t("curriculum_empty", lang)}</p>
       ) : (
         <>

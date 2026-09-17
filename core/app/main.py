@@ -2,8 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import csv
-import io
 import json
 import threading
 import time
@@ -15,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
-from . import auth, captions_translate, content, course_ingest, conversations, liveavatar, stt, syllabus_ai, tts, youtube
+from . import auth, captions_translate, content, course_ingest, conversations, liveavatar, quiz, stt, syllabus_ai, tts, youtube
 from .cache import semantic_cache
 from .chat import run_chat
 from .config import settings
@@ -253,6 +251,40 @@ async def transcript(video_id: str, lang: str | None = None):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+@app.get("/videos/{video_id}/quiz")
+async def video_quiz(video_id: str):
+    """Practice questions generated from this video's own transcript chunks — see
+    core/app/quiz.py for why every question is grounded in a specific excerpt rather than
+    the model's general sense of the topic. Cached after first generation, so no auth is
+    needed (matches /videos and /videos/{id}/transcript's own no-auth-required shape)."""
+    try:
+        return {"questions": await quiz.get_quiz(video_id)}
+    except quiz.QuizError as e:
+        status = {"no_transcript": 404, "quiz_unavailable": 503, "quiz_busy": 429}.get(e.code, 502)
+        raise HTTPException(status, e.code) from e
+
+
+@app.get("/search")
+async def search(q: str = "", k: int = 10):
+    """Cross-lecture search: every video's transcript, not just the currently-playing one —
+    "find every mention of X across the whole course," for exam review. Pure retrieval, no
+    LLM call — free, instant, and exact (a snippet is either there or it isn't), unlike chat
+    which is one grounded answer to one question."""
+    from .chat import citations_for
+    from .embed import EmbeddingUnavailable, embed_queries
+
+    q = q.strip()
+    if not q:
+        return {"results": []}
+    k = max(1, min(k, 30))
+    try:
+        qvecs = await asyncio.to_thread(embed_queries, [q])
+    except EmbeddingUnavailable as e:
+        raise HTTPException(503, "encoder_unavailable") from e
+    hits = await asyncio.to_thread(corpus.search, qvecs, [q], k)
+    return {"results": citations_for(hits)}
+
+
 @app.get("/course")
 def get_published_course():
     """The admin-authored course (weeks → lessons → mapped video), or null if none is
@@ -390,26 +422,6 @@ async def live_avatar_stop(session_id: str):
 
 
 # ---------------------------------------------------------------- admin
-@app.post("/admin/codes")
-def admin_codes(request: Request, n: int = 0, labels: UploadFile | None = File(None)):
-    """Generate enrollment codes. Either ?n=400 or upload a one-column CSV of labels."""
-    auth.require_admin(request)
-    names: list[str] = []
-    if labels is not None:
-        text = labels.file.read().decode("utf-8-sig")
-        names = [row[0].strip() for row in csv.reader(io.StringIO(text)) if row and row[0].strip()]
-    count = n or len(names)
-    if count <= 0:
-        raise HTTPException(400, "need_n_or_csv")
-    rows = auth.create_students(count, names or None)
-    out = io.StringIO()
-    w = csv.writer(out)
-    w.writerow(["label", "code"])
-    for r in rows:
-        w.writerow([r["label"], r["code"]])
-    return PlainTextResponse(out.getvalue(), media_type="text/csv")
-
-
 @app.post("/admin/reload")
 def admin_reload(request: Request):
     """Hot-swap the corpus after the pipeline commits new shards; evict cache for changed videos."""
@@ -435,7 +447,6 @@ def admin_status(request: Request):
         "events_24h": counts,
         "avg_ms_24h": {r["kind"]: int(r["avg_ms"]) for r in lat},
         "cache_entries": query("SELECT COUNT(*) AS n FROM cache")[0]["n"],
-        "students": query("SELECT COUNT(*) AS n, SUM(redeemed_at IS NOT NULL) AS redeemed FROM students")[0],
     }
 
 
@@ -482,6 +493,33 @@ def am_i_course_admin(user=auth.OptionalUser):
     """So the web app can decide whether to offer the Admin Dashboard at all, without
     guessing — the actual gate on every route below is still server-side per-request."""
     return {"is_admin": bool(user) and auth.is_course_admin(user["email"])}
+
+
+@app.get("/admin/course/analytics")
+def admin_course_analytics(admin=auth.AdminUser):
+    """A course-admin-reachable view of the same numbers /admin/status already computes for
+    the older x-admin-token ops routes — this project's only admin didn't have a login to
+    that mechanism's usual caller (a curl command with a header), so the data existed but
+    wasn't actually visible to them. Read-only, derived entirely from the existing `events`
+    and `cache` tables — no new tracking, no new schema."""
+    day_ago = int(time.time()) - 86400
+    counts = {r["kind"]: r["n"] for r in query("SELECT kind, COUNT(*) AS n FROM events WHERE ts > ? GROUP BY kind", (day_ago,))}
+    lat = query("SELECT kind, AVG(ms) AS avg_ms FROM events WHERE ts > ? AND ms IS NOT NULL GROUP BY kind", (day_ago,))
+    # Every question resolves exactly one of these four ways — the denominator for the rates below.
+    total = sum(counts.get(k, 0) for k in ("chat", "cache_hit", "floor", "gate_refuse"))
+    return {
+        "corpus": {"videos": len(corpus.videos), "chunks": corpus.size},
+        "questions_24h": total,
+        "cache_hit_rate_24h": round(counts.get("cache_hit", 0) / total, 3) if total else None,
+        "refusal_rate_24h": round(counts.get("gate_refuse", 0) / total, 3) if total else None,
+        "floor_rate_24h": round(counts.get("floor", 0) / total, 3) if total else None,
+        "events_24h": counts,
+        "avg_ms_24h": {r["kind"]: int(r["avg_ms"]) for r in lat},
+        "cache_entries": query("SELECT COUNT(*) AS n FROM cache")[0]["n"],
+        "queue_depth": router.queue_depth,
+        "providers": [{"id": p["id"], "tier": p["tier"], "rpd_used": p["rpd_used"], "rpd": p["rpd"], "errors": p["errors"]} for p in router.snapshot()["providers"]],
+        "stt": stt.budget(),
+    }
 
 
 @app.get("/admin/course/courses")

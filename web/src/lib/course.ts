@@ -65,6 +65,22 @@ async function req<T>(token: string, method: string, path: string, body?: unknow
 export const amICourseAdmin = (token: string | null) =>
   fetch(`${API}/admin/course/is_admin`, { headers: headers(token) }).then((r) => r.json()) as Promise<{ is_admin: boolean }>;
 
+// ---------------------------------------------------------------- analytics
+export interface Analytics {
+  corpus: { videos: number; chunks: number };
+  questions_24h: number;
+  cache_hit_rate_24h: number | null;
+  refusal_rate_24h: number | null;
+  floor_rate_24h: number | null;
+  events_24h: Record<string, number>;
+  avg_ms_24h: Record<string, number>;
+  cache_entries: number;
+  queue_depth: number;
+  providers: { id: string; tier: string; rpd_used: number; rpd: number | null; errors: number }[];
+  stt: { engine: string; used?: number; cap?: number };
+}
+export const getAnalytics = (token: string) => req<Analytics>(token, "GET", "/admin/course/analytics");
+
 // ---------------------------------------------------------------- courses
 export const listCourses = (token: string) => req<{ courses: Course[] }>(token, "GET", "/admin/course/courses").then((r) => r.courses);
 export const createCourse = (token: string, title: string, description = "") =>

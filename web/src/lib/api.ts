@@ -134,6 +134,24 @@ export async function transcript(token: string, videoId: string, capLang?: "en" 
   return r.json();
 }
 
+export interface QuizQuestion { question: string; options: string[]; answer_index: number; t: number }
+
+/** Grounded in this video's own transcript — see core/app/quiz.py. First call for a video
+ * can take a few seconds (a real LLM generation); cached server-side after that. */
+export async function getQuiz(videoId: string): Promise<QuizQuestion[]> {
+  const r = await check(await fetch(`${API}/videos/${videoId}/quiz`));
+  return (await r.json()).questions;
+}
+
+/** Cross-lecture search — every video's transcript, not just the one on screen. No LLM, pure
+ * retrieval, so it's instant and exact. Same shape as a chat Citation (title/t/snippet/…),
+ * so a result can be handed straight to the same onJump a citation click already uses. */
+export async function searchLectures(q: string, k = 10): Promise<Citation[]> {
+  if (!q.trim()) return [];
+  const r = await check(await fetch(`${API}/search?${new URLSearchParams({ q, k: String(k) })}`));
+  return (await r.json()).results;
+}
+
 export async function stt(token: string, blob: Blob, langHint?: Lang): Promise<{ text: string; language: string | null }> {
   const fd = new FormData();
   fd.append("file", blob, "audio.webm");

@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import AdminDashboard from "./components/AdminDashboard";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Chat, { type LiveState } from "./components/Chat";
 import Curriculum from "./components/Curriculum";
 import LiveAvatarPanel, { type LiveAvatarHandle } from "./components/LiveAvatarPanel";
@@ -12,6 +11,7 @@ import {
 } from "./lib/api";
 import { getAnonId, getSessionToken, setSessionToken, signOut, type User } from "./lib/auth";
 import { amICourseAdmin, courseToVideos, getPublishedCourse } from "./lib/course";
+import { downloadMarkdown, messagesToMarkdown } from "./lib/export";
 
 import { dirOf, t } from "./lib/i18n";
 import { SentenceSplitter, Speaker, isUnlocked, resumeAudio, unlockAudio } from "./lib/speech";
@@ -20,6 +20,10 @@ import { EMPTY_TRANSCRIPT, type LiveTranscript } from "./lib/transcript";
 import { db, getPref, setPref, type StoredMessage } from "./lib/store";
 
 const speaker = new Speaker();
+
+// Dynamic import, not a static one: students — the overwhelming majority of visitors — should
+// never download the admin-authoring bundle. It only loads when someone actually hits /admin.
+const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
 
 // What an anonymous visitor sends. The backend accepts it as "no user" and answers anyway —
 // signing in buys saved history, not access.
@@ -367,6 +371,13 @@ export default function App() {
     setMessages([{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]);
   }, [lang, stopSpeech]);
 
+  const exportNotes = useCallback(() => {
+    const real = messages.filter((m) => m.role === "user" || m.citations.length > 0 || m.content.trim());
+    if (real.length === 0) return;
+    const md = messagesToMarkdown(real, t("appName", lang));
+    downloadMarkdown(`study-notes-${new Date().toISOString().slice(0, 10)}.md`, md);
+  }, [messages, lang]);
+
   /** Load a past conversation and continue it. */
   const resumeConversation = useCallback(async (id: string) => {
     if (!sessionToken || streaming) return;
@@ -427,6 +438,7 @@ export default function App() {
         </button>
       </span>
       <span className="pill"><button onClick={newChat}>{t("new_chat", lang)}</button></span>
+      <span className="pill"><button onClick={exportNotes} title={t("export_notes", lang)}>⬇ {t("export_notes", lang)}</button></span>
       <span className="pill">
         {(["ar", "en", "fr"] as Lang[]).map((l) => <button key={l} onClick={() => { setLang(l); setPref("lang", l); }} style={{ fontWeight: l === lang ? 700 : 400 }}>{l.toUpperCase()}</button>)}
       </span>
@@ -507,7 +519,11 @@ export default function App() {
         </div>
       );
     }
-    return <AdminDashboard token={sessionToken} onExit={() => { window.location.href = "/"; }} />;
+    return (
+      <Suspense fallback={<div className="admin-shell"><p>{t("loading", lang)}</p></div>}>
+        <AdminDashboard token={sessionToken} onExit={() => { window.location.href = "/"; }} />
+      </Suspense>
+    );
   }
 
   // Sign-in is offered once per browser and only when the server has a client id configured.
@@ -535,7 +551,7 @@ export default function App() {
         <Chat lang={lang} messages={messages} live={live} streaming={streaming} speakingSentence={speakingSentence} transcript={transcript} listening={listening} sttMode={sttMode} onSend={send} onMic={mic} onStop={stopMic} onJump={jump} />
       </section>
       <section className="panel panel-curriculum" aria-label={t("curriculum", lang)}>
-        <Curriculum videos={videos} activeId={activeVideo} lang={lang} onPick={setActiveVideo} />
+        <Curriculum videos={videos} activeId={activeVideo} lang={lang} onPick={setActiveVideo} onJump={jump} />
       </section>
       {sessionToken && (
         <Sessions

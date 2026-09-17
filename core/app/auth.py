@@ -1,18 +1,18 @@
 """Identity and per-student accounting.
 
-Two independent things live here:
+Google Sign-In (`verify_google_id_token` → `issue_user_token` → `CurrentUser`): the browser
+gets an ID token from Google, we verify its signature against Google's published JWKS and
+swap it for our own JWT. Only GOOGLE_CLIENT_ID is needed and it is public by design, so there
+is no secret to leak; with it unset, sign-in is simply unavailable and the app runs
+anonymously (see `OptionalUser`).
 
-1. Google Sign-In (`verify_google_id_token` → `issue_user_token` → `CurrentUser`). The
-   browser gets an ID token from Google, we verify its signature against Google's published
-   JWKS and swap it for our own JWT. Only GOOGLE_CLIENT_ID is needed and it is public by
-   design, so there is no secret to leak; with it unset, sign-in is simply unavailable and
-   the app runs anonymously (see `OptionalUser`).
-2. Enrollment codes (`create_students` / `redeem`), the pre-SSO scheme. No API route uses
-   them any more, but `python -m app.cli codes` and its tests still do.
+`issue_token`/`decode_token` are the lower-level JWT primitives this and `conversations.py`'s
+tests build on. There used to be a second, independent identity scheme here — enrollment
+codes, from before Google Sign-In existed — but nothing redeemed one through any live route,
+so it was dead weight pretending to be a feature; it's gone, along with the `students` table.
 """
 from __future__ import annotations
 
-import secrets
 import time
 from datetime import datetime, timezone
 
@@ -25,55 +25,6 @@ from .db import query, tx
 GOOGLE_ISSUERS = ("accounts.google.com", "https://accounts.google.com")
 GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs"
 _jwks_client: "jwt.PyJWKClient | None" = None
-
-CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"  # no 0/O/1/I
-
-
-def new_code() -> str:
-    raw = "".join(secrets.choice(CODE_ALPHABET) for _ in range(8))
-    return f"{raw[:4]}-{raw[4:]}"
-
-
-def create_students(n: int, labels: list[str] | None = None, reusable: bool = False) -> list[dict]:
-    """Insert n students with fresh codes. Returns [{id, label, code}].
-
-    `reusable` marks a code that never binds to a device, so the same one works on a phone,
-    a laptop and a lecture-hall machine, for as long as it exists. That is what you want for
-    yourself and for a demo, and what you must not hand to a cohort: everyone redeeming it
-    shares one identity, and therefore one daily budget and one conversation history.
-    """
-    out = []
-    now = int(time.time())
-    with tx() as c:
-        for i in range(n):
-            sid = secrets.token_hex(8)
-            label = labels[i] if labels and i < len(labels) else f"student-{i + 1:03d}"
-            code = new_code()
-            c.execute(
-                "INSERT INTO students (id, label, code, created_at, reusable) VALUES (?, ?, ?, ?, ?)",
-                (sid, label, code, now, 1 if reusable else 0),
-            )
-            out.append({"id": sid, "label": label, "code": code})
-    return out
-
-
-def redeem(code: str, device_id: str) -> str:
-    code = code.strip().upper().replace(" ", "")
-    if len(code) == 8:
-        code = f"{code[:4]}-{code[4:]}"
-    rows = query("SELECT * FROM students WHERE code = ?", (code,))
-    if not rows:
-        raise HTTPException(401, "invalid_code")
-    s = rows[0]
-    # A reusable code is deliberately not bound to the device that got there first.
-    if not s["reusable"] and s["redeemed_at"] and s["device_id"] != device_id:
-        raise HTTPException(403, "code_already_used")
-    with tx() as c:
-        c.execute(
-            "UPDATE students SET redeemed_at = COALESCE(redeemed_at, ?), device_id = ? WHERE id = ?",
-            (int(time.time()), device_id, s["id"]),
-        )
-    return issue_token(s["id"], device_id)
 
 
 def issue_token(student_id: str, device_id: str) -> str:
