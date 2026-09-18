@@ -49,13 +49,16 @@ TARGET_S, MIN_S, MAX_S, OVERLAP_S = 60.0, 30.0, 90.0, 15.0
 
 
 # ------------------------------------------------------------------ transcripts
-def ffmpeg_path() -> str:
+def ffmpeg_dir() -> str | None:
+    """Directory of the bundled imageio-ffmpeg binary, or None to let yt-dlp search PATH.
+    Passing an empty string here used to override PATH with nothing — so an install without
+    imageio-ffmpeg failed with "ffmpeg not found" even when ffmpeg was on PATH."""
     try:
         import imageio_ffmpeg
 
-        return imageio_ffmpeg.get_ffmpeg_exe()
+        return os.path.dirname(imageio_ffmpeg.get_ffmpeg_exe())
     except Exception:
-        return "ffmpeg"
+        return None
 
 
 def yt_download_audio(youtube_id: str, out_dir: Path) -> Path:
@@ -68,11 +71,12 @@ def yt_download_audio(youtube_id: str, out_dir: Path) -> Path:
     opts = {
         "format": "bestaudio[ext=m4a]/bestaudio/best",
         "outtmpl": str(out_dir / f"{youtube_id}.%(ext)s"),
-        "ffmpeg_location": os.path.dirname(ffmpeg_path()),
         "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "m4a"}],
         "quiet": True,
         "no_warnings": True,
     }
+    if (loc := ffmpeg_dir()) is not None:
+        opts["ffmpeg_location"] = loc
     with yt_dlp.YoutubeDL(opts) as ydl:
         ydl.download([f"https://www.youtube.com/watch?v={youtube_id}"])
     if not target.exists():
@@ -107,14 +111,19 @@ def yt_auto_captions(youtube_id: str, lang: str, out_dir: Path) -> Path:
     return cands[0]
 
 
-def whisper_transcribe(audio: Path, lang: str | None, vocab: str) -> tuple[list[dict], str | None]:
-    from faster_whisper import WhisperModel
+def whisper_transcribe(audio: Path, lang: str | None, vocab: str, model=None) -> tuple[list[dict], str | None]:
+    """`model` lets a caller that already holds a loaded WhisperModel (the live backend's
+    GPU-resident STT model, see core/app/course_ingest.py) reuse it instead of this function
+    building a fresh CPU one from WHISPER_* env vars — which is what the offline CLI/Kaggle
+    path wants, but was silently sending admin-triggered ingestion to the CPU on GPU boxes."""
+    if model is None:
+        from faster_whisper import WhisperModel
 
-    model_name = os.environ.get("WHISPER_MODEL", "large-v3-turbo")
-    device = "cuda" if os.environ.get("WHISPER_DEVICE") == "cuda" else "cpu"
-    compute = "float16" if device == "cuda" else "int8"
-    print(f"  whisper {model_name} on {device}/{compute} …", flush=True)
-    model = WhisperModel(model_name, device=device, compute_type=compute)
+        model_name = os.environ.get("WHISPER_MODEL", "large-v3-turbo")
+        device = "cuda" if os.environ.get("WHISPER_DEVICE") == "cuda" else "cpu"
+        compute = "float16" if device == "cuda" else "int8"
+        print(f"  whisper {model_name} on {device}/{compute} …", flush=True)
+        model = WhisperModel(model_name, device=device, compute_type=compute)
     segments, info = model.transcribe(
         str(audio),
         language=lang if lang in ("ar", "en", "fr") else None,
@@ -265,7 +274,7 @@ def fingerprint(v: dict) -> str:
     return h
 
 
-def ingest_video(v: dict, vocab: str, force: bool) -> bool:
+def ingest_video(v: dict, vocab: str, force: bool, model=None) -> bool:
     vid = v["id"]
     idx = CORPUS / "index"
     tr = CORPUS / "transcripts"
@@ -291,7 +300,7 @@ def ingest_video(v: dict, vocab: str, force: bool) -> bool:
             audio = yt_download_audio(v["youtube_id"], WORK / "audio")
         else:
             audio = source_media(v)
-        cues, detected_lang = whisper_transcribe(audio, v.get("lang"), vocab)
+        cues, detected_lang = whisper_transcribe(audio, v.get("lang"), vocab, model=model)
     if not cues:
         raise RuntimeError(f"{vid}: empty transcript")
 

@@ -260,6 +260,30 @@ def all_ready_videos() -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def published_video_ids() -> set[str] | None:
+    """The corpus video ids the Tutor is allowed to answer from right now.
+
+    None means "no course is published — the whole corpus is fair game", which is how a
+    fresh install with only the static sample lectures always behaved. Once an admin
+    publishes a course, this is exactly the set of that course's lessons whose video has
+    finished ingesting: the Lessons list tells the student "this is what you can ask about",
+    and this is what makes retrieval honour that instead of also matching every sample
+    lecture that happens to share a word with the question. An empty set (course published,
+    nothing ingested yet) is a legitimate answer — it means nothing is answerable yet, not
+    "fall back to the samples"."""
+    course = published_course()
+    if not course:
+        return None
+    rows = query(
+        "SELECT DISTINCT v.corpus_video_id FROM lessons l"
+        " JOIN weeks w ON w.id = l.week_id"
+        " JOIN youtube_videos v ON v.id = l.video_id"
+        " WHERE w.course_id = ? AND v.ingest_status = 'ready' AND v.corpus_video_id IS NOT NULL",
+        (course["id"],),
+    )
+    return {r["corpus_video_id"] for r in rows}
+
+
 def set_video_ingest_status(video_id: str, status: str, error: str | None = None, corpus_video_id: str | None = None) -> None:
     with tx() as c:
         c.execute(
@@ -278,7 +302,8 @@ def _course_tree(course_id: str) -> dict:
             "SELECT l.id, l.title, l.position, l.video_id,"
             " v.youtube_video_id AS video_youtube_id, v.title AS video_title,"
             " v.thumbnail AS video_thumbnail, v.duration_s AS video_duration_s,"
-            " v.ingest_status AS video_ingest_status, v.corpus_video_id AS video_corpus_id"
+            " v.ingest_status AS video_ingest_status, v.ingest_error AS video_ingest_error,"
+            " v.corpus_video_id AS video_corpus_id"
             " FROM lessons l LEFT JOIN youtube_videos v ON v.id = l.video_id"
             " WHERE l.week_id = ? ORDER BY l.position",
             (w["id"],),

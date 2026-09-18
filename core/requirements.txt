@@ -19,3 +19,10 @@ langdetect==1.0.9
 mishkal
 piper-tts
 yt-dlp
+# The backend runs pipeline/ingest.py itself when an admin assigns a video (course_ingest.py),
+# so it needs the same transcription stack the offline pipeline does. faster-whisper is also
+# what core/app/stt.py's local lane imports; it was only ever installed by hand before.
+# imageio-ffmpeg bundles a static ffmpeg binary — no system install, works on Windows and
+# ARM Linux alike — which yt-dlp needs to extract audio.
+faster-whisper==1.0.*
+imageio-ffmpeg

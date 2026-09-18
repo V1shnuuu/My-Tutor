@@ -1,4 +1,2 @@
 -r ../core/requirements.txt
-faster-whisper==1.0.*
-imageio-ffmpeg
 webvtt-py==0.5.*

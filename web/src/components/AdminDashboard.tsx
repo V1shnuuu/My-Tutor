@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   addLesson, addWeek, aiParseSyllabus, assignVideo, bulkSyllabus, connectPlaylist, createCourse,
   deleteCourse, deleteLesson, deleteWeek, getAdminCourse, getAnalytics, listCourses, listPlaylistVideos,
-  publishCourse, renameLesson, renameWeek, reorderLessons, reorderWeeks, syncPlaylist, unpublishCourse,
+  publishCourse, renameLesson, renameWeek, reorderLessons, reorderWeeks, retryIngest, syncPlaylist, unpublishCourse,
   type AdminCourseTree, type Analytics, type Course, type PlaylistVideo,
 } from "../lib/course";
 import { parseSyllabus, type ParsedWeek } from "../lib/syllabus";
@@ -50,6 +50,16 @@ export default function AdminDashboard({ token, onExit }: Props) {
 
   useEffect(() => { void refreshCourses(); }, [refreshCourses]);
   useEffect(() => { if (activeId) void refreshTree(activeId); else setTree(null); }, [activeId, refreshTree]);
+
+  // Transcription runs for minutes in a background thread server-side; the status badge is
+  // the only window into it. Poll while anything is in flight so "learning this lecture…"
+  // actually turns into "Tutor ready" (or "failed", with its error) without a manual reload.
+  const inFlight = !!tree?.weeks.some((w) => w.lessons.some((l) => l.video_ingest_status === "pending" || l.video_ingest_status === "ingesting"));
+  useEffect(() => {
+    if (!inFlight || !activeId) return;
+    const id = setInterval(() => { void refreshTree(activeId); }, 10_000);
+    return () => clearInterval(id);
+  }, [inFlight, activeId, refreshTree]);
 
   const run = async (fn: () => Promise<unknown>) => {
     setBusy(true); setErr(null);
@@ -251,7 +261,14 @@ export default function AdminDashboard({ token, onExit }: Props) {
                   <option value="">— Video: not assigned yet —</option>
                   {playlistVideos.map((v) => <option key={v.id} value={v.id}>{v.title}</option>)}
                 </select>
-                {l.video_ingest_status && <span className={`admin-ingest ${l.video_ingest_status}`}>{ING_LABEL[l.video_ingest_status]}</span>}
+                {l.video_ingest_status && (
+                  <span className={`admin-ingest ${l.video_ingest_status}`} title={l.video_ingest_error ?? undefined}>
+                    {ING_LABEL[l.video_ingest_status]}
+                  </span>
+                )}
+                {l.video_ingest_status === "failed" && l.video_id && (
+                  <button className="btn-ghost" disabled={busy} title={l.video_ingest_error ?? undefined} onClick={() => run(() => retryIngest(token, l.video_id!))}>↻ Retry</button>
+                )}
                 <button className="icon-btn" disabled={li === 0} onClick={() => { const ids = w.lessons.map((x) => x.id); [ids[li - 1], ids[li]] = [ids[li], ids[li - 1]]; void run(() => reorderLessons(token, w.id, ids)); }}>↑</button>
                 <button className="icon-btn" disabled={li === w.lessons.length - 1} onClick={() => { const ids = w.lessons.map((x) => x.id); [ids[li], ids[li + 1]] = [ids[li + 1], ids[li]]; void run(() => reorderLessons(token, w.id, ids)); }}>↓</button>
                 <button className="icon-btn danger" onClick={() => run(() => deleteLesson(token, l.id))}>🗑</button>

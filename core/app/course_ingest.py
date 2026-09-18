@@ -26,6 +26,12 @@ if str(_ROOT) not in sys.path:
 CORPUS_ID_PREFIX = "yt-"  # namespaced so an admin-added video's shard id can never collide
                           # with a static pipeline/videos.yaml id (e.g. "sample-6006-l01")
 
+# One transcription at a time. Assigning a whole playlist would otherwise start one thread
+# per video, each contending for the same GPU (or, worse, each loading its own copy of the
+# model) — serial is both faster in wall-clock and bounded in memory. Queued videos sit in
+# "ingesting" until their turn, which the admin UI's poll shows honestly.
+_one_at_a_time = threading.Lock()
+
 
 def corpus_video_id(youtube_video_id: str) -> str:
     return f"{CORPUS_ID_PREFIX}{youtube_video_id}"
@@ -55,23 +61,31 @@ def _run(row_id: str, youtube_video_id: str, title: str) -> None:
         _rebuild_manifest_and_reload()
         return
     content.set_video_ingest_status(row_id, "ingesting")
-    try:
-        from pipeline.ingest import ingest_video  # local import: pulls in yt_dlp/whisper lazily
+    with _one_at_a_time:
+        try:
+            from pipeline.ingest import ingest_video  # local import: pulls in yt_dlp/whisper lazily
 
-        vocab_file = settings.corpus_dir / "vocabulary.txt"
-        vocab = vocab_file.read_text(encoding="utf-8") if vocab_file.exists() else ""
-        # No lang hint: this project's own STT work already found that a wrong forced hint
-        # produces worse transcripts than letting Whisper auto-detect (core/app/stt.py does
-        # the same) — an admin course can mix languages across a playlist with no per-video
-        # language field to force one anyway.
-        entry = {
-            "id": cvid, "title": title, "source": "youtube", "youtube_id": youtube_video_id,
-            "transcript": "whisper", "lang": None,
-        }
-        ingest_video(entry, vocab, force=False)
-    except Exception as e:
-        content.set_video_ingest_status(row_id, "failed", error=str(e)[:500])
-        return
+            from . import stt
+
+            vocab_file = settings.corpus_dir / "vocabulary.txt"
+            vocab = vocab_file.read_text(encoding="utf-8") if vocab_file.exists() else ""
+            # No lang hint: this project's own STT work already found that a wrong forced hint
+            # produces worse transcripts than letting Whisper auto-detect (core/app/stt.py does
+            # the same) — an admin course can mix languages across a playlist with no per-video
+            # language field to force one anyway.
+            entry = {
+                "id": cvid, "title": title, "source": "youtube", "youtube_id": youtube_video_id,
+                "transcript": "whisper", "lang": None,
+            }
+            # Reuse the live STT model when there is one: it's already loaded, already on the
+            # device LOCAL_STT_DEVICE says (GPU here), and shares the CUDA DLL fix stt.py
+            # applies. The pipeline's own fallback builds a CPU model from WHISPER_* env vars
+            # nothing in the backend sets — that's what left GPU boxes transcribing on CPU.
+            model = stt._local_whisper() if stt.local_available() else None
+            ingest_video(entry, vocab, force=False, model=model)
+        except Exception as e:
+            content.set_video_ingest_status(row_id, "failed", error=str(e)[:500])
+            return
     content.set_video_ingest_status(row_id, "ready", corpus_video_id=cvid)
     _rebuild_manifest_and_reload()
 

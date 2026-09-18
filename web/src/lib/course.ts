@@ -14,6 +14,7 @@ export interface CourseLesson {
   video_thumbnail: string | null;
   video_duration_s: number | null;
   video_ingest_status: IngestStatus | null;
+  video_ingest_error: string | null;
   video_corpus_id: string | null;
 }
 export interface CourseWeek {
@@ -110,6 +111,8 @@ export const reorderLessons = (token: string, weekId: string, ids: string[]) =>
   req<{ ok: true }>(token, "POST", `/admin/course/weeks/${weekId}/lessons/reorder`, { ids });
 export const assignVideo = (token: string, lessonId: string, videoId: string | null) =>
   req<{ ok: true }>(token, "POST", `/admin/course/lessons/${lessonId}/video`, { video_id: videoId });
+export const retryIngest = (token: string, videoId: string) =>
+  req<{ ok: true }>(token, "POST", `/admin/course/videos/${videoId}/retry_ingest`);
 
 // ---------------------------------------------------------------- bulk syllabus
 export interface SyllabusWeekInput { title: string; lessons: string[] }

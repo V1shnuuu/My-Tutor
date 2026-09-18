@@ -16,6 +16,7 @@ from typing import AsyncIterator
 
 import numpy as np
 
+from . import content
 from .auth import bump_usage
 from .cache import semantic_cache
 from .config import settings
@@ -178,8 +179,15 @@ async def run_chat(student_id: str, message: str, history: list[dict], prev_lang
         return
     qvec = qvecs[0]
 
+    # ---- scope: the published course's lessons, or the whole corpus when none is published ----
+    # Without this, a question matched every sample lecture ever ingested alongside the
+    # course the student is actually looking at — "placement" answered from an AVL-trees
+    # lecture while a placement-prep video was on screen. The Lessons list is the promise
+    # of what's askable; retrieval and the cache both keep it.
+    scope = content.published_video_ids()
+
     # ---- semantic cache ----
-    hit = semantic_cache.lookup(qvec, lang)
+    hit = semantic_cache.lookup(qvec, lang, scope)
     if hit:
         yield sse({"type": "status", "stage": "cached"})
         yield sse({"type": "citations", "items": hit["citations"]})
@@ -194,7 +202,7 @@ async def run_chat(student_id: str, message: str, history: list[dict], prev_lang
         return
 
     # ---- retrieve + gate ----
-    hits = await asyncio.to_thread(corpus.search, qvecs, queries, settings.top_k)
+    hits = await asyncio.to_thread(corpus.search, qvecs, queries, settings.top_k, scope)
     cites = citations_for(hits)
     best = max((h.dense for h in hits), default=0.0)
     if not hits or best < settings.gate_threshold(lang):

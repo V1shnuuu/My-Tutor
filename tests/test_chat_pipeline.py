@@ -48,9 +48,13 @@ def chat(loaded_corpus, monkeypatch):
     from app.cache import semantic_cache
 
     # A fresh cache per test: a hit leaking between tests would make one of them lie.
-    semantic_cache.ids, semantic_cache.langs = [], []
+    semantic_cache.ids, semantic_cache.langs, semantic_cache.video_ids = [], [], []
     semantic_cache.vecs = np.zeros((0, 768), dtype=np.float32)
     monkeypatch.setattr(semantic_cache, "store", lambda *a, **k: None, raising=False)
+    # These tests exercise the static sample corpus, i.e. the no-course-published shape.
+    # Another test module leaving a course published would otherwise scope retrieval down
+    # to that course's (zero) ingested lessons and turn every question into a refusal.
+    monkeypatch.setattr(mod.content, "published_video_ids", lambda: None)
     return mod
 
 

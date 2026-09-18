@@ -18,7 +18,7 @@ from .cache import semantic_cache
 from .chat import run_chat
 from .config import settings
 from .corpus import corpus
-from .db import connect, query
+from .db import connect, query, tx
 from .router import router
 
 app = FastAPI(title="Adaptive Tutor Core", version="0.1.0")
@@ -38,6 +38,14 @@ VOCAB_FILE = settings.corpus_dir / "vocabulary.txt"
 @app.on_event("startup")
 def _startup() -> None:
     connect()
+    # Ingestion runs in daemon threads that die with the process, so any video still marked
+    # "ingesting" at boot was interrupted, not in progress — and retry_ingest would refuse it
+    # forever as "already ingesting". Mark it failed with the real reason so it's retryable.
+    with tx() as c:
+        c.execute(
+            "UPDATE youtube_videos SET ingest_status = 'failed', ingest_error = ? WHERE ingest_status = 'ingesting'",
+            ("interrupted by a server restart — retry to start again",),
+        )
     corpus.load()
     semantic_cache.load(corpus.version)
     # Warm the embedding model so the first student does not pay the load time.
@@ -281,7 +289,8 @@ async def search(q: str = "", k: int = 10):
         qvecs = await asyncio.to_thread(embed_queries, [q])
     except EmbeddingUnavailable as e:
         raise HTTPException(503, "encoder_unavailable") from e
-    hits = await asyncio.to_thread(corpus.search, qvecs, [q], k)
+    # Same scope as chat: the published course's lessons, or everything when none is published.
+    hits = await asyncio.to_thread(corpus.search, qvecs, [q], k, content.published_video_ids())
     return {"results": citations_for(hits)}
 
 
@@ -612,8 +621,24 @@ def admin_assign_video(lesson_id: str, body: VideoAssignIn, admin=auth.AdminUser
     # lesson is the moment it became something a student can ask the Tutor about.
     if body.video_id:
         rows = query("SELECT youtube_video_id, title, ingest_status FROM youtube_videos WHERE id = ?", (body.video_id,))
-        if rows and rows[0]["ingest_status"] == "pending":
+        if rows and rows[0]["ingest_status"] in ("pending", "failed"):
             course_ingest.ingest_video_in_background(body.video_id, rows[0]["youtube_video_id"], rows[0]["title"])
+    return {"ok": True}
+
+
+@app.post("/admin/course/videos/{video_id}/retry_ingest")
+def admin_retry_ingest(video_id: str, admin=auth.AdminUser):
+    """A failed ingestion used to be a dead end — nothing ever retried it, so a transient
+    cause (a missing ffmpeg, a network blip mid-download) left the lesson permanently
+    unanswerable. This is the explicit second chance; the admin UI shows the stored error
+    next to the button so the retry is informed, not blind."""
+    rows = query("SELECT youtube_video_id, title, ingest_status FROM youtube_videos WHERE id = ?", (video_id,))
+    if not rows:
+        raise HTTPException(404, "video_not_found")
+    if rows[0]["ingest_status"] == "ingesting":
+        raise HTTPException(409, "already_ingesting")
+    content.set_video_ingest_status(video_id, "pending")
+    course_ingest.ingest_video_in_background(video_id, rows[0]["youtube_video_id"], rows[0]["title"])
     return {"ok": True}
 
 

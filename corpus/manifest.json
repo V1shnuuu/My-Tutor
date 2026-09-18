@@ -1,9 +1,9 @@
 {
-  "corpus_version": "9440bd66c4",
+  "corpus_version": "12c552080b",
   "videos": [
     {
       "id": "sample-6006-l01",
-      "title": "Sample \u2014 MIT 6.006 Lecture 1: Algorithmic Thinking, Peak Finding",
+      "title": "Sample — MIT 6.006 Lecture 1: Algorithmic Thinking, Peak Finding",
       "source": "youtube",
       "youtube_id": "HtSuA80QTyo",
       "url": null,
@@ -13,7 +13,7 @@
     },
     {
       "id": "sample-6006-l02",
-      "title": "Sample \u2014 MIT 6.006 Lecture 2: Models of Computation, Document Distance",
+      "title": "Sample — MIT 6.006 Lecture 2: Models of Computation, Document Distance",
       "source": "youtube",
       "youtube_id": "Zc54gFhdpLA",
       "url": null,
@@ -23,7 +23,7 @@
     },
     {
       "id": "sample-6006-l03",
-      "title": "Sample \u2014 MIT 6.006 Lecture 3: Insertion Sort, Merge Sort",
+      "title": "Sample — MIT 6.006 Lecture 3: Insertion Sort, Merge Sort",
       "source": "youtube",
       "youtube_id": "Kg4bqzAqRBM",
       "url": null,
@@ -33,7 +33,7 @@
     },
     {
       "id": "sample-6006-l04",
-      "title": "Sample \u2014 MIT 6.006 Lecture 4: Heaps and Heap Sort",
+      "title": "Sample — MIT 6.006 Lecture 4: Heaps and Heap Sort",
       "source": "youtube",
       "youtube_id": "B7hVxCmfPtM",
       "url": null,
@@ -43,7 +43,7 @@
     },
     {
       "id": "sample-6006-l05",
-      "title": "Sample \u2014 MIT 6.006 Lecture 5: Binary Search Trees, BST Sort",
+      "title": "Sample — MIT 6.006 Lecture 5: Binary Search Trees, BST Sort",
       "source": "youtube",
       "youtube_id": "9Jry5-82I68",
       "url": null,
@@ -53,7 +53,7 @@
     },
     {
       "id": "sample-6006-l06",
-      "title": "Sample \u2014 MIT 6.006 Lecture 6: AVL Trees, AVL Sort",
+      "title": "Sample — MIT 6.006 Lecture 6: AVL Trees, AVL Sort",
       "source": "youtube",
       "youtube_id": "FNeL18KsWPc",
       "url": null,
@@ -63,7 +63,7 @@
     },
     {
       "id": "sample-6006-l07",
-      "title": "Sample \u2014 MIT 6.006 Lecture 7: Counting Sort, Radix Sort, Lower Bounds for Sorting",
+      "title": "Sample — MIT 6.006 Lecture 7: Counting Sort, Radix Sort, Lower Bounds for Sorting",
       "source": "youtube",
       "youtube_id": "Nz1KZXbghj8",
       "url": null,
@@ -73,7 +73,7 @@
     },
     {
       "id": "sample-6006-l08",
-      "title": "Sample \u2014 MIT 6.006 Lecture 8: Hashing with Chaining",
+      "title": "Sample — MIT 6.006 Lecture 8: Hashing with Chaining",
       "source": "youtube",
       "youtube_id": "0M_kIqhwbFo",
       "url": null,
@@ -83,7 +83,7 @@
     },
     {
       "id": "sample-6006-l09",
-      "title": "Sample \u2014 MIT 6.006 Lecture 9: Table Doubling, Karp-Rabin",
+      "title": "Sample — MIT 6.006 Lecture 9: Table Doubling, Karp-Rabin",
       "source": "youtube",
       "youtube_id": "BRO7mVIFt08",
       "url": null,
@@ -93,7 +93,7 @@
     },
     {
       "id": "sample-6006-l10",
-      "title": "Sample \u2014 MIT 6.006 Lecture 10: Open Addressing, Cryptographic Hashing",
+      "title": "Sample — MIT 6.006 Lecture 10: Open Addressing, Cryptographic Hashing",
       "source": "youtube",
       "youtube_id": "rvdJDijO2Ro",
       "url": null,
@@ -103,7 +103,7 @@
     },
     {
       "id": "sample-6006-l11",
-      "title": "Sample \u2014 MIT 6.006 Lecture 11: Integer Arithmetic, Karatsuba Multiplication",
+      "title": "Sample — MIT 6.006 Lecture 11: Integer Arithmetic, Karatsuba Multiplication",
       "source": "youtube",
       "youtube_id": "eCaXlAaN2uE",
       "url": null,
@@ -113,7 +113,7 @@
     },
     {
       "id": "sample-6006-l12",
-      "title": "Sample \u2014 MIT 6.006 Lecture 12: Square Roots, Newton's Method",
+      "title": "Sample — MIT 6.006 Lecture 12: Square Roots, Newton's Method",
       "source": "youtube",
       "youtube_id": "2YeJ-5UAke8",
       "url": null,
@@ -123,7 +123,7 @@
     },
     {
       "id": "sample-6006-l13",
-      "title": "Sample \u2014 MIT 6.006 Lecture 13: Breadth-First Search (BFS)",
+      "title": "Sample — MIT 6.006 Lecture 13: Breadth-First Search (BFS)",
       "source": "youtube",
       "youtube_id": "s-CYnVz-uh4",
       "url": null,
@@ -133,7 +133,7 @@
     },
     {
       "id": "sample-6006-l14",
-      "title": "Sample \u2014 MIT 6.006 Lecture 14: Depth-First Search (DFS), Topological Sort",
+      "title": "Sample — MIT 6.006 Lecture 14: Depth-First Search (DFS), Topological Sort",
       "source": "youtube",
       "youtube_id": "AfSk24UTFS8",
       "url": null,
@@ -143,7 +143,7 @@
     },
     {
       "id": "sample-6006-l15",
-      "title": "Sample \u2014 MIT 6.006 Lecture 15: Single-Source Shortest Paths Problem",
+      "title": "Sample — MIT 6.006 Lecture 15: Single-Source Shortest Paths Problem",
       "source": "youtube",
       "youtube_id": "Aa2sqUhIn-E",
       "url": null,
@@ -153,7 +153,7 @@
     },
     {
       "id": "sample-6006-l16",
-      "title": "Sample \u2014 MIT 6.006 Lecture 16: Dijkstra",
+      "title": "Sample — MIT 6.006 Lecture 16: Dijkstra",
       "source": "youtube",
       "youtube_id": "2E7MmKv0Y24",
       "url": null,
@@ -163,7 +163,7 @@
     },
     {
       "id": "sample-6006-l17",
-      "title": "Sample \u2014 MIT 6.006 Lecture 17: Bellman-Ford",
+      "title": "Sample — MIT 6.006 Lecture 17: Bellman-Ford",
       "source": "youtube",
       "youtube_id": "ozsuci5pIso",
       "url": null,
@@ -173,7 +173,7 @@
     },
     {
       "id": "sample-6006-l18",
-      "title": "Sample \u2014 MIT 6.006 Lecture 18: Speeding up Dijkstra",
+      "title": "Sample — MIT 6.006 Lecture 18: Speeding up Dijkstra",
       "source": "youtube",
       "youtube_id": "CHvQ3q_gJ7E",
       "url": null,
@@ -183,7 +183,7 @@
     },
     {
       "id": "sample-6006-l19",
-      "title": "Sample \u2014 MIT 6.006 Lecture 19: Dynamic Programming I: Fibonacci, Shortest Paths",
+      "title": "Sample — MIT 6.006 Lecture 19: Dynamic Programming I: Fibonacci, Shortest Paths",
       "source": "youtube",
       "youtube_id": "OQ5jsbhAv_M",
       "url": null,
@@ -193,7 +193,7 @@
     },
     {
       "id": "sample-6006-l20",
-      "title": "Sample \u2014 MIT 6.006 Lecture 20: Dynamic Programming II: Text Justification, Blackjack",
+      "title": "Sample — MIT 6.006 Lecture 20: Dynamic Programming II: Text Justification, Blackjack",
       "source": "youtube",
       "youtube_id": "ENyox7kNKeY",
       "url": null,
@@ -203,7 +203,7 @@
     },
     {
       "id": "sample-6006-l21",
-      "title": "Sample \u2014 MIT 6.006 Lecture 21: Dynamic Programming III: Parenthesization, Edit Distance, Knapsack",
+      "title": "Sample — MIT 6.006 Lecture 21: Dynamic Programming III: Parenthesization, Edit Distance, Knapsack",
       "source": "youtube",
       "youtube_id": "ocZMDMZwhCY",
       "url": null,
@@ -213,7 +213,7 @@
     },
     {
       "id": "sample-6006-l22",
-      "title": "Sample \u2014 MIT 6.006 Lecture 22: Dynamic Programming IV: Guitar Fingering, Tetris, Super Mario Bros.",
+      "title": "Sample — MIT 6.006 Lecture 22: Dynamic Programming IV: Guitar Fingering, Tetris, Super Mario Bros.",
       "source": "youtube",
       "youtube_id": "tp4_UXaVyx8",
       "url": null,
@@ -223,7 +223,7 @@
     },
     {
       "id": "sample-6006-l23",
-      "title": "Sample \u2014 MIT 6.006 Lecture 23: Computational Complexity",
+      "title": "Sample — MIT 6.006 Lecture 23: Computational Complexity",
       "source": "youtube",
       "youtube_id": "moPtwq_cVH8",
       "url": null,
@@ -233,7 +233,7 @@
     },
     {
       "id": "sample-6006-l24",
-      "title": "Sample \u2014 MIT 6.006 Lecture 24: Topics in Algorithms Research",
+      "title": "Sample — MIT 6.006 Lecture 24: Topics in Algorithms Research",
       "source": "youtube",
       "youtube_id": "dU40AvBURDQ",
       "url": null,
@@ -243,7 +243,7 @@
     },
     {
       "id": "sample-6006-r25",
-      "title": "Sample \u2014 MIT 6.006 Recitation 1: Asymptotic Complexity, Peak Finding",
+      "title": "Sample — MIT 6.006 Recitation 1: Asymptotic Complexity, Peak Finding",
       "source": "youtube",
       "youtube_id": "P7frcB_-g4w",
       "url": null,
@@ -253,7 +253,7 @@
     },
     {
       "id": "sample-6006-r26",
-      "title": "Sample \u2014 MIT 6.006 Recitation 2: Python Cost Model, Document Distance",
+      "title": "Sample — MIT 6.006 Recitation 2: Python Cost Model, Document Distance",
       "source": "youtube",
       "youtube_id": "QFcyt8fgQMU",
       "url": null,
@@ -263,7 +263,7 @@
     },
     {
       "id": "sample-6006-r27",
-      "title": "Sample \u2014 MIT 6.006 Recitation 3: Document Distance, Insertion and Merge Sort",
+      "title": "Sample — MIT 6.006 Recitation 3: Document Distance, Insertion and Merge Sort",
       "source": "youtube",
       "youtube_id": "4iXLnF3hExw",
       "url": null,
@@ -273,7 +273,7 @@
     },
     {
       "id": "sample-6006-r28",
-      "title": "Sample \u2014 MIT 6.006 Recitation 5: Recursion Trees, Binary Search Trees",
+      "title": "Sample — MIT 6.006 Recitation 5: Recursion Trees, Binary Search Trees",
       "source": "youtube",
       "youtube_id": "r5pXu1PAUkI",
       "url": null,
@@ -283,7 +283,7 @@
     },
     {
       "id": "sample-6006-r29",
-      "title": "Sample \u2014 MIT 6.006 Recitation 6: AVL Trees",
+      "title": "Sample — MIT 6.006 Recitation 6: AVL Trees",
       "source": "youtube",
       "youtube_id": "IWzYoXKaRIc",
       "url": null,
@@ -293,7 +293,7 @@
     },
     {
       "id": "sample-6006-r30",
-      "title": "Sample \u2014 MIT 6.006 Recitation 7: Comparison Sort, Counting and Radix Sort",
+      "title": "Sample — MIT 6.006 Recitation 7: Comparison Sort, Counting and Radix Sort",
       "source": "youtube",
       "youtube_id": "9bkvws_vqLU",
       "url": null,
@@ -303,7 +303,7 @@
     },
     {
       "id": "sample-6006-r31",
-      "title": "Sample \u2014 MIT 6.006 Recitation 8: Simulation Algorithms",
+      "title": "Sample — MIT 6.006 Recitation 8: Simulation Algorithms",
       "source": "youtube",
       "youtube_id": "eGSXsaJ-BlY",
       "url": null,
@@ -313,7 +313,7 @@
     },
     {
       "id": "sample-6006-r32",
-      "title": "Sample \u2014 MIT 6.006 Recitation 9: Rolling Hashes, Amortized Analysis",
+      "title": "Sample — MIT 6.006 Recitation 9: Rolling Hashes, Amortized Analysis",
       "source": "youtube",
       "youtube_id": "w6nuXg0BISo",
       "url": null,
@@ -323,7 +323,7 @@
     },
     {
       "id": "sample-6006-r33",
-      "title": "Sample \u2014 MIT 6.006 Recitation 9b: DNA Sequence Matching",
+      "title": "Sample — MIT 6.006 Recitation 9b: DNA Sequence Matching",
       "source": "youtube",
       "youtube_id": "-DwGrJ8JxDc",
       "url": null,
@@ -333,7 +333,7 @@
     },
     {
       "id": "sample-6006-r34",
-      "title": "Sample \u2014 MIT 6.006 Recitation 10: Quiz 1 Review",
+      "title": "Sample — MIT 6.006 Recitation 10: Quiz 1 Review",
       "source": "youtube",
       "youtube_id": "-FElVPKykgw",
       "url": null,
@@ -343,7 +343,7 @@
     },
     {
       "id": "sample-6006-r35",
-      "title": "Sample \u2014 MIT 6.006 Recitation 11: Principles of Algorithm Design",
+      "title": "Sample — MIT 6.006 Recitation 11: Principles of Algorithm Design",
       "source": "youtube",
       "youtube_id": "a_otxyu0mSQ",
       "url": null,
@@ -353,7 +353,7 @@
     },
     {
       "id": "sample-6006-r36",
-      "title": "Sample \u2014 MIT 6.006 Recitation 12: Karatsuba Multiplication, Newton's Method",
+      "title": "Sample — MIT 6.006 Recitation 12: Karatsuba Multiplication, Newton's Method",
       "source": "youtube",
       "youtube_id": "JRgIXyEPnbA",
       "url": null,
@@ -363,7 +363,7 @@
     },
     {
       "id": "sample-6006-r37",
-      "title": "Sample \u2014 MIT 6.006 Recitation 13: Breadth-First Search (BFS)",
+      "title": "Sample — MIT 6.006 Recitation 13: Breadth-First Search (BFS)",
       "source": "youtube",
       "youtube_id": "5JxShDZ_ylo",
       "url": null,
@@ -373,7 +373,7 @@
     },
     {
       "id": "sample-6006-r38",
-      "title": "Sample \u2014 MIT 6.006 Recitation 14: Depth-First Search (DFS)",
+      "title": "Sample — MIT 6.006 Recitation 14: Depth-First Search (DFS)",
       "source": "youtube",
       "youtube_id": "C5SPsY72_CM",
       "url": null,
@@ -383,7 +383,7 @@
     },
     {
       "id": "sample-6006-r39",
-      "title": "Sample \u2014 MIT 6.006 R15. Shortest Paths",
+      "title": "Sample — MIT 6.006 R15. Shortest Paths",
       "source": "youtube",
       "youtube_id": "mQSp6VmfakA",
       "url": null,
@@ -393,7 +393,7 @@
     },
     {
       "id": "sample-6006-r40",
-      "title": "Sample \u2014 MIT 6.006 Recitation 16: Rubik's Cube, StarCraft Zero",
+      "title": "Sample — MIT 6.006 Recitation 16: Rubik's Cube, StarCraft Zero",
       "source": "youtube",
       "youtube_id": "oRpERQA4Vik",
       "url": null,
@@ -403,7 +403,7 @@
     },
     {
       "id": "sample-6006-r41",
-      "title": "Sample \u2014 MIT 6.006 Recitation 18: Quiz 2 Review",
+      "title": "Sample — MIT 6.006 Recitation 18: Quiz 2 Review",
       "source": "youtube",
       "youtube_id": "sPuazUPiV1k",
       "url": null,
@@ -413,7 +413,7 @@
     },
     {
       "id": "sample-6006-r42",
-      "title": "Sample \u2014 MIT 6.006 Recitation 19: Dynamic Programming: Crazy Eights, Shortest Path",
+      "title": "Sample — MIT 6.006 Recitation 19: Dynamic Programming: Crazy Eights, Shortest Path",
       "source": "youtube",
       "youtube_id": "IFrvgSvZA0I",
       "url": null,
@@ -423,7 +423,7 @@
     },
     {
       "id": "sample-6006-r43",
-      "title": "Sample \u2014 MIT 6.006 Recitation 20: Dynamic Programming: Blackjack",
+      "title": "Sample — MIT 6.006 Recitation 20: Dynamic Programming: Blackjack",
       "source": "youtube",
       "youtube_id": "jZbkToeNK2g",
       "url": null,
@@ -433,7 +433,7 @@
     },
     {
       "id": "sample-6006-r44",
-      "title": "Sample \u2014 MIT 6.006 Recitation 22: Dynamic Programming: Dance Dance Revolution",
+      "title": "Sample — MIT 6.006 Recitation 22: Dynamic Programming: Dance Dance Revolution",
       "source": "youtube",
       "youtube_id": "PptQgy89cN8",
       "url": null,
@@ -443,7 +443,7 @@
     },
     {
       "id": "sample-6006-r45",
-      "title": "Sample \u2014 MIT 6.006 Recitation 21: Dynamic Programming: Knapsack Problem",
+      "title": "Sample — MIT 6.006 Recitation 21: Dynamic Programming: Knapsack Problem",
       "source": "youtube",
       "youtube_id": "wFP5VHGHFdk",
       "url": null,
@@ -453,7 +453,7 @@
     },
     {
       "id": "sample-6006-r46",
-      "title": "Sample \u2014 MIT 6.006 Recitation 23: Computational Complexity",
+      "title": "Sample — MIT 6.006 Recitation 23: Computational Complexity",
       "source": "youtube",
       "youtube_id": "t5Wxk96QjUk",
       "url": null,
@@ -463,13 +463,33 @@
     },
     {
       "id": "sample-6006-r47",
-      "title": "Sample \u2014 MIT 6.006 Recitation 24: Final Exam Review",
+      "title": "Sample — MIT 6.006 Recitation 24: Final Exam Review",
       "source": "youtube",
       "youtube_id": "hkAONP0aC9w",
       "url": null,
       "duration": 3103.14,
       "lang": "en",
       "week": 12
+    },
+    {
+      "id": "yt-JWlblDS7WS8",
+      "title": "Episode - 1 Complete Placement Preparation Course in Tamil | Skills to get a job in IT Email Writing",
+      "source": "youtube",
+      "youtube_id": "JWlblDS7WS8",
+      "url": null,
+      "duration": 1022.62,
+      "lang": "ta",
+      "week": null
+    },
+    {
+      "id": "yt-dm4CwgzvKPQ",
+      "title": "Episode - 2 Complete Placement Preparation Course in Tamil | Skills to get a job in IT Email Writing",
+      "source": "youtube",
+      "youtube_id": "dm4CwgzvKPQ",
+      "url": null,
+      "duration": 1940.92,
+      "lang": "ta",
+      "week": null
     }
   ]
 }

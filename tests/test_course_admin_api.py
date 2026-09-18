@@ -53,6 +53,7 @@ ADMIN_ROUTES = [
     ("PATCH", "/admin/course/lessons/whatever", {"title": "X"}),
     ("DELETE", "/admin/course/lessons/whatever", None),
     ("POST", "/admin/course/lessons/whatever/video", {"video_id": None}),
+    ("POST", "/admin/course/videos/whatever/retry_ingest", None),
     ("POST", "/admin/course/courses/whatever/playlist", {"url": "https://youtube.com/playlist?list=PLx"}),
     ("POST", "/admin/course/courses/whatever/playlist/sync", None),
     ("GET", "/admin/course/courses/whatever/playlist/videos", None),
@@ -132,6 +133,9 @@ def test_full_course_authoring_flow(client, admin_headers):
     assert published is not None
     assert published["id"] == course["id"]
     assert published["weeks"][0]["lessons"][0]["video_id"] is None
+    # Leave no course published: retrieval scopes itself to the published course, so one left
+    # behind here would silently change what every later test's questions can match.
+    assert client.post(f"/admin/course/courses/{course['id']}/unpublish", headers=admin_headers).status_code == 200
 
 
 def _mock_yt_extract(monkeypatch, result):

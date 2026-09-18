@@ -18,25 +18,33 @@ class SemanticCache:
         self.lock = threading.Lock()
         self.ids: list[int] = []
         self.langs: list[str] = []
+        self.video_ids: list[set[str]] = []
         self.vecs = np.zeros((0, 768), dtype=np.float32)
 
     def load(self, corpus_version: str) -> None:
-        rows = query("SELECT id, lang, embedding FROM cache WHERE corpus_version = ?", (corpus_version,))
-        ids, langs, mats = [], [], []
+        rows = query("SELECT id, lang, embedding, video_ids FROM cache WHERE corpus_version = ?", (corpus_version,))
+        ids, langs, vids, mats = [], [], [], []
         for r in rows:
             ids.append(r["id"])
             langs.append(r["lang"])
+            vids.append(set(json.loads(r["video_ids"])))
             mats.append(np.frombuffer(r["embedding"], dtype=np.float32))
         with self.lock:
-            self.ids, self.langs = ids, langs
+            self.ids, self.langs, self.video_ids = ids, langs, vids
             self.vecs = np.vstack(mats) if mats else np.zeros((0, 768), dtype=np.float32)
 
-    def lookup(self, qvec: np.ndarray, lang: str) -> dict | None:
+    def lookup(self, qvec: np.ndarray, lang: str, allowed_video_ids: set[str] | None = None) -> dict | None:
+        """`allowed_video_ids` mirrors corpus.search's scope: an entry citing any video
+        outside it is treated as a miss, not a hit — otherwise an answer grounded in a
+        sample lecture, cached before a course was published, keeps beating the right
+        one on similarity forever."""
         with self.lock:
             if self.vecs.shape[0] == 0:
                 return None
             sims = self.vecs @ qvec
             mask = np.array([l == lang for l in self.langs])
+            if allowed_video_ids is not None:
+                mask &= np.array([v <= allowed_video_ids for v in self.video_ids])
             sims = np.where(mask, sims, -1.0)
             i = int(np.argmax(sims))
             if sims[i] < settings.cache_threshold:
@@ -69,6 +77,7 @@ class SemanticCache:
         with self.lock:
             self.ids.append(cid)
             self.langs.append(lang)
+            self.video_ids.append(set(video_ids))
             self.vecs = np.vstack([self.vecs, qvec[None, :].astype(np.float32)])
 
     def evict_videos(self, video_ids: list[str]) -> int:

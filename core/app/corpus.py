@@ -115,10 +115,14 @@ class Corpus:
         return len(self.chunks)
 
     # ---- retrieval -----------------------------------------------------------
-    def search(self, qvecs: np.ndarray, queries: list[str], k: int = 6) -> list[Hit]:
+    def search(self, qvecs: np.ndarray, queries: list[str], k: int = 6, video_ids: set[str] | None = None) -> list[Hit]:
         """Hybrid: dense cosine over all query vectors (max-pooled) + BM25 over all
         query strings, fused with reciprocal rank fusion. Dense score is kept as the
-        gate signal because it is comparable across languages."""
+        gate signal because it is comparable across languages.
+
+        `video_ids` restricts results to those videos (see content.published_video_ids):
+        chunks outside it are zeroed out before ranking, so they can't win a slot, can't
+        raise the gate score, and can't cite. None = the whole corpus."""
         if not self.chunks:
             return []
         with self.lock:
@@ -131,6 +135,11 @@ class Corpus:
                         continue
                     s = self._bm25.get_scores(toks)
                     sparse = np.maximum(sparse, s.astype(np.float32))
+            allowed = None
+            if video_ids is not None:
+                allowed = np.array([c.video_id in video_ids for c in self.chunks])
+                dense = np.where(allowed, dense, -1.0)
+                sparse = np.where(allowed, sparse, 0.0)
         if sparse.max() > 0:
             sparse = sparse / sparse.max()
         d_rank = np.argsort(-dense)
@@ -141,6 +150,10 @@ class Corpus:
             rrf[i] += 1.0 / (K + r)
         for r, i in enumerate(s_rank[: k * 5]):
             rrf[i] += 0.7 / (K + r)  # dense weighted higher: it is the cross-lingual signal
+        if allowed is not None:
+            # A small scope (fewer than k*5 chunks) would otherwise let zeroed-out chunks
+            # still collect a rank position above — hard-exclude them from the final pick.
+            rrf = np.where(allowed, rrf, 0.0)
         top = np.argsort(-rrf)[:k]
         hits = [Hit(self.chunks[i], float(rrf[i]), float(dense[i]), float(sparse[i])) for i in top if rrf[i] > 0]
         # Merge adjacent chunks of the same video into one context window when they overlap.
