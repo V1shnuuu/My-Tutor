@@ -122,6 +122,10 @@ def test_ungrounded_answer_is_replaced_not_delivered(chat, fixed_query_vector, m
     assert r["replaced"] is True
     assert "Peaks are interesting in general." not in r["answer"]
     assert "—" in r["answer"] or ":" in r["answer"], "the replacement quotes the lecture"
+    # Not "llm": a discarded, replaced answer is functionally a floor answer to the student
+    # (same extractive text, same badge) and must count as one in admin analytics — otherwise
+    # a model that frequently forgets to cite looks 100% grounded in every dashboard number.
+    assert r["source"] == "floor"
 
 
 def test_ungrounded_answer_is_never_cached(caching_chat, fixed_query_vector, monkeypatch):

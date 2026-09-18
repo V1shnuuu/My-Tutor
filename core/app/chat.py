@@ -315,14 +315,22 @@ async def run_chat(student_id: str, message: str, history: list[dict], prev_lang
     lang_ok = is_refusal or detect(answer, lang).lang == lang
     if not is_refusal and has_cite and lang_ok:
         semantic_cache.store(qvec, lang, message, answer, cites, corpus.version)
-    elif not is_refusal and (not has_cite or not lang_ok):
+    replaced = False
+    if not is_refusal and (not has_cite or not lang_ok):
         # Ungrounded or wrong-language output on a gated-in question: replace with the
         # extractive answer, which is always in {lang} by construction and never cached.
         answer = extractive_answer(lang, hits, cites, FLOOR_INTRO[lang])
         yield sse({"type": "replace", "text": answer})
+        replaced = True
+    # A replaced answer is functionally a floor answer to the student (same extractive text,
+    # same "Straight from the lecture" badge) — labelling it "llm" hid every ungrounded-output
+    # rate from admin analytics and made a model that frequently forgets to cite look 100% on
+    # topic. log_event still says "chat": a real generation call was made and billed against
+    # the provider's window either way.
+    source = "refusal" if is_refusal else ("floor" if replaced else "llm")
     log_event("chat", lang, ms, student_id)
     bump_usage(student_id, messages=1, llm_calls=1)
-    yield sse({"type": "done", "answer": answer, "source": "refusal" if is_refusal else "llm", "provider": provider.id, "ms": ms})
+    yield sse({"type": "done", "answer": answer, "source": source, "provider": provider.id, "ms": ms})
 
 
 def chunk_text(text: str, n: int = 24) -> list[str]:
