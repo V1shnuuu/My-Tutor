@@ -233,7 +233,7 @@ export default function AdminDashboard({ token, onExit }: Props) {
       </section>
 
       <section className="admin-card">
-        <h2>YouTube Playlist</h2>
+        <h2>YouTube Playlist or Video</h2>
         {tree.playlist ? (
           <div className="admin-playlist-info">
             <img src={tree.playlist.thumbnail} alt="" />
@@ -241,12 +241,12 @@ export default function AdminDashboard({ token, onExit }: Props) {
               <strong>{tree.playlist.title}</strong>
               <div className="muted">{tree.playlist.channel_title} · {playlistVideos.length} video{playlistVideos.length === 1 ? "" : "s"}</div>
             </div>
-            <button className="btn" disabled={busy} onClick={() => run(() => syncPlaylist(token, tree.id))}>Sync Playlist</button>
+            <button className="btn" disabled={busy} onClick={() => run(() => syncPlaylist(token, tree.id))}>Sync</button>
             <button
               className="btn danger"
               disabled={busy}
               onClick={() => {
-                if (confirm("Disconnect this playlist? Lessons pointing at its videos go back to \"not assigned yet\" — already-transcribed videos stay usable if you reconnect the same playlist later.")) {
+                if (confirm("Disconnect this? Lessons pointing at its videos go back to \"not assigned yet\" — already-transcribed videos stay usable if you reconnect the same playlist or video later.")) {
                   void run(() => deletePlaylist(token, tree.id));
                 }
               }}
@@ -256,8 +256,13 @@ export default function AdminDashboard({ token, onExit }: Props) {
           </div>
         ) : (
           <div className="admin-row">
-            <input value={playlistUrl} onChange={(e) => setPlaylistUrl(e.target.value)} placeholder="https://www.youtube.com/playlist?list=..." onKeyDown={(e) => e.key === "Enter" && connect()} />
-            <button className="btn primary" disabled={busy || !playlistUrl.trim()} onClick={connect}>Connect Playlist</button>
+            <input
+              value={playlistUrl}
+              onChange={(e) => setPlaylistUrl(e.target.value)}
+              placeholder="Playlist (youtube.com/playlist?list=...) or a single video (youtube.com/watch?v=...)"
+              onKeyDown={(e) => e.key === "Enter" && connect()}
+            />
+            <button className="btn primary" disabled={busy || !playlistUrl.trim()} onClick={connect}>Connect</button>
           </div>
         )}
         {tree.unassigned_videos.length > 0 && (

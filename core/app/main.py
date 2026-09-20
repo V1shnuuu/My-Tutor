@@ -675,17 +675,26 @@ def _youtube_status(code: str) -> int:
     stt_local_failed (503) rather than raising one generic "something went wrong" status."""
     return {
         "invalid_playlist_url": 422,       # the admin's input, not YouTube's fault
+        "invalid_url": 422,
         "playlist_not_found": 404,
+        "video_not_found": 404,
     }.get(code, 502)                       # anything else: yt-dlp genuinely couldn't read it
 
 
 @app.post("/admin/course/courses/{course_id}/playlist")
 async def admin_connect_playlist(course_id: str, body: PlaylistIn, admin=auth.AdminUser):
+    """Accepts either a playlist URL or a single video URL — see youtube.extract_source. A
+    single video is stored and synced exactly like a one-video playlist (content.py needs no
+    separate code path), so "connect" here really means "connect a source of lessons"."""
     content.get_course(course_id)
     try:
-        playlist_id = youtube.extract_playlist_id(body.url)
-        meta = await youtube.fetch_playlist(playlist_id)
-        videos = await youtube.fetch_playlist_videos(playlist_id)
+        kind, source_id = youtube.extract_source(body.url)
+        if kind == "playlist":
+            meta = await youtube.fetch_playlist(source_id)
+            videos = await youtube.fetch_playlist_videos(source_id)
+        else:
+            meta = await youtube.fetch_video(source_id)
+            videos = await youtube.fetch_video_as_list(source_id)
     except youtube.YouTubeError as e:
         raise HTTPException(_youtube_status(e.code), e.code) from e
     if not videos:
@@ -701,7 +710,10 @@ async def admin_sync_playlist(course_id: str, admin=auth.AdminUser):
     if not playlist:
         raise HTTPException(404, "no_playlist_connected")
     try:
-        videos = await youtube.fetch_playlist_videos(playlist["youtube_playlist_id"])
+        if youtube.is_single_video_source(playlist["youtube_playlist_id"]):
+            videos = await youtube.fetch_video_as_list(youtube.strip_video_prefix(playlist["youtube_playlist_id"]))
+        else:
+            videos = await youtube.fetch_playlist_videos(playlist["youtube_playlist_id"])
     except youtube.YouTubeError as e:
         raise HTTPException(_youtube_status(e.code), e.code) from e
     sync_result = content.sync_videos(playlist["id"], videos)

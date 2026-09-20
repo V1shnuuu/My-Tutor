@@ -9,7 +9,10 @@ import asyncio
 import pytest
 import yt_dlp
 
-from app.youtube import YouTubeError, extract_playlist_id, fetch_playlist, fetch_playlist_videos
+from app.youtube import (
+    YouTubeError, extract_playlist_id, extract_source, extract_video_id, fetch_playlist,
+    fetch_playlist_videos, fetch_video, fetch_video_as_list, is_single_video_source, strip_video_prefix,
+)
 
 
 # ---------------------------------------------------------------- extract_playlist_id
@@ -129,3 +132,72 @@ def test_fetch_playlist_videos_falls_back_to_a_default_thumbnail(monkeypatch):
     })
     videos = asyncio.run(fetch_playlist_videos("PLxyz"))
     assert videos[0]["thumbnail"] == "https://i.ytimg.com/vi/vid1/hqdefault.jpg"
+
+
+# ---------------------------------------------------------------- extract_video_id / extract_source
+@pytest.mark.parametrize("text,expected", [
+    ("https://www.youtube.com/watch?v=dQw4w9WgXcQ", "dQw4w9WgXcQ"),
+    ("https://youtu.be/dQw4w9WgXcQ", "dQw4w9WgXcQ"),
+    ("https://www.youtube.com/shorts/dQw4w9WgXcQ", "dQw4w9WgXcQ"),
+    ("  dQw4w9WgXcQ  ", "dQw4w9WgXcQ"),  # stray whitespace, pasted from a chat
+])
+def test_extracts_video_id_from_every_realistic_shape(text, expected):
+    assert extract_video_id(text) == expected
+
+
+def test_extract_video_id_rejects_a_playlist_url():
+    with pytest.raises(YouTubeError):
+        extract_video_id("https://www.youtube.com/playlist?list=PLUl4u3cNGP63WbdFxL8giv4yhgdMGaZNA")
+
+
+def test_extract_source_picks_playlist_when_both_a_video_and_a_list_param_are_present():
+    # A playlist URL opened from a specific video carries both v= and list= — list= must win,
+    # since that's what the admin actually meant to connect (see youtube.py's docstring).
+    kind, source_id = extract_source("https://www.youtube.com/watch?v=abc123&list=PLxyz789")
+    assert (kind, source_id) == ("playlist", "PLxyz789")
+
+
+def test_extract_source_falls_back_to_video_when_theres_no_playlist():
+    kind, source_id = extract_source("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+    assert (kind, source_id) == ("video", "dQw4w9WgXcQ")
+
+
+def test_extract_source_rejects_real_garbage():
+    with pytest.raises(YouTubeError):
+        extract_source("this is not a url at all")
+
+
+# ---------------------------------------------------------------- reading a single video (mocked)
+def test_fetch_video_metadata_is_prefixed_so_a_later_resync_knows_its_a_video(monkeypatch):
+    _mock_extract(monkeypatch, result={
+        "title": "Lecture 1", "channel": "MIT OCW",
+        "thumbnails": [{"url": "https://img/thumb.jpg"}],
+    })
+    meta = asyncio.run(fetch_video("dQw4w9WgXcQ"))
+    assert meta == {
+        "id": "video:dQw4w9WgXcQ", "title": "Lecture 1",
+        "channel_title": "MIT OCW", "thumbnail": "https://img/thumb.jpg",
+    }
+    assert is_single_video_source(meta["id"])
+    assert strip_video_prefix(meta["id"]) == "dQw4w9WgXcQ"
+
+
+def test_fetch_video_as_list_is_a_single_item_shaped_like_a_playlist_entry(monkeypatch):
+    _mock_extract(monkeypatch, result={"title": "Lecture 1", "duration": 3202, "thumbnails": []})
+    videos = asyncio.run(fetch_video_as_list("dQw4w9WgXcQ"))
+    assert videos == [{
+        "id": "dQw4w9WgXcQ", "title": "Lecture 1",
+        "thumbnail": "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+        "position": 0, "duration_s": 3202, "published_at": None,
+    }]
+
+
+def test_fetch_video_not_found_when_extraction_returns_nothing(monkeypatch):
+    _mock_extract(monkeypatch, result=None)
+    with pytest.raises(YouTubeError) as e:
+        asyncio.run(fetch_video("doesnotexist"))
+    assert e.value.code == "video_not_found"
+
+
+def test_a_regular_playlist_id_is_not_mistaken_for_a_single_video_source():
+    assert not is_single_video_source("PLUl4u3cNGP63WbdFxL8giv4yhgdMGaZNA")

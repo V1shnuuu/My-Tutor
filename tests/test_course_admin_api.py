@@ -253,6 +253,36 @@ def test_delete_playlist_disconnects_it_and_unassigns_its_video_from_lessons(cli
     assert client.delete(f"/admin/course/courses/{course['id']}/playlist", headers=admin_headers).status_code == 404
 
 
+def test_connect_a_single_video_url_works_the_same_as_a_one_video_playlist(client, admin_headers, monkeypatch):
+    """The "Connect" box accepts a plain video URL, not just a playlist — see
+    youtube.extract_source. Stored and synced through the exact same content.py path as a
+    playlist; only the id gets a `video:` prefix so a later /sync knows to re-fetch it as a
+    single video, not try to read it as a playlist."""
+    from app import course_ingest
+    monkeypatch.setattr(course_ingest, "ingest_video_in_background", lambda *a, **k: None)
+
+    course = client.post("/admin/course/courses", json={"title": "Course"}, headers=admin_headers).json()
+    _mock_yt_extract(monkeypatch, {
+        "title": "Lecture 1: Peak Finding", "channel": "MIT OCW", "thumbnails": [], "duration": 3202,
+    })
+
+    r = client.post(f"/admin/course/courses/{course['id']}/playlist", json={
+        "url": "https://www.youtube.com/watch?v=HtSuA80QTyo",
+    }, headers=admin_headers)
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert data["playlist"]["title"] == "Lecture 1: Peak Finding"
+    assert data["sync"]["added"] == 1
+
+    tree = client.get(f"/admin/course/courses/{course['id']}", headers=admin_headers).json()
+    assert tree["unassigned_videos"][0]["youtube_video_id"] == "HtSuA80QTyo"
+
+    # Resyncing re-reads it as a single video, not a playlist — no crash, still one video.
+    r = client.post(f"/admin/course/courses/{course['id']}/playlist/sync", headers=admin_headers)
+    assert r.status_code == 200, r.text
+    assert r.json()["sync"]["total"] == 1
+
+
 def test_invalid_playlist_url_is_a_clean_422_not_a_500(client, admin_headers):
     course = client.post("/admin/course/courses", json={"title": "Course"}, headers=admin_headers).json()
     r = client.post(f"/admin/course/courses/{course['id']}/playlist", json={"url": "not a url at all"}, headers=admin_headers)
