@@ -26,3 +26,6 @@ web/blob-report/
 infra/.env
 eval/ab_results*.txt
 eval/last_report.json
+
+# Browser cookies for yt-dlp (YOUTUBE_COOKIES_FILE) — session tokens, never commit.
+cookies*.txt
