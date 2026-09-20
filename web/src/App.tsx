@@ -139,16 +139,17 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  // ---- /admin: is this signed-in account actually an admin? Only asked on that route, and
-  // purely for UX (show the dashboard vs. "not authorized") — every admin request is still
-  // independently checked server-side, so this check being skipped, stale, or spoofed changes
-  // nothing about what the account can actually do.
+  // ---- is this signed-in account actually an admin? Checked whenever signed in (not just on
+  // /admin) since the Lessons panel's "⚙ Admin" entry button needs the answer too — purely for
+  // UX either way (show the button / the dashboard vs. "not authorized"), every admin request
+  // is still independently checked server-side, so this being skipped, stale, or spoofed
+  // changes nothing about what the account can actually do.
   useEffect(() => {
-    if (!isAdminRoute || !sessionToken) { setIsCourseAdmin(null); return; }
+    if (!sessionToken) { setIsCourseAdmin(null); return; }
     let alive = true;
     amICourseAdmin(sessionToken).then((r) => { if (alive) setIsCourseAdmin(r.is_admin); }).catch(() => { if (alive) setIsCourseAdmin(false); });
     return () => { alive = false; };
-  }, [isAdminRoute, sessionToken]);
+  }, [sessionToken]);
 
   // ---- speaker wiring
   useEffect(() => { speakerStateRef.current = speakerState; }, [speakerState]);
