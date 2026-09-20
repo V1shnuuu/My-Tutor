@@ -130,6 +130,8 @@ export const connectPlaylist = (token: string, courseId: string, url: string) =>
   req<{ playlist: CoursePlaylist; sync: { added: number; updated: number; removed: string[]; total: number } }>(
     token, "POST", `/admin/course/courses/${courseId}/playlist`, { url },
   );
+export const deletePlaylist = (token: string, courseId: string) =>
+  req<{ ok: true }>(token, "DELETE", `/admin/course/courses/${courseId}/playlist`);
 export const syncPlaylist = (token: string, courseId: string) =>
   req<{ sync: { added: number; updated: number; removed: string[]; total: number } }>(
     token, "POST", `/admin/course/courses/${courseId}/playlist/sync`,

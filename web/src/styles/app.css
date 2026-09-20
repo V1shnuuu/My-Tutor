@@ -538,6 +538,7 @@ button { cursor: pointer; }
 .admin-week-actions { display: flex; gap: 2px; margin-inline-start: auto; }
 .admin-inline-title { flex: 1; border: 1px solid transparent; border-radius: 6px; padding: 4px 6px; background: none; font: inherit; }
 .admin-inline-title:hover, .admin-inline-title:focus { border-color: var(--rule); background: var(--paper); }
+.admin-course-title { font: 700 30px/1 var(--font-hand); color: var(--ink-display); min-width: 200px; }
 .admin-lesson { display: flex; align-items: center; gap: 8px; padding: 4px 0 4px 18px; }
 .admin-lesson-n { font: 500 12px/1 var(--font-mono); color: var(--ink-3); min-width: 1.4em; }
 .admin-lesson select { flex: 1; min-width: 160px; max-width: 280px; border: 1px solid var(--rule); border-radius: 6px; padding: 4px 6px; background: var(--paper); font-size: 13px; }

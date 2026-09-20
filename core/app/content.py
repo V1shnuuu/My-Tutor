@@ -192,6 +192,19 @@ def get_playlist(course_id: str) -> dict | None:
     return dict(rows[0]) if rows else None
 
 
+def delete_playlist(course_id: str) -> None:
+    """Disconnects the course's playlist. The schema's own ON DELETE CASCADE removes its
+    youtube_videos rows with it, and ON DELETE SET NULL clears any lesson that was pointing
+    at one of them back to "not assigned yet" — a real, already-supported state, not a bug.
+    A video that had already finished ingesting keeps its corpus shard on disk regardless
+    (see all_ready_videos): re-connecting the same playlist later reuses it instead of
+    re-transcribing, the same way an unpublished course's shard stays live."""
+    if not get_playlist(course_id):
+        raise HTTPException(404, "no_playlist_connected")
+    with tx() as c:
+        c.execute("DELETE FROM youtube_playlists WHERE course_id = ?", (course_id,))
+
+
 def sync_videos(playlist_id: str, fetched: list[dict]) -> dict:
     """Upserts by (playlist_id, youtube_video_id) — see db.py's schema comment for why the
     real YouTube id can't be a global key — so an existing lesson→video mapping (which points

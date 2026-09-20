@@ -708,6 +708,12 @@ async def admin_sync_playlist(course_id: str, admin=auth.AdminUser):
     return {"sync": sync_result}
 
 
+@app.delete("/admin/course/courses/{course_id}/playlist")
+def admin_delete_playlist(course_id: str, admin=auth.AdminUser):
+    content.delete_playlist(course_id)
+    return {"ok": True}
+
+
 @app.get("/admin/course/courses/{course_id}/playlist/videos")
 def admin_list_playlist_videos(course_id: str, admin=auth.AdminUser):
     """Every video in the connected playlist, assigned or not — what the per-lesson video

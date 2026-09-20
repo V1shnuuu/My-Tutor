@@ -57,6 +57,7 @@ ADMIN_ROUTES = [
     ("POST", "/admin/course/courses/whatever/playlist", {"url": "https://youtube.com/playlist?list=PLx"}),
     ("POST", "/admin/course/courses/whatever/playlist/sync", None),
     ("GET", "/admin/course/courses/whatever/playlist/videos", None),
+    ("DELETE", "/admin/course/courses/whatever/playlist", None),
     ("POST", "/admin/course/courses/whatever/syllabus/bulk", {"weeks": []}),
     ("POST", "/admin/course/syllabus/ai_parse", {"text": "Week 1\n1. Intro"}),
 ]
@@ -217,6 +218,39 @@ def test_connect_playlist_end_to_end_with_youtube_mocked(client, admin_headers, 
     assert tree["weeks"][0]["lessons"][0]["video_youtube_id"] == "HtSuA80QTyo"
     # Assigning a never-before-seen video starts ingestion in the background immediately.
     assert tree["weeks"][0]["lessons"][0]["video_ingest_status"] in ("pending", "ingesting", "ready")
+
+
+def test_delete_playlist_disconnects_it_and_unassigns_its_video_from_lessons(client, admin_headers, monkeypatch):
+    """The D in playlist CRUD: previously there was no way to disconnect a playlist at all.
+    A lesson pointing at one of its videos must fall back to "not assigned yet" — a real,
+    already-supported state — rather than the course tree dangling on a deleted row."""
+    from app import course_ingest
+
+    course = client.post("/admin/course/courses", json={"title": "Course"}, headers=admin_headers).json()
+    _mock_yt_extract(monkeypatch, {
+        "title": "A Playlist", "channel": "A Channel", "thumbnails": [],
+        "entries": [{"id": "abc123", "title": "Video 1", "duration": 100, "thumbnails": []}],
+    })
+    monkeypatch.setattr(course_ingest, "ingest_video_in_background", lambda *a, **k: None)
+    client.post(f"/admin/course/courses/{course['id']}/playlist", json={
+        "url": "https://www.youtube.com/playlist?list=PLUl4u3cNGP63WbdFxL8giv4yhgdMGaZNA",
+    }, headers=admin_headers)
+
+    week = client.post(f"/admin/course/courses/{course['id']}/weeks", json={"title": "Week 1"}, headers=admin_headers).json()
+    lesson = client.post(f"/admin/course/weeks/{week['id']}/lessons", json={"title": "Lesson 1"}, headers=admin_headers).json()
+    tree = client.get(f"/admin/course/courses/{course['id']}", headers=admin_headers).json()
+    video_row_id = tree["unassigned_videos"][0]["id"]
+    client.post(f"/admin/course/lessons/{lesson['id']}/video", json={"video_id": video_row_id}, headers=admin_headers)
+
+    r = client.delete(f"/admin/course/courses/{course['id']}/playlist", headers=admin_headers)
+    assert r.status_code == 200
+
+    tree = client.get(f"/admin/course/courses/{course['id']}", headers=admin_headers).json()
+    assert tree["playlist"] is None
+    assert tree["unassigned_videos"] == []
+    assert tree["weeks"][0]["lessons"][0]["video_id"] is None, "the deleted video must clear the lesson's assignment, not dangle"
+
+    assert client.delete(f"/admin/course/courses/{course['id']}/playlist", headers=admin_headers).status_code == 404
 
 
 def test_invalid_playlist_url_is_a_clean_422_not_a_500(client, admin_headers):

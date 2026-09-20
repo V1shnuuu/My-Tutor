@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   addLesson, addWeek, aiParseSyllabus, assignVideo, bulkSyllabus, connectPlaylist, createCourse,
-  deleteCourse, deleteLesson, deleteWeek, getAdminCourse, getAnalytics, listCourses, listPlaylistVideos,
-  publishCourse, renameLesson, renameWeek, reorderLessons, reorderWeeks, retryIngest, syncPlaylist, unpublishCourse,
+  deleteCourse, deleteLesson, deletePlaylist, deleteWeek, getAdminCourse, getAnalytics, listCourses,
+  listPlaylistVideos, publishCourse, renameLesson, renameWeek, reorderLessons, reorderWeeks, retryIngest,
+  syncPlaylist, unpublishCourse, updateCourse,
   type AdminCourseTree, type Analytics, type Course, type PlaylistVideo,
 } from "../lib/course";
 import { parseSyllabus, type ParsedWeek } from "../lib/syllabus";
@@ -176,7 +177,14 @@ export default function AdminDashboard({ token, onExit }: Props) {
     <div className="admin-shell">
       <header className="admin-topbar">
         <button className="btn-ghost" onClick={() => setActiveId(null)}>← All courses</button>
-        <h1>{tree.title}</h1>
+        <input
+          className="admin-inline-title admin-course-title"
+          defaultValue={tree.title}
+          onBlur={(e) => {
+            const title = e.target.value.trim();
+            if (title && title !== tree.title) void run(() => updateCourse(token, tree.id, title, tree.description));
+          }}
+        />
         <span className={`admin-status ${tree.status}`}>{tree.status}</span>
         <div className="admin-topbar-actions">
           <a className="btn" href="/" target="_blank" rel="noreferrer">Preview Student Dashboard</a>
@@ -189,6 +197,20 @@ export default function AdminDashboard({ token, onExit }: Props) {
       {err && <div className="admin-err">{err}</div>}
 
       <section className="admin-card">
+        <h2>Course details</h2>
+        <textarea
+          className="admin-bulk"
+          rows={2}
+          defaultValue={tree.description}
+          placeholder="Optional course description — shown nowhere to students yet, but kept here for your own reference."
+          onBlur={(e) => {
+            const description = e.target.value;
+            if (description !== tree.description) void run(() => updateCourse(token, tree.id, tree.title, description));
+          }}
+        />
+      </section>
+
+      <section className="admin-card">
         <h2>YouTube Playlist</h2>
         {tree.playlist ? (
           <div className="admin-playlist-info">
@@ -198,6 +220,17 @@ export default function AdminDashboard({ token, onExit }: Props) {
               <div className="muted">{tree.playlist.channel_title} · {playlistVideos.length} video{playlistVideos.length === 1 ? "" : "s"}</div>
             </div>
             <button className="btn" disabled={busy} onClick={() => run(() => syncPlaylist(token, tree.id))}>Sync Playlist</button>
+            <button
+              className="btn danger"
+              disabled={busy}
+              onClick={() => {
+                if (confirm("Disconnect this playlist? Lessons pointing at its videos go back to \"not assigned yet\" — already-transcribed videos stay usable if you reconnect the same playlist later.")) {
+                  void run(() => deletePlaylist(token, tree.id));
+                }
+              }}
+            >
+              Disconnect
+            </button>
           </div>
         ) : (
           <div className="admin-row">
