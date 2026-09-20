@@ -93,6 +93,21 @@ browser's own id (`X-Anon-Id`, minted once client-side — see `lib/auth.ts`'s `
 Falling back to one shared id for every signed-out visitor means the first handful of
 anonymous questions each day exhaust the cap for everyone else who hasn't signed in.
 
+## 8. A provider's own outage is not the same failure as a rate limit
+
+`router.py`'s cooldown after an error is sized to the failure, not one blanket duration.
+A real 429 keeps a long (60s) cooldown — retrying sooner just burns another call against
+an already-exhausted window. A 5xx or dropped connection gets a short one (5s): this is
+the provider's own infrastructure having a bad moment (a bare 502 from Groq's Cloudflare
+front door has actually happened, mid-demo, not hypothetically), and it recovers in
+seconds on its own. Collapsing these into one long cooldown is what turned a single
+transient blip into every student seeing "Busy" for the full window — worse the fewer
+providers are actually configured (a deployment running on Groq alone has no fallback
+to fall through to while it's in cooldown). If you touch this logic, keep the three
+tiers distinct: 429 (exhausted, wait it out) vs 5xx/network (transient, retry soon) vs
+other 4xx (a config problem — bad model name, bad request — that needs a human, not a
+timer, but shouldn't lock the provider out as long as a real rate limit either).
+
 ## Commands
 
 ```
