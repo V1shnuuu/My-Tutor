@@ -453,12 +453,6 @@ export default function App() {
           {theme === "dark" ? "🌙" : "☀️"}
         </button>
       </span>
-      {/* Only the one allowlisted admin account ever sees this — isCourseAdmin comes back
-          false (or null, before the check resolves) for every other signed-in user and for
-          anonymous visitors, so no student is ever invited to click into a 403. */}
-      {isCourseAdmin && (
-        <span className="pill"><button onClick={() => { window.location.href = "/admin"; }}>⚙ Admin</button></span>
-      )}
       {user ? (
         <span className="pill account" title={user.email}>
           {user.picture
@@ -565,7 +559,7 @@ export default function App() {
         <Chat lang={lang} messages={messages} live={live} streaming={streaming} speakingSentence={speakingSentence} transcript={transcript} listening={listening} sttMode={sttMode} onSend={send} onMic={mic} onStop={stopMic} onJump={jump} />
       </section>
       <section className="panel panel-curriculum" aria-label={t("curriculum", lang)}>
-        <Curriculum videos={videos} activeId={activeVideo} lang={lang} onPick={setActiveVideo} onJump={jump} />
+        <Curriculum videos={videos} activeId={activeVideo} lang={lang} onPick={setActiveVideo} onJump={jump} isCourseAdmin={!!isCourseAdmin} />
       </section>
       {sessionToken && (
         <Sessions

@@ -74,6 +74,29 @@ def test_every_admin_route_rejects_a_signed_in_non_admin(client, method, path, b
     assert r.status_code == 403, f"{method} {path} should 403 for a non-admin, got {r.status_code}: {r.text}"
 
 
+def test_admin_emails_supports_more_than_one_admin(client, settings):
+    """ADMIN_EMAILS is a comma-separated allowlist, not a single value — two real people
+    (e.g. an instructor and a TA) can both administer the same course, and neither one's
+    presence weakens the check for anyone not on the list."""
+    before = settings.admin_emails
+    settings.admin_emails = "admin-one@example.com, admin-two@example.com"
+    try:
+        auth.upsert_user("admin-one@example.com", "One", "")
+        auth.upsert_user("admin-two@example.com", "Two", "")
+        auth.upsert_user("outsider@example.com", "Outsider", "")
+        h1 = {"authorization": f"Bearer {auth.issue_user_token('admin-one@example.com')}"}
+        h2 = {"authorization": f"Bearer {auth.issue_user_token('admin-two@example.com')}"}
+        h3 = {"authorization": f"Bearer {auth.issue_user_token('outsider@example.com')}"}
+        assert client.get("/admin/course/is_admin", headers=h1).json() == {"is_admin": True}
+        assert client.get("/admin/course/is_admin", headers=h2).json() == {"is_admin": True}
+        assert client.get("/admin/course/is_admin", headers=h3).json() == {"is_admin": False}
+        assert client.get("/admin/course/courses", headers=h1).status_code == 200
+        assert client.get("/admin/course/courses", headers=h2).status_code == 200
+        assert client.get("/admin/course/courses", headers=h3).status_code == 403
+    finally:
+        settings.admin_emails = before
+
+
 def test_a_forged_admin_email_in_the_request_body_is_ignored(client, student_headers):
     """The frontend cannot claim a role — there is no role field to claim, and even a body
     that tries to look like one changes nothing: authorization comes only from the caller's

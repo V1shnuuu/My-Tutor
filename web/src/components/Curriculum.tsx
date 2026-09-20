@@ -8,6 +8,10 @@ interface Props {
   lang: Lang;
   onPick: (id: string) => void;
   onJump: (c: Citation) => void;
+  /** True only for a signed-in account the server has verified against ADMIN_EMAILS — false
+   * (or not passed) for every student, so the button below simply doesn't exist for them
+   * rather than existing-but-disabled. */
+  isCourseAdmin?: boolean;
 }
 
 const mins = (s: number | null) => (s ? `${Math.round(s / 60)}′` : "");
@@ -17,7 +21,7 @@ const mins = (s: number | null) => (s ? `${Math.round(s / 60)}′` : "");
  * with the one being watched marked. It is also the honest answer to "what can I ask
  * about?" — the tutor only knows what is on this list, so the list is worth showing.
  */
-export default function Curriculum({ videos, activeId, lang, onPick, onJump }: Props) {
+export default function Curriculum({ videos, activeId, lang, onPick, onJump, isCourseAdmin }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Citation[] | null>(null);
   const [searching, setSearching] = useState(false);
@@ -53,7 +57,12 @@ export default function Curriculum({ videos, activeId, lang, onPick, onJump }: P
 
   return (
     <nav className="curriculum" aria-label={t("curriculum", lang)}>
-      <h2>{t("curriculum", lang)}</h2>
+      <div className="curriculum-heading">
+        <h2>{t("curriculum", lang)}</h2>
+        {isCourseAdmin && (
+          <button className="admin-entry" onClick={() => { window.location.href = "/admin"; }}>⚙ Admin</button>
+        )}
+      </div>
       <div className="curriculum-search">
         <input
           type="search"
