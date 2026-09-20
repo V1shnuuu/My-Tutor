@@ -118,11 +118,22 @@ regardless of playlist vs. single video, regardless of which yt-dlp "player clie
 try (android/ios/tv/mweb — all tested, all blocked the same way once the IP is flagged).
 There is no client-side workaround; it's the IP being challenged, not the request shape.
 
-The fix is `YOUTUBE_COOKIES_FILE` (`core/app/config.py`): point it at a `cookies.txt`
-exported from a real signed-in browser session (e.g. the "Get cookies.txt LOCALLY"
-extension), and yt-dlp presents those cookies instead of an anonymous request. No account
-password ever touches this app — cookies are just proof-of-not-a-bot to YouTube, the same
-thing your own browser already carries. This needs `EnvironmentFile=` in the systemd unit
+The durable fix is the `bgutil-ytdlp-pot-provider` plugin (`core/requirements.txt`) plus its
+companion server, a `brainicism/bgutil-ytdlp-pot-provider` Docker container `deploy/setup.sh`
+runs bound to `127.0.0.1:4416`. It mints yt-dlp a proof-of-origin token per request, which is
+what actually satisfies the bot check — no code here calls it; yt-dlp auto-discovers the
+plugin from `site-packages/yt_dlp_plugins/` the moment it's installed. Nothing expires on a
+schedule and nobody has to export anything by hand, unlike the cookies fallback below. If
+`ingestion failed` comes back with the same `"sign in to confirm"` message, check the
+container is actually up first: `docker ps --filter name=bgutil-provider` and
+`docker logs bgutil-provider`, before assuming the token approach itself has stopped working.
+
+`YOUTUBE_COOKIES_FILE` (`core/app/config.py`) is the fallback if the provider container is
+ever down and a video needs to go through right now: point it at a `cookies.txt` exported
+from a real signed-in browser session (e.g. the "Get cookies.txt LOCALLY" extension), and
+yt-dlp presents those cookies instead. No account password ever touches this app — cookies
+are just proof-of-not-a-bot to YouTube, same as the token is. Both this and the pot-provider
+container need `EnvironmentFile=`/being reachable from the systemd unit
 (`deploy/tutor-backend.service`) to actually reach `pipeline/ingest.py`'s plain
 `os.environ.get()` calls — `core/.env` is otherwise only ever parsed by `config.py`'s
 pydantic `Settings`, which never exports it to the real process environment.

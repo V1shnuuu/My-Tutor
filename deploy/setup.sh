@@ -11,6 +11,14 @@ REPO_URL="https://github.com/V1shnuuu/My-Tutor.git"
 sudo apt-get update
 sudo apt-get install -y python3.11 python3.11-venv git ffmpeg curl
 
+# Docker, for the bgutil PO-token provider below — the only thing keeping YouTube's
+# "Sign in to confirm you're not a bot" block (see CLAUDE.md #9) off this box without a
+# browser cookie export that expires and needs re-doing by hand.
+if ! command -v docker >/dev/null; then
+  curl -fsSL https://get.docker.com | sudo sh
+  sudo usermod -aG docker "$(whoami)"
+fi
+
 sudo mkdir -p "$APP_DIR"
 sudo chown "$(whoami)":"$(whoami)" "$APP_DIR"
 if [ -d "$APP_DIR/.git" ]; then
@@ -22,6 +30,14 @@ fi
 python3.11 -m venv "$APP_DIR/venv"
 "$APP_DIR/venv/bin/pip" install --upgrade pip
 "$APP_DIR/venv/bin/pip" install -r "$APP_DIR/core/requirements.txt"
+
+# bgutil PO-token server: core/requirements.txt's bgutil-ytdlp-pot-provider is the yt-dlp-side
+# plugin (auto-discovered, no config); this container is the token-minting half it talks to on
+# 127.0.0.1:4416 — bound to localhost only, nothing external reaches it. --restart unless-stopped
+# keeps it up across reboots the same way systemd does tutor-backend, without a second unit file.
+sudo docker rm -f bgutil-provider >/dev/null 2>&1 || true
+sudo docker run --name bgutil-provider -d --init --restart unless-stopped \
+  -p 127.0.0.1:4416:4416 brainicism/bgutil-ytdlp-pot-provider
 
 if [ ! -f "$APP_DIR/core/.env" ]; then
   cp "$APP_DIR/core/.env.example" "$APP_DIR/core/.env"
@@ -75,5 +91,10 @@ Bootstrap done. Before the app is actually reachable, you still need to:
 
 6. Check it's alive:
      curl https://api.yourdomain.com/me
+
+7. Check the PO-token provider is up (fixes "Sign in to confirm you're not a bot" on
+   playlist/video connect and on real ingestion — see CLAUDE.md #9):
+     sudo docker ps --filter name=bgutil-provider
+     sudo docker logs bgutil-provider --tail 20
 ======================================================================
 EOF

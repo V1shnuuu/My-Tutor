@@ -19,6 +19,10 @@ langdetect==1.0.9
 mishkal
 piper-tts
 yt-dlp
+# Lets yt-dlp mint its own proof-of-origin token instead of relying on YOUTUBE_COOKIES_FILE —
+# see deploy/setup.sh for the companion server this talks to, and CLAUDE.md #9 for why. Just
+# installing this is enough: yt-dlp auto-discovers it as a plugin, no code here calls it.
+bgutil-ytdlp-pot-provider
 # The backend runs pipeline/ingest.py itself when an admin assigns a video (course_ingest.py),
 # so it needs the same transcription stack the offline pipeline does. faster-whisper is also
 # what core/app/stt.py's local lane imports; it was only ever installed by hand before.
