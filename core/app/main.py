@@ -314,6 +314,9 @@ class ChatIn(BaseModel):
     # Signed-in only. Given one, the turn is appended to that conversation and its prior
     # turns — read from the database, not from `history` — are what the model sees.
     conversation_id: str | None = None
+    # The corpus video the student currently has open. Narrows retrieval to that one lecture
+    # (see chat.run_chat's scope block); omitted or null keeps the whole published course.
+    video_id: str | None = None
 
 
 async def _persisted(gen, conversation_id: str, message: str, lang_hint: str | None):
@@ -364,7 +367,7 @@ async def chat(body: ChatIn, user=auth.OptionalUser, x_anon_id: str | None = Hea
     # else who hasn't signed in, which is not a fair-use cap, it's an outage waiting to happen.
     student_id = user["email"] if user else (x_anon_id or ANON_ID)
     auth.check_fair_share(student_id)
-    gen = run_chat(student_id, body.message, history, body.prev_lang, {}, body.spoken)
+    gen = run_chat(student_id, body.message, history, body.prev_lang, {}, body.spoken, body.video_id)
     if conversation_id:
         gen = _persisted(gen, conversation_id, body.message, body.prev_lang)
     return StreamingResponse(gen, media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})

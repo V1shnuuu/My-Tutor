@@ -168,13 +168,16 @@ export async function stt(token: string, blob: Blob, langHint?: Lang): Promise<{
  *
  * `anonId` (from lib/auth.ts's getAnonId) gives each signed-out browser its own daily/minute
  * budget server-side instead of one shared pool for every anonymous student — pass it
- * whenever there's no signed-in session token. */
-export async function* chat(token: string, message: string, history: { role: string; content: string }[], prevLang: Lang | null, spoken = false, signal?: AbortSignal, conversationId?: string | null, anonId?: string): AsyncGenerator<ChatEvent> {
+ * whenever there's no signed-in session token.
+ *
+ * `videoId` is the lecture the student has open: it scopes retrieval to that one video, so
+ * the answer comes from what's on screen rather than anywhere in the course. */
+export async function* chat(token: string, message: string, history: { role: string; content: string }[], prevLang: Lang | null, spoken = false, signal?: AbortSignal, conversationId?: string | null, anonId?: string, videoId?: string | null): AsyncGenerator<ChatEvent> {
   const r = await check(
     await fetch(`${API}/chat`, {
       method: "POST",
       headers: anonId ? { ...headers(token), "X-Anon-Id": anonId } : headers(token),
-      body: JSON.stringify({ message, history, prev_lang: prevLang, spoken, conversation_id: conversationId ?? null }),
+      body: JSON.stringify({ message, history, prev_lang: prevLang, spoken, conversation_id: conversationId ?? null, video_id: videoId ?? null }),
       signal,
     }),
   );

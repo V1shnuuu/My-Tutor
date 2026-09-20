@@ -263,7 +263,7 @@ export default function App() {
     const update = (patch: Partial<StoredMessage>) => setMessages((m) => { const c = [...m]; c[c.length - 1] = { ...c[c.length - 1], ...patch }; return c; });
     try {
       // Spoken answers get a much shorter register; a muted session keeps the reading length.
-      for await (const ev of chatApi(token, text, history, lang, voiceOn, undefined, convId, sessionToken ? undefined : getAnonId())) {
+      for await (const ev of chatApi(token, text, history, lang, voiceOn, undefined, convId, sessionToken ? undefined : getAnonId(), activeVideo)) {
         if (ev.type === "meta") {
           asst.lang = ev.lang; setLang(ev.lang); setPref("lang", ev.lang); update({ lang: ev.lang });
         } else if (ev.type === "status") {

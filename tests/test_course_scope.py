@@ -9,7 +9,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from app import content
+from app import chat, content
 from app.cache import SemanticCache
 from app.corpus import Chunk, Corpus
 from app.db import connect
@@ -70,6 +70,32 @@ def test_cache_skips_an_entry_citing_a_video_outside_the_scope():
     # Unscoped: the entry is a perfect similarity match, so the lookup reaches the DB read.
     # We don't need a real row for this test — a miss on the scope check must happen before.
     assert cache.lookup(vec, "en", allowed_video_ids={"yt-course"}) is None
+
+
+def test_the_open_lecture_narrows_the_scope_to_itself(monkeypatch):
+    """A student with one video open is asking about that video, not the whole course."""
+    monkeypatch.setattr(content, "published_video_ids", lambda: {"yt-a", "yt-b", "yt-c"})
+    assert chat.scope_for("yt-b") == {"yt-b"}
+
+
+def test_no_open_lecture_leaves_the_course_scope_untouched(monkeypatch):
+    monkeypatch.setattr(content, "published_video_ids", lambda: {"yt-a", "yt-b"})
+    assert chat.scope_for(None) == {"yt-a", "yt-b"}
+
+
+def test_an_unpublished_video_id_cannot_widen_the_scope(monkeypatch):
+    """The narrowing intersects the published set — it never replaces it. A client asking
+    about a video the admin hasn't published gets nothing, not that video's content."""
+    monkeypatch.setattr(content, "published_video_ids", lambda: {"yt-a"})
+    assert chat.scope_for("sample-mit") == set()
+
+
+def test_with_no_course_published_the_open_lecture_still_scopes(monkeypatch):
+    """Fresh install: the whole corpus is fair game, but having a video open still means
+    the question is about that video."""
+    monkeypatch.setattr(content, "published_video_ids", lambda: None)
+    assert chat.scope_for("sample-mit") == {"sample-mit"}
+    assert chat.scope_for(None) is None
 
 
 def test_published_video_ids_is_none_with_no_course_and_a_set_once_published(settings):

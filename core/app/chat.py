@@ -139,7 +139,25 @@ def sse(obj: dict) -> str:
     return f"data: {json.dumps(obj, ensure_ascii=False)}\n\n"
 
 
-async def run_chat(student_id: str, message: str, history: list[dict], prev_lang: str | None, budget: dict, spoken: bool = False) -> AsyncIterator[str]:
+def scope_for(video_id: str | None) -> set[str] | None:
+    """The corpus video ids an answer may be grounded in.
+
+    A student watching one lecture is asking about *that* lecture, so `video_id` (the video
+    they have open) narrows retrieval to it — a term the course uses across several videos
+    ("complexity", "الخوارزمية") is then answered from what's on screen rather than from
+    whichever video happens to score highest course-wide.
+
+    The narrowing is an intersection with the published set, never a replacement for it: an
+    id outside that set (a stale tab, a hand-rolled request) yields an empty scope and an
+    honest off-topic refusal, not a door into content the admin hasn't published. None, as
+    ever, means the whole corpus — no course published and no video open."""
+    scope = content.published_video_ids()
+    if not video_id:
+        return scope
+    return {video_id} if scope is None else scope & {video_id}
+
+
+async def run_chat(student_id: str, message: str, history: list[dict], prev_lang: str | None, budget: dict, spoken: bool = False, video_id: str | None = None) -> AsyncIterator[str]:
     t0 = time.time()
     det = detect(message, prev_lang)
     lang = det.lang
@@ -179,12 +197,12 @@ async def run_chat(student_id: str, message: str, history: list[dict], prev_lang
         return
     qvec = qvecs[0]
 
-    # ---- scope: the published course's lessons, or the whole corpus when none is published ----
+    # ---- scope: the lecture the student has open, else the published course, else all ----
     # Without this, a question matched every sample lecture ever ingested alongside the
     # course the student is actually looking at — "placement" answered from an AVL-trees
     # lecture while a placement-prep video was on screen. The Lessons list is the promise
     # of what's askable; retrieval and the cache both keep it.
-    scope = content.published_video_ids()
+    scope = scope_for(video_id)
 
     # ---- semantic cache ----
     hit = semantic_cache.lookup(qvec, lang, scope)
