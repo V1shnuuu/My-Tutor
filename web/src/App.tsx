@@ -453,6 +453,12 @@ export default function App() {
           {theme === "dark" ? "🌙" : "☀️"}
         </button>
       </span>
+      {/* Only the one allowlisted admin account ever sees this — isCourseAdmin comes back
+          false (or null, before the check resolves) for every other signed-in user and for
+          anonymous visitors, so no student is ever invited to click into a 403. */}
+      {isCourseAdmin && (
+        <span className="pill"><button onClick={() => { window.location.href = "/admin"; }}>⚙ Admin</button></span>
+      )}
       {user ? (
         <span className="pill account" title={user.email}>
           {user.picture
