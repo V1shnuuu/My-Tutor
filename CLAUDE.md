@@ -108,6 +108,25 @@ tiers distinct: 429 (exhausted, wait it out) vs 5xx/network (transient, retry so
 other 4xx (a config problem — bad model name, bad request — that needs a human, not a
 timer, but shouldn't lock the provider out as long as a real rate limit either).
 
+## 9. A cloud IP is not a browser, and YouTube eventually notices
+
+Both `core/app/youtube.py` (admin's "Connect" flow) and `pipeline/ingest.py`
+(`yt_download_audio`/`yt_auto_captions`) call yt-dlp against YouTube directly from the
+server's own IP. Cloud/datacenter IP ranges — Oracle's included — get flagged sooner or
+later: every extraction starts failing with `"Sign in to confirm you're not a bot"`,
+regardless of playlist vs. single video, regardless of which yt-dlp "player client" you
+try (android/ios/tv/mweb — all tested, all blocked the same way once the IP is flagged).
+There is no client-side workaround; it's the IP being challenged, not the request shape.
+
+The fix is `YOUTUBE_COOKIES_FILE` (`core/app/config.py`): point it at a `cookies.txt`
+exported from a real signed-in browser session (e.g. the "Get cookies.txt LOCALLY"
+extension), and yt-dlp presents those cookies instead of an anonymous request. No account
+password ever touches this app — cookies are just proof-of-not-a-bot to YouTube, the same
+thing your own browser already carries. This needs `EnvironmentFile=` in the systemd unit
+(`deploy/tutor-backend.service`) to actually reach `pipeline/ingest.py`'s plain
+`os.environ.get()` calls — `core/.env` is otherwise only ever parsed by `config.py`'s
+pydantic `Settings`, which never exports it to the real process environment.
+
 ## Commands
 
 ```

@@ -8,6 +8,12 @@ Type=simple
 # images, e.g. "ubuntu" — check with `whoami` after you SSH in).
 User=ubuntu
 WorkingDirectory=/opt/mytutor/core
+# core/.env is otherwise only ever read by config.py's pydantic Settings, which parses it
+# into a Settings object but never exports it to the process's real os.environ — invisible
+# to any plain os.environ.get() (pipeline/ingest.py's WHISPER_MODEL/WHISPER_DEVICE, its
+# YOUTUBE_COOKIES_FILE, yt-dlp's own env-based options). This line is what actually makes
+# .env values visible there too, not just inside Settings.
+EnvironmentFile=/opt/mytutor/core/.env
 ExecStart=/opt/mytutor/venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 Restart=on-failure
 RestartSec=3

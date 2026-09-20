@@ -13,6 +13,19 @@ from __future__ import annotations
 import asyncio
 import re
 
+from app.config import settings
+
+
+def _base_opts() -> dict:
+    """Shared yt-dlp options for every extraction call. `cookiefile` is omitted entirely
+    (not passed as None/"") when unset — yt-dlp treats a present-but-empty cookiefile as an
+    error, not "no cookies", so this only adds the key when there's an actual file to use."""
+    opts = {"quiet": True, "no_warnings": True, "skip_download": True}
+    if settings.youtube_cookies_file:
+        opts["cookiefile"] = settings.youtube_cookies_file
+    return opts
+
+
 _PLAYLIST_PATTERNS = [
     re.compile(r"(?:[?&]|^)list=([A-Za-z0-9_-]+)"),
     re.compile(r"^((?:PL|UU|FL|LL)[A-Za-z0-9_-]+)$"),
@@ -76,13 +89,7 @@ def _extract(playlist_id: str) -> dict:
     import yt_dlp
 
     url = f"https://www.youtube.com/playlist?list={playlist_id}"
-    opts = {
-        "quiet": True,
-        "no_warnings": True,
-        "skip_download": True,
-        "extract_flat": "in_playlist",
-        "ignoreerrors": True,
-    }
+    opts = {**_base_opts(), "extract_flat": "in_playlist", "ignoreerrors": True}
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -90,6 +97,12 @@ def _extract(playlist_id: str) -> dict:
         msg = str(e).lower()
         if "does not exist" in msg or "private" in msg or "unavailable" in msg:
             raise YouTubeError("That playlist doesn't exist, or it's private.", code="playlist_not_found") from e
+        if "sign in to confirm" in msg or "not a bot" in msg:
+            raise YouTubeError(
+                "YouTube is blocking this server's IP as a bot. Set YOUTUBE_COOKIES_FILE "
+                "to a cookies.txt exported from a real signed-in browser and restart.",
+                code="youtube_bot_check",
+            ) from e
         raise YouTubeError(f"Couldn't read that playlist: {e}", code="youtube_upstream_error") from e
     if info is None:
         raise YouTubeError("That playlist doesn't exist, or it's private.", code="playlist_not_found")
@@ -137,14 +150,19 @@ def _extract_video(video_id: str) -> dict:
     import yt_dlp
 
     url = f"https://www.youtube.com/watch?v={video_id}"
-    opts = {"quiet": True, "no_warnings": True, "skip_download": True}
     try:
-        with yt_dlp.YoutubeDL(opts) as ydl:
+        with yt_dlp.YoutubeDL(_base_opts()) as ydl:
             info = ydl.extract_info(url, download=False)
     except yt_dlp.utils.DownloadError as e:
         msg = str(e).lower()
         if "unavailable" in msg or "private" in msg or "removed" in msg:
             raise YouTubeError("That video doesn't exist, or it's private.", code="video_not_found") from e
+        if "sign in to confirm" in msg or "not a bot" in msg:
+            raise YouTubeError(
+                "YouTube is blocking this server's IP as a bot. Set YOUTUBE_COOKIES_FILE "
+                "to a cookies.txt exported from a real signed-in browser and restart.",
+                code="youtube_bot_check",
+            ) from e
         raise YouTubeError(f"Couldn't read that video: {e}", code="youtube_upstream_error") from e
     if info is None:
         raise YouTubeError("That video doesn't exist, or it's private.", code="video_not_found")

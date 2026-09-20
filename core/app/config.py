@@ -20,6 +20,14 @@ class Settings(BaseSettings):
     data_dir: Path = ROOT / "core" / "data"
     providers_file: Path = ROOT / "core" / "providers.yaml"
 
+    # YouTube import (admin playlist/video connect + pipeline/ingest.py's audio download).
+    # Empty = no cookies sent, which is fine until YouTube's bot-check starts blocking this
+    # server's IP outright ("Sign in to confirm you're not a bot" — happens to datacenter
+    # IPs, not just this one). When it does, export cookies.txt from a real signed-in browser
+    # (e.g. the "Get cookies.txt LOCALLY" extension) and point this at that file — no account
+    # password ever touches this app, cookies are just proof-of-not-a-bot to YouTube.
+    youtube_cookies_file: str = ""
+
     # Auth
     jwt_secret: str = "change-me-in-production"
     admin_token: str = "change-me-admin"
