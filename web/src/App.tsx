@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Chat, { type LiveState } from "./components/Chat";
 import Curriculum from "./components/Curriculum";
-import LiveAvatarPanel, { type LiveAvatarHandle } from "./components/LiveAvatarPanel";
+import type { LiveAvatarHandle } from "./components/LiveAvatarPanel";
 import Sessions from "./components/Sessions";
 import SignIn from "./components/SignIn";
 import VideoPlayer, { type PlayerHandle } from "./components/VideoPlayer";
@@ -24,6 +24,12 @@ const speaker = new Speaker();
 // Dynamic import, not a static one: students — the overwhelming majority of visitors — should
 // never download the admin-authoring bundle. It only loads when someone actually hits /admin.
 const AdminDashboard = lazy(() => import("./components/AdminDashboard"));
+
+// LiveAvatarPanel pulls in livekit-client (a full WebRTC SDK, ~14MB unpacked) purely to render
+// the HeyGen streaming avatar — already gated on liveAvatarOn (the server's own /me flag), so
+// this only changes *when* it downloads: on demand, not in the initial bundle every visitor
+// pays for even with the avatar off or unconfigured.
+const LiveAvatarPanel = lazy(() => import("./components/LiveAvatarPanel"));
 
 // What an anonymous visitor sends. The backend accepts it as "no user" and answers anyway —
 // signing in buys saved history, not access.
@@ -464,18 +470,20 @@ export default function App() {
   const avatar = (
     <section className="panel panel-avatar" aria-label={t("avatar_label", lang)}>
       {liveAvatarOn ? (
-        <LiveAvatarPanel
-          ref={liveAvatar}
-          token={token}
-          lang={lang}
-          label={t("avatar_label", lang)}
-          onState={(s) => {
-            setSpeakerState(s === "speaking" ? "speaking" : "idle");
-            if (s === "closed" || s === "error") onLivePaused();
-          }}
-          onReady={onLiveReady}
-          onUnavailable={onLiveUnavailable}
-        />
+        <Suspense fallback={null}>
+          <LiveAvatarPanel
+            ref={liveAvatar}
+            token={token}
+            lang={lang}
+            label={t("avatar_label", lang)}
+            onState={(s) => {
+              setSpeakerState(s === "speaking" ? "speaking" : "idle");
+              if (s === "closed" || s === "error") onLivePaused();
+            }}
+            onReady={onLiveReady}
+            onUnavailable={onLiveUnavailable}
+          />
+        </Suspense>
       ) : (
         <div className="avatar-wrap avatar-empty">
           <span className="placeholder-icon" aria-hidden="true">🧑‍🏫</span>

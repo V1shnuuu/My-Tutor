@@ -177,7 +177,15 @@ class Router:
             async with self.client.stream("POST", url, headers=headers, json=body) as r:
                 if r.status_code >= 400:
                     text = (await r.aread())[:300].decode("utf-8", "replace")
-                    provider.cooldown_until = time.time() + (60 if r.status_code == 429 else 20)
+                    # 429 (real rate limit): a long cooldown — retrying sooner just burns
+                    # another call against the same window. 5xx (the provider's own outage,
+                    # e.g. Groq returning a bare 502 from its Cloudflare front door — seen for
+                    # real, not hypothetical) recovers on its own in seconds, and with only one
+                    # or two cloud providers actually configured, a 20s cooldown here used to
+                    # lock out every student's cloud generation for the full 20s over one blip.
+                    # Any other 4xx (bad model name, bad request) needs a human fix, not a
+                    # retry — cooldown long enough to stop hammering it, short of the 429 tier.
+                    provider.cooldown_until = time.time() + (60 if r.status_code == 429 else 5 if r.status_code >= 500 else 20)
                     raise ProviderError(f"{cfg['id']} HTTP {r.status_code}: {text}")
                 async for line in r.aiter_lines():
                     if not line.startswith("data:"):
@@ -196,7 +204,9 @@ class Router:
                             yield delta
             ok = True
         except httpx.HTTPError as e:
-            provider.cooldown_until = time.time() + 20
+            # A dropped connection/timeout is the same "transient, recovers fast" class as a
+            # 5xx above — same short cooldown, for the same reason.
+            provider.cooldown_until = time.time() + 5
             raise ProviderError(f"{cfg['id']} network: {e}") from e
         finally:
             provider.inflight -= 1
