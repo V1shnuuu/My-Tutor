@@ -527,6 +527,9 @@ button { cursor: pointer; }
 .admin-provider-table th, .admin-provider-table td { text-align: start; padding: 4px 8px; border-bottom: 1px solid var(--rule); }
 .admin-unassigned { margin-top: 12px; font-size: 13px; }
 .admin-unassigned summary { cursor: pointer; color: var(--ink-2); }
+.admin-corpus-list { list-style: none; margin: 8px 0 0; padding: 0; max-height: 280px; overflow-y: auto; font-size: 13px; }
+.admin-corpus-list li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
+.admin-corpus-list .title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-unassigned ul { list-style: none; margin: 8px 0 0; padding: 0; color: var(--ink-2); }
 .admin-bulk { width: 100%; font: 500 14px/1.5 var(--font-mono); border: 1px solid var(--rule); border-radius: 8px; padding: 10px; background: var(--paper); resize: vertical; }
 .admin-preview { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { listVideos, type Video } from "../lib/api";
 import {
   addLesson, addWeek, aiParseSyllabus, assignVideo, bulkSyllabus, connectPlaylist, createCourse,
   deleteCourse, deleteLesson, deletePlaylist, deleteWeek, getAdminCourse, getAnalytics, listCourses,
@@ -36,12 +37,14 @@ export default function AdminDashboard({ token, onExit }: Props) {
   const [parsed, setParsed] = useState<ParsedWeek[] | null>(null);
   const [parsing, setParsing] = useState(false);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [corpusVideos, setCorpusVideos] = useState<Video[] | null>(null);
 
   const refreshCourses = useCallback(async () => {
     setCourses(await listCourses(token));
   }, [token]);
 
   useEffect(() => { void getAnalytics(token).then(setAnalytics).catch(() => setAnalytics(null)); }, [token]);
+  useEffect(() => { void listVideos(token).then(setCorpusVideos).catch(() => setCorpusVideos(null)); }, [token]);
 
   const refreshTree = useCallback(async (id: string) => {
     const t = await getAdminCourse(token, id);
@@ -165,6 +168,25 @@ export default function AdminDashboard({ token, onExit }: Props) {
               </table>
             )}
             <p className="muted">Speech-to-text: {analytics.stt.engine}{analytics.stt.cap ? ` (${analytics.stt.used}/${analytics.stt.cap} used today)` : ""}</p>
+          </section>
+        )}
+
+        {corpusVideos && corpusVideos.length > 0 && (
+          <section className="admin-card">
+            <h2>Ingested corpus ({corpusVideos.length})</h2>
+            <p className="muted">
+              Already transcribed and indexed, but not organized into any course's lessons — students don't see
+              this list. To turn any of it into real lessons, connect a matching playlist above and assign videos
+              to lessons; anything left here stays indexed but unused.
+            </p>
+            <ul className="admin-corpus-list">
+              {corpusVideos.map((v) => (
+                <li key={v.id}>
+                  <span className="title" dir="auto">{v.title}</span>
+                  {v.duration ? <span className="muted">{Math.round(v.duration / 60)}′</span> : null}
+                </li>
+              ))}
+            </ul>
           </section>
         )}
       </div>
