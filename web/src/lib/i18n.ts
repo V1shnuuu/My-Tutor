@@ -58,9 +58,9 @@ const S = {
   },
   curriculum: { ar: "المنهج", en: "Lessons", fr: "Leçons" },
   curriculum_empty: {
-    ar: "مفيش محاضرات لسه. شغّل add_videos.py وبعدها ingest.py.",
-    en: "No lectures indexed yet. Run add_videos.py, then ingest.py.",
-    fr: "Aucun cours indexé. Lance add_videos.py, puis ingest.py.",
+    ar: "لسه مفيش كورس متاح. تواصل مع المدرّس.",
+    en: "No course is published yet. Check back soon.",
+    fr: "Aucun cours publié pour le moment. Revenez bientôt.",
   },
   week: { ar: "أسبوع", en: "Week", fr: "Semaine" },
   search_lectures: { ar: "دوّر في كل المحاضرات…", en: "Search all lectures…", fr: "Rechercher dans tous les cours…" },

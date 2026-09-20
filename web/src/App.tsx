@@ -6,7 +6,7 @@ import Sessions from "./components/Sessions";
 import SignIn from "./components/SignIn";
 import VideoPlayer, { type PlayerHandle } from "./components/VideoPlayer";
 import {
-  ApiError, chat as chatApi, createConversation, getConversation, listVideos, me,
+  ApiError, chat as chatApi, createConversation, getConversation, me,
   type AuthInfo, type Citation, type Lang, type UserProfile, type Video,
 } from "./lib/api";
 import { getAnonId, getSessionToken, setSessionToken, signOut, type User } from "./lib/auth";
@@ -119,12 +119,13 @@ export default function App() {
         // A published, admin-authored course takes over the syllabus/player the existing
         // components already render — reshaped into the same flat Video[] shape (see
         // course.ts's courseToVideos), so Curriculum.tsx and VideoPlayer.tsx needed no
-        // changes to support it. No published course yet: the static corpus/ videos exactly
-        // as before, so a fresh install with nothing configured in the Admin Dashboard keeps
-        // working unchanged.
-        const [vs, course] = await Promise.all([listVideos(token), getPublishedCourse().catch(() => null)]);
+        // changes to support it. No published course yet: an empty lessons list, not the raw
+        // ingested corpus — that corpus can hold anything (sample/demo content, an old course
+        // being replaced), and dumping it on students unscoped is exactly the leak this course
+        // system exists to prevent (see published_video_ids in content.py).
+        const course = await getPublishedCourse().catch(() => null);
         if (!alive) return;
-        const finalVideos = course ? courseToVideos(course) : vs;
+        const finalVideos = course ? courseToVideos(course) : [];
         setVideos(finalVideos);
         // Prefer the first lesson that actually has a video over blindly picking index 0 —
         // an admin-authored course can start with unassigned lessons.
