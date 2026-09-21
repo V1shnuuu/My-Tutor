@@ -118,25 +118,86 @@ regardless of playlist vs. single video, regardless of which yt-dlp "player clie
 try (android/ios/tv/mweb — all tested, all blocked the same way once the IP is flagged).
 There is no client-side workaround; it's the IP being challenged, not the request shape.
 
-The durable fix is the `bgutil-ytdlp-pot-provider` plugin (`core/requirements.txt`) plus its
-companion server, a `brainicism/bgutil-ytdlp-pot-provider` Docker container `deploy/setup.sh`
-runs bound to `127.0.0.1:4416`. It mints yt-dlp a proof-of-origin token per request, which is
-what actually satisfies the bot check — no code here calls it; yt-dlp auto-discovers the
-plugin from `site-packages/yt_dlp_plugins/` the moment it's installed. Nothing expires on a
-schedule and nobody has to export anything by hand, unlike the cookies fallback below. If
-`ingestion failed` comes back with the same `"sign in to confirm"` message, check the
-container is actually up first: `docker ps --filter name=bgutil-provider` and
-`docker logs bgutil-provider`, before assuming the token approach itself has stopped working.
+**Confirmed the hard way, so don't re-attempt these as the fix**: neither a PO-token
+provider (`bgutil-ytdlp-pot-provider`, still installed via `core/requirements.txt` plus the
+`brainicism/bgutil-ytdlp-pot-provider` Docker container `deploy/setup.sh` runs on
+`127.0.0.1:4416`) nor `YOUTUBE_COOKIES_FILE` cleared this on Oracle. Both were deployed and
+tested live — `docker logs bgutil-provider` showed the token server healthy, the cookies file
+was verified working from a normal residential IP — and yt-dlp still returned the identical
+`"sign in to confirm"` error from the server. Forcing yt-dlp's player client
+(`android`/`web`/`tv`, working around a separate real bug where this yt-dlp version's default
+`visionos` client is broken) didn't help either. Getting the VM a **completely fresh** Oracle
+ephemeral public IP didn't help either — the replacement was blocked identically, on the
+*first* request, before this app had ever made one. That rules out "this one IP got flagged
+from our own traffic" — it's Oracle's free-tier IP pool being challenged as a class, not a
+per-IP reputation building up over time. Cookies and the PO-token provider are still wired in
+(harmless, and may matter for less-severe blocks or other hosts), but treat them as
+insufficient on their own for a host on a flagged range — don't spend time re-verifying they
+"should" work.
 
-`YOUTUBE_COOKIES_FILE` (`core/app/config.py`) is the fallback if the provider container is
-ever down and a video needs to go through right now: point it at a `cookies.txt` exported
-from a real signed-in browser session (e.g. the "Get cookies.txt LOCALLY" extension), and
-yt-dlp presents those cookies instead. No account password ever touches this app — cookies
-are just proof-of-not-a-bot to YouTube, same as the token is. Both this and the pot-provider
-container need `EnvironmentFile=`/being reachable from the systemd unit
-(`deploy/tutor-backend.service`) to actually reach `pipeline/ingest.py`'s plain
-`os.environ.get()` calls — `core/.env` is otherwise only ever parsed by `config.py`'s
-pydantic `Settings`, which never exports it to the real process environment.
+The fix that actually clears it is `YOUTUBE_PROXY` (`core/app/config.py`, wired into both
+`core/app/youtube.py` and `pipeline/ingest.py`): a residential-IP proxy
+(`http://user:pass@host:port` or `socks5://...`) that routes yt-dlp's YouTube traffic through
+a non-datacenter IP, which is the only thing that changes what YouTube sees enough to matter.
+This is a deliberate, deployment-specific exception to rule #1 ("free and quota-free") — made
+explicitly, at the deploying admin's discretion, because the alternative (a manual
+download-and-upload flow) breaks the "paste a link" UX the admin dashboard is built around.
+Don't treat this as license to add other paid dependencies elsewhere in the project.
+
+`YOUTUBE_COOKIES_FILE`/`YOUTUBE_PROXY`/the pot-provider container all need
+`EnvironmentFile=`/being reachable from the systemd unit (`deploy/tutor-backend.service`) to
+actually reach `pipeline/ingest.py`'s plain `os.environ.get()` calls — `core/.env` is
+otherwise only ever parsed by `config.py`'s pydantic `Settings`, which never exports it to the
+real process environment.
+
+Separately, now fixed but worth knowing the shape of: `deploy/setup.sh` used to
+unconditionally overwrite `/etc/caddy/Caddyfile` from the repo's placeholder-domain template
+on every run, even when a real domain (or, as deployed here, a `<dashes-ip>.sslip.io`
+free-TLS hostname) was already live in it. It never restarted Caddy itself, so an
+already-running Caddy kept serving correctly from memory right up until the next restart for
+any reason (reboot, an unattended-upgrade, a future deploy) — at which point it would have
+tried to get a cert for the literal placeholder string and taken the backend down. Live-hit
+this exact sequence deploying the fixes above. `setup.sh` now only writes `/etc/caddy/Caddyfile`
+when one doesn't already exist; if you ever hand-edit it outside that script, the same care
+still applies before anything restarts Caddy.
+
+## 10. Multiple courses can be published at once
+
+The app used to hard-assume exactly one published course system-wide — `publish_course()`
+auto-unpublished every other course, `published_course()` did `... LIMIT 1`, and the student
+frontend had no course switcher at all. An admin running several differently-themed courses
+(e.g. a physics unit and a separate film-sound unit) needs both live and independently
+answerable, not one silently un-publishing the other.
+
+Now: publishing a course only ever touches that course. `content.published_course()`,
+`published_video_ids()`, and `student_course_tree()` each take an optional `course_id` —
+given one, they scope to exactly that course (and only if it's actually published; a draft's
+id never widens a scope). Given none, they fall back to "the one published course" only when
+there's exactly one — the zero-friction path for any deployment that only ever runs a single
+course, unchanged from before. With two or more published at once and no `course_id`, the
+fallback is deliberately ambiguous (`None`/empty, never a guess) — `GET /courses` lists what's
+live, the frontend's `CoursePicker` shows it once `getPublishedCourses()` returns more than
+one, and the student's pick is threaded through `/course`, `/search`, and `/chat` as
+`course_id` from then on (remembered per-browser via `localStorage`, not trusted without
+re-checking it's still published).
+
+**Retrieval itself needed no redesign.** `chat.py`/`corpus.py` only ever dealt in a
+`set[str]` of allowed `video_id`s; the single-course assumption lived entirely in what
+produced that set. If you touch grounding/retrieval scoping, keep it that way — `course_id`
+stays a `content.py`/`main.py` concern, not something `corpus.search()` needs to know about.
+
+**Deliberately not done here, flagged for whoever picks it up next**: `GET /videos` and
+`/videos/{id}/{captions.vtt,transcript,quiz}` (`main.py`) take a bare `video_id`/`corpus_video_id`
+with **no course-membership check at all** — a pre-existing gap predating multi-course, made
+more exposed by it (a draft or unpublished course's video id can still be fetched directly by
+anyone who has it). Fixing it needs distinguishing "static `pipeline/videos.yaml` videos"
+(meant to stay always open) from "admin-course videos not currently in any published course"
+(should be gated) — don't gate these endpoints by "must belong to a published course" without
+that distinction, or you'll break the static-corpus-only deployment path.
+
+**Also deliberately not done**: per-course admin ownership. `ADMIN_EMAILS` stays one global
+allowlist — any admin can manage any course, same as before multi-course. `courses.created_by`
+is an audit field only, never checked for authorization.
 
 ## Commands
 

@@ -63,6 +63,8 @@ const S = {
     fr: "Aucun cours publié pour le moment. Revenez bientôt.",
   },
   week: { ar: "أسبوع", en: "Week", fr: "Semaine" },
+  choose_course: { ar: "اختار الكورس", en: "Choose a course", fr: "Choisissez un cours" },
+  switch_course: { ar: "غيّر الكورس", en: "Switch course", fr: "Changer de cours" },
   search_lectures: { ar: "دوّر في كل المحاضرات…", en: "Search all lectures…", fr: "Rechercher dans tous les cours…" },
   search_no_results: { ar: "مفيش نتايج", en: "No results", fr: "Aucun résultat" },
   video_unassigned: { ar: "مفيش فيديو لسه", en: "Video not assigned yet", fr: "Vidéo non assignée" },

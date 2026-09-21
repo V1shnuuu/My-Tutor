@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Chat, { type LiveState } from "./components/Chat";
+import CoursePicker from "./components/CoursePicker";
 import Curriculum from "./components/Curriculum";
 import type { LiveAvatarHandle } from "./components/LiveAvatarPanel";
 import Sessions from "./components/Sessions";
@@ -10,7 +11,7 @@ import {
   type AuthInfo, type Citation, type Lang, type UserProfile, type Video,
 } from "./lib/api";
 import { getAnonId, getSessionToken, setSessionToken, signOut, type User } from "./lib/auth";
-import { amICourseAdmin, courseToVideos, getPublishedCourse } from "./lib/course";
+import { amICourseAdmin, courseToVideos, getPublishedCourse, getPublishedCourses, type Course } from "./lib/course";
 import { downloadMarkdown, messagesToMarkdown } from "./lib/export";
 
 import { dirOf, t } from "./lib/i18n";
@@ -56,6 +57,11 @@ export default function App() {
   const [lang, setLang] = useState<Lang>((getPref("lang") as Lang) || (navigator.language.startsWith("ar") ? "ar" : navigator.language.startsWith("fr") ? "fr" : "en"));
   const [videos, setVideos] = useState<Video[]>([]);
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
+  // Every course currently published — usually one (or zero, fresh install), in which case
+  // the picker below never renders and nothing about this feels different from before. Only
+  // shown/used when it's actually more than one.
+  const [publishedCourses, setPublishedCourses] = useState<Course[]>([]);
+  const [courseId, setCourseId] = useState<string | null>(null);
   const [messages, setMessages] = useState<StoredMessage[]>([]);
   const [live, setLive] = useState<LiveState>({ stage: "idle" });
   const [streaming, setStreaming] = useState(false);
@@ -123,7 +129,23 @@ export default function App() {
         // ingested corpus — that corpus can hold anything (sample/demo content, an old course
         // being replaced), and dumping it on students unscoped is exactly the leak this course
         // system exists to prevent (see published_video_ids in content.py).
-        const course = await getPublishedCourse().catch(() => null);
+        //
+        // Zero or one published course: exactly today's behavior, no picker ever shown. Two
+        // or more: auto-resume the last course this browser picked if it's still published,
+        // otherwise leave courseId unset — the render below shows CoursePicker instead of the
+        // main app until the student chooses.
+        const courses = await getPublishedCourses().catch(() => []);
+        if (!alive) return;
+        setPublishedCourses(courses);
+        let selectedId: string | null = null;
+        if (courses.length === 1) {
+          selectedId = courses[0].id;
+        } else if (courses.length > 1) {
+          const remembered = getPref("courseId");
+          if (remembered && courses.some((c) => c.id === remembered)) selectedId = remembered;
+        }
+        setCourseId(selectedId);
+        const course = selectedId ? await getPublishedCourse(selectedId).catch(() => null) : null;
         if (!alive) return;
         const finalVideos = course ? courseToVideos(course) : [];
         setVideos(finalVideos);
@@ -151,6 +173,19 @@ export default function App() {
     amICourseAdmin(sessionToken).then((r) => { if (alive) setIsCourseAdmin(r.is_admin); }).catch(() => { if (alive) setIsCourseAdmin(false); });
     return () => { alive = false; };
   }, [sessionToken]);
+
+  // ---- easter egg: type "vishnu" anywhere on the page. Not tied to any input field — this
+  // is a hidden signature, not a feature, so it shouldn't interfere with typing a question.
+  useEffect(() => {
+    let buf = "";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.length !== 1) return;
+      buf = (buf + e.key.toLowerCase()).slice(-6);
+      if (buf === "vishnu") setToast("Built by B Vishnu Priyan ✨");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   // ---- speaker wiring
   useEffect(() => { speakerStateRef.current = speakerState; }, [speakerState]);
@@ -263,7 +298,7 @@ export default function App() {
     const update = (patch: Partial<StoredMessage>) => setMessages((m) => { const c = [...m]; c[c.length - 1] = { ...c[c.length - 1], ...patch }; return c; });
     try {
       // Spoken answers get a much shorter register; a muted session keeps the reading length.
-      for await (const ev of chatApi(token, text, history, lang, voiceOn, undefined, convId, sessionToken ? undefined : getAnonId(), activeVideo)) {
+      for await (const ev of chatApi(token, text, history, lang, voiceOn, undefined, convId, sessionToken ? undefined : getAnonId(), activeVideo, courseId)) {
         if (ev.type === "meta") {
           asst.lang = ev.lang; setLang(ev.lang); setPref("lang", ev.lang); update({ lang: ev.lang });
         } else if (ev.type === "status") {
@@ -303,7 +338,7 @@ export default function App() {
       // so the drawer's list is now stale.
       if (convId) setSessionsKey((k) => k + 1);
     }
-  }, [token, sessionToken, conversationId, streaming, lang, messages, ensureUnlocked]);
+  }, [token, sessionToken, conversationId, streaming, lang, messages, ensureUnlocked, activeVideo, courseId]);
 
   // ---- voice input
   const mic = useCallback(async () => {
@@ -379,6 +414,20 @@ export default function App() {
     setMessages([{ role: "assistant", content: t("welcome", lang), lang, citations: [], ts: Date.now() }]);
   }, [lang, stopSpeech]);
 
+  /** Only reachable when publishedCourses.length > 1 — picking a course loads its syllabus
+   * and starts a fresh conversation, since the previous one's history/citations belonged to
+   * a different course's content. */
+  const selectCourse = useCallback(async (id: string) => {
+    setCourseId(id);
+    setPref("courseId", id);
+    setActiveVideo(null);
+    const course = await getPublishedCourse(id).catch(() => null);
+    const finalVideos = course ? courseToVideos(course) : [];
+    setVideos(finalVideos);
+    setActiveVideo(finalVideos.find((v) => !v.unassigned)?.id || finalVideos[0]?.id || null);
+    await newChat();
+  }, [newChat]);
+
   const exportNotes = useCallback(() => {
     const real = messages.filter((m) => m.role === "user" || m.citations.length > 0 || m.content.trim());
     if (real.length === 0) return;
@@ -437,6 +486,9 @@ export default function App() {
   const topbar = (
     <div className="topbar">
       <span className="brand">📓 {t("appName", lang)}</span>
+      {publishedCourses.length > 1 && (
+        <span className="pill"><button onClick={() => setCourseId(null)}>{t("switch_course", lang)}</button></span>
+      )}
       <span className={`pill ${voiceOn ? "ok" : ""}`}><button onClick={toggleVoice}>{voiceOn ? t("voice_on", lang) : t("voice_off", lang)}</button></span>
       {voiceOn && engine === "none" && <span className="pill warn" title="No voice for this language on this device or server">{lang} voice ✗</span>}
       {voiceOn && engine === "server" && <span className="pill" title="Server voice (Piper)">🗣 piper</span>}
@@ -550,6 +602,12 @@ export default function App() {
     );
   }
 
+  // More than one course is live and this browser hasn't picked one yet (or its remembered
+  // pick was unpublished since) — nothing else can load until the student chooses.
+  if (publishedCourses.length > 1 && !courseId) {
+    return <CoursePicker courses={publishedCourses} lang={lang} onPick={selectCourse} />;
+  }
+
   return (
     <div className="app" lang={lang}>
       <div className={`top ${videoCollapsed ? "video-collapsed" : ""}`} >
@@ -561,7 +619,7 @@ export default function App() {
         <Chat lang={lang} messages={messages} live={live} streaming={streaming} speakingSentence={speakingSentence} transcript={transcript} listening={listening} sttMode={sttMode} onSend={send} onMic={mic} onStop={stopMic} onJump={jump} />
       </section>
       <section className="panel panel-curriculum" aria-label={t("curriculum", lang)}>
-        <Curriculum videos={videos} activeId={activeVideo} lang={lang} onPick={setActiveVideo} onJump={jump} isCourseAdmin={!!isCourseAdmin} />
+        <Curriculum videos={videos} activeId={activeVideo} lang={lang} onPick={setActiveVideo} onJump={jump} isCourseAdmin={!!isCourseAdmin} courseId={courseId} />
       </section>
       {sessionToken && (
         <Sessions

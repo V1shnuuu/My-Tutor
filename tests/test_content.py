@@ -17,14 +17,26 @@ def _db():
     yield
 
 
-def test_only_one_course_can_be_published_at_a_time():
+def test_multiple_courses_can_be_published_at_once():
+    """Deliberately changed behavior, not a regression: publishing used to auto-unpublish
+    every other course (the app assumed exactly one live course, system-wide). An admin
+    running several differently-themed courses simultaneously needs each independently
+    publishable — see CLAUDE.md's multi-course section. Publishing B must leave A alone."""
     a = content.create_course("admin@example.com", "Course A")
     b = content.create_course("admin@example.com", "Course B")
     content.publish_course(a["id"], True)
-    assert content.published_course()["id"] == a["id"]
     content.publish_course(b["id"], True)
-    assert content.published_course()["id"] == b["id"]
-    assert content.get_course(a["id"])["status"] == "draft"
+    assert content.get_course(a["id"])["status"] == "published"
+    assert content.get_course(b["id"])["status"] == "published"
+    published_ids = {c["id"] for c in content.list_published_courses()}
+    assert {a["id"], b["id"]} <= published_ids
+    # published_course() with no id is only unambiguous for exactly one published course —
+    # with two, it can't guess which one the caller means.
+    assert content.published_course() is None
+    assert content.published_course(a["id"])["id"] == a["id"]
+    assert content.published_course(b["id"])["id"] == b["id"]
+    content.delete_course(a["id"])
+    content.delete_course(b["id"])
 
 
 def test_weeks_and_lessons_get_sequential_positions():

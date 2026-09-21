@@ -78,8 +78,9 @@ CREATE TABLE IF NOT EXISTS conv_messages (
 CREATE INDEX IF NOT EXISTS idx_conv_messages ON conv_messages (conversation_id, id);
 
 -- Admin-authored courses: syllabus (weeks/lessons) + a connected YouTube playlist, mapped
--- lesson-by-lesson to specific videos. Deliberately one course "published" at a time — the
--- student UI has no course switcher, mirroring the single flat corpus it already renders.
+-- lesson-by-lesson to specific videos. Any number of courses can have status='published' at
+-- once (nothing here enforces otherwise — see content.py's publish_course/published_course);
+-- the student UI picks one via a course switcher shown only when more than one is live.
 CREATE TABLE IF NOT EXISTS courses (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,

@@ -12,6 +12,10 @@ interface Props {
    * (or not passed) for every student, so the button below simply doesn't exist for them
    * rather than existing-but-disabled. */
   isCourseAdmin?: boolean;
+  /** Which published course this search should stay within, when more than one is live at
+   * once — see App.tsx's course picker. Omitted (single-course deployments) searches the
+   * one published course exactly as before. */
+  courseId?: string | null;
 }
 
 const mins = (s: number | null) => (s ? `${Math.round(s / 60)}′` : "");
@@ -21,7 +25,7 @@ const mins = (s: number | null) => (s ? `${Math.round(s / 60)}′` : "");
  * with the one being watched marked. It is also the honest answer to "what can I ask
  * about?" — the tutor only knows what is on this list, so the list is worth showing.
  */
-export default function Curriculum({ videos, activeId, lang, onPick, onJump, isCourseAdmin }: Props) {
+export default function Curriculum({ videos, activeId, lang, onPick, onJump, isCourseAdmin, courseId }: Props) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Citation[] | null>(null);
   const [searching, setSearching] = useState(false);
@@ -30,7 +34,7 @@ export default function Curriculum({ videos, activeId, lang, onPick, onJump, isC
     setQuery(q);
     if (!q.trim()) { setResults(null); return; }
     setSearching(true);
-    searchLectures(q).then(setResults).finally(() => setSearching(false));
+    searchLectures(q, 10, courseId).then(setResults).finally(() => setSearching(false));
   };
 
   // Weeks when the videos declare them, otherwise one flat list. Ingest leaves `week` null

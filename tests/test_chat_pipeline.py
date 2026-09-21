@@ -54,7 +54,7 @@ def chat(loaded_corpus, monkeypatch):
     # These tests exercise the static sample corpus, i.e. the no-course-published shape.
     # Another test module leaving a course published would otherwise scope retrieval down
     # to that course's (zero) ingested lessons and turn every question into a refusal.
-    monkeypatch.setattr(mod.content, "published_video_ids", lambda: None)
+    monkeypatch.setattr(mod.content, "published_video_ids", lambda course_id=None: None)
     return mod
 
 

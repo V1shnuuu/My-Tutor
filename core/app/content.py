@@ -2,8 +2,12 @@
 the lesson-to-video mapping the student dashboard reads. Mirrors conversations.py's shape —
 plain functions, explicit ownership/scope checks, no ORM.
 
-Exactly one course is ever "published" at a time (see db.py's schema comment): the student
-dashboard has no course switcher, so `published_course()` is the one query it actually needs.
+Any number of courses can be published simultaneously — a student picks which one they're
+in (the frontend's course switcher) and every read/write here is scoped by `course_id`
+except the handful of "which published course(s)" helpers (`published_course`,
+`list_published_courses`, `published_video_ids`, `student_course_tree`), which accept an
+optional `course_id` and fall back to "the one published course" only when there's exactly
+one — the zero-friction behavior for any deployment that only ever runs one course at a time.
 """
 from __future__ import annotations
 
@@ -58,13 +62,11 @@ def update_course(course_id: str, title: str | None = None, description: str | N
 
 
 def publish_course(course_id: str, published: bool) -> dict:
+    """Publishing/unpublishing only ever touches this one course — multiple courses can be
+    published at once, each answerable independently (see published_video_ids)."""
     get_course(course_id)
     status = "published" if published else "draft"
     with tx() as c:
-        if published:
-            # One published course at a time: publishing this one un-publishes any other,
-            # rather than leaving the student dashboard to guess which of several to show.
-            c.execute("UPDATE courses SET status = 'draft' WHERE status = 'published' AND id != ?", (course_id,))
         c.execute("UPDATE courses SET status = ?, updated_at = ? WHERE id = ?", (status, int(time.time()), course_id))
     return get_course(course_id)
 
@@ -75,9 +77,24 @@ def delete_course(course_id: str) -> None:
         c.execute("DELETE FROM courses WHERE id = ?", (course_id,))  # cascades weeks/lessons/playlists/videos
 
 
-def published_course() -> dict | None:
-    rows = query("SELECT id, title, description, status, created_at, updated_at FROM courses WHERE status = 'published' LIMIT 1")
-    return dict(rows[0]) if rows else None
+def published_course(course_id: str | None = None) -> dict | None:
+    """A specific published course by id (None if it doesn't exist or isn't published — never
+    leaks a draft by id), or with no id given, the one published course IF there's exactly
+    one — ambiguous otherwise (None), since the caller must then ask the student to pick."""
+    if course_id is not None:
+        rows = query(
+            "SELECT id, title, description, status, created_at, updated_at FROM courses WHERE id = ? AND status = 'published'",
+            (course_id,),
+        )
+        return dict(rows[0]) if rows else None
+    rows = query("SELECT id, title, description, status, created_at, updated_at FROM courses WHERE status = 'published' LIMIT 2")
+    return dict(rows[0]) if len(rows) == 1 else None
+
+
+def list_published_courses() -> list[dict]:
+    """Every currently-published course, lightweight — powers the student course picker."""
+    rows = query("SELECT id, title, description FROM courses WHERE status = 'published' ORDER BY updated_at DESC")
+    return [dict(r) for r in rows]
 
 
 # ---------------------------------------------------------------- weeks
@@ -273,28 +290,38 @@ def all_ready_videos() -> list[dict]:
     return [dict(r) for r in rows]
 
 
-def published_video_ids() -> set[str] | None:
-    """The corpus video ids the Tutor is allowed to answer from right now.
-
-    None means "no course is published — the whole corpus is fair game", which is how a
-    fresh install with only the static sample lectures always behaved. Once an admin
-    publishes a course, this is exactly the set of that course's lessons whose video has
-    finished ingesting: the Lessons list tells the student "this is what you can ask about",
-    and this is what makes retrieval honour that instead of also matching every sample
-    lecture that happens to share a word with the question. An empty set (course published,
-    nothing ingested yet) is a legitimate answer — it means nothing is answerable yet, not
-    "fall back to the samples"."""
-    course = published_course()
-    if not course:
-        return None
+def _course_video_ids(course_id: str) -> set[str]:
     rows = query(
         "SELECT DISTINCT v.corpus_video_id FROM lessons l"
         " JOIN weeks w ON w.id = l.week_id"
         " JOIN youtube_videos v ON v.id = l.video_id"
         " WHERE w.course_id = ? AND v.ingest_status = 'ready' AND v.corpus_video_id IS NOT NULL",
-        (course["id"],),
+        (course_id,),
     )
     return {r["corpus_video_id"] for r in rows}
+
+
+def published_video_ids(course_id: str | None = None) -> set[str] | None:
+    """The corpus video ids the Tutor is allowed to answer from right now.
+
+    With a course_id: that course's ingested lessons only (empty set if published but
+    nothing ingested yet — a legitimate "nothing answerable yet" answer) — but only if that
+    course is actually published; a draft's id never widens the scope.
+
+    With no course_id: the union across every published course. None means "no course is
+    published at all — the whole corpus is fair game", which is how a fresh install with
+    only the static sample lectures always behaved. This is what makes retrieval honour the
+    Lessons list ("this is what you can ask about") instead of also matching every sample
+    lecture that happens to share a word with the question."""
+    if course_id is not None:
+        return _course_video_ids(course_id) if published_course(course_id) else set()
+    courses = list_published_courses()
+    if not courses:
+        return None
+    ids: set[str] = set()
+    for course in courses:
+        ids |= _course_video_ids(course["id"])
+    return ids
 
 
 def set_video_ingest_status(video_id: str, status: str, error: str | None = None, corpus_video_id: str | None = None) -> None:
@@ -334,11 +361,15 @@ def admin_course_tree(course_id: str) -> dict:
     return tree
 
 
-def student_course_tree() -> dict | None:
-    """The published course, shaped for the student dashboard: only lessons with a video that
+def student_course_tree(course_id: str | None = None) -> dict | None:
+    """A published course, shaped for the student dashboard: only lessons with a video that
     has actually finished ingesting are usable for the Tutor, but every lesson (assigned or
-    not, ingested or not) is shown — "not assigned yet" is a real state, not hidden."""
-    course = published_course()
+    not, ingested or not) is shown — "not assigned yet" is a real state, not hidden.
+
+    With no course_id, falls back to "the one published course" if there's exactly one
+    (see published_course) — the frontend only needs to pass one once it has fetched
+    list_published_courses() and there's more than one to choose from."""
+    course = published_course(course_id)
     if not course:
         return None
     return _course_tree(course["id"])

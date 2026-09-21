@@ -146,9 +146,11 @@ export async function getQuiz(videoId: string): Promise<QuizQuestion[]> {
 /** Cross-lecture search — every video's transcript, not just the one on screen. No LLM, pure
  * retrieval, so it's instant and exact. Same shape as a chat Citation (title/t/snippet/…),
  * so a result can be handed straight to the same onJump a citation click already uses. */
-export async function searchLectures(q: string, k = 10): Promise<Citation[]> {
+export async function searchLectures(q: string, k = 10, courseId?: string | null): Promise<Citation[]> {
   if (!q.trim()) return [];
-  const r = await check(await fetch(`${API}/search?${new URLSearchParams({ q, k: String(k) })}`));
+  const params = new URLSearchParams({ q, k: String(k) });
+  if (courseId) params.set("course_id", courseId);
+  const r = await check(await fetch(`${API}/search?${params}`));
   return (await r.json()).results;
 }
 
@@ -171,13 +173,16 @@ export async function stt(token: string, blob: Blob, langHint?: Lang): Promise<{
  * whenever there's no signed-in session token.
  *
  * `videoId` is the lecture the student has open: it scopes retrieval to that one video, so
- * the answer comes from what's on screen rather than anywhere in the course. */
-export async function* chat(token: string, message: string, history: { role: string; content: string }[], prevLang: Lang | null, spoken = false, signal?: AbortSignal, conversationId?: string | null, anonId?: string, videoId?: string | null): AsyncGenerator<ChatEvent> {
+ * the answer comes from what's on screen rather than anywhere in the course.
+ *
+ * `courseId` is which published course the student picked, when more than one is live at
+ * once; omitted, the server resolves it the same way /course does (see main.py). */
+export async function* chat(token: string, message: string, history: { role: string; content: string }[], prevLang: Lang | null, spoken = false, signal?: AbortSignal, conversationId?: string | null, anonId?: string, videoId?: string | null, courseId?: string | null): AsyncGenerator<ChatEvent> {
   const r = await check(
     await fetch(`${API}/chat`, {
       method: "POST",
       headers: anonId ? { ...headers(token), "X-Anon-Id": anonId } : headers(token),
-      body: JSON.stringify({ message, history, prev_lang: prevLang, spoken, conversation_id: conversationId ?? null, video_id: videoId ?? null }),
+      body: JSON.stringify({ message, history, prev_lang: prevLang, spoken, conversation_id: conversationId ?? null, video_id: videoId ?? null, course_id: courseId ?? null }),
       signal,
     }),
   );

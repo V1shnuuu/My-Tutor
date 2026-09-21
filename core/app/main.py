@@ -273,7 +273,7 @@ async def video_quiz(video_id: str):
 
 
 @app.get("/search")
-async def search(q: str = "", k: int = 10):
+async def search(q: str = "", k: int = 10, course_id: str | None = None):
     """Cross-lecture search: every video's transcript, not just the currently-playing one —
     "find every mention of X across the whole course," for exam review. Pure retrieval, no
     LLM call — free, instant, and exact (a snippet is either there or it isn't), unlike chat
@@ -289,18 +289,31 @@ async def search(q: str = "", k: int = 10):
         qvecs = await asyncio.to_thread(embed_queries, [q])
     except EmbeddingUnavailable as e:
         raise HTTPException(503, "encoder_unavailable") from e
-    # Same scope as chat: the published course's lessons, or everything when none is published.
-    hits = await asyncio.to_thread(corpus.search, qvecs, [q], k, content.published_video_ids())
+    # Same scope as chat: the given (or sole) published course's lessons, or everything when
+    # none is published.
+    hits = await asyncio.to_thread(corpus.search, qvecs, [q], k, content.published_video_ids(course_id))
     return {"results": citations_for(hits)}
 
 
+@app.get("/courses")
+def get_published_courses():
+    """Every currently-published course, lightweight — the student course picker's source.
+    No auth required, same posture as /course: which courses exist to pick from is not
+    sensitive, only their content is gated further down."""
+    return content.list_published_courses()
+
+
 @app.get("/course")
-def get_published_course():
+def get_published_course(course_id: str | None = None):
     """The admin-authored course (weeks → lessons → mapped video), or null if none is
     published yet — same no-auth-required shape as /videos, which this is meant to sit
     alongside rather than replace: a fresh install with no course published falls back to
-    the static corpus/ videos the way it always has."""
-    return content.student_course_tree()
+    the static corpus/ videos the way it always has.
+
+    With no course_id, resolves to "the" published course only when there's exactly one —
+    the zero-friction path for a single-course deployment. With two or more courses live at
+    once the frontend must fetch /courses and pass the one the student picked."""
+    return content.student_course_tree(course_id)
 
 
 # ---------------------------------------------------------------- chat
@@ -317,6 +330,10 @@ class ChatIn(BaseModel):
     # The corpus video the student currently has open. Narrows retrieval to that one lecture
     # (see chat.run_chat's scope block); omitted or null keeps the whole published course.
     video_id: str | None = None
+    # Which published course the student picked, when more than one is live at once. Omitted
+    # or null resolves to "the" published course only when there's exactly one (see
+    # content.published_course) — unchanged behavior for a single-course deployment.
+    course_id: str | None = None
 
 
 async def _persisted(gen, conversation_id: str, message: str, lang_hint: str | None):
@@ -367,7 +384,7 @@ async def chat(body: ChatIn, user=auth.OptionalUser, x_anon_id: str | None = Hea
     # else who hasn't signed in, which is not a fair-use cap, it's an outage waiting to happen.
     student_id = user["email"] if user else (x_anon_id or ANON_ID)
     auth.check_fair_share(student_id)
-    gen = run_chat(student_id, body.message, history, body.prev_lang, {}, body.spoken, body.video_id)
+    gen = run_chat(student_id, body.message, history, body.prev_lang, {}, body.spoken, body.video_id, body.course_id)
     if conversation_id:
         gen = _persisted(gen, conversation_id, body.message, body.prev_lang)
     return StreamingResponse(gen, media_type="text/event-stream", headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})

@@ -23,6 +23,8 @@ def _base_opts() -> dict:
     opts = {"quiet": True, "no_warnings": True, "skip_download": True}
     if settings.youtube_cookies_file:
         opts["cookiefile"] = settings.youtube_cookies_file
+    if settings.youtube_proxy:
+        opts["proxy"] = settings.youtube_proxy
     return opts
 
 

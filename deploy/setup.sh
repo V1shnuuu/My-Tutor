@@ -58,7 +58,15 @@ if ! command -v caddy >/dev/null; then
   sudo apt-get update
   sudo apt-get install -y caddy
 fi
-sudo cp "$APP_DIR/deploy/Caddyfile" /etc/caddy/Caddyfile
+if [ ! -f /etc/caddy/Caddyfile ]; then
+  sudo cp "$APP_DIR/deploy/Caddyfile" /etc/caddy/Caddyfile
+  echo "Created /etc/caddy/Caddyfile from the template. EDIT IT with your real domain before"
+  echo "starting caddy — see the checklist this script prints at the end."
+else
+  echo "/etc/caddy/Caddyfile already exists — leaving it as-is (this script used to"
+  echo "overwrite it with the placeholder template on every re-run, which was live-tested"
+  echo "to silently break HTTPS on the next Caddy restart; see CLAUDE.md #9)."
+fi
 
 cat <<'EOF'
 

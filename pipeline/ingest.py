@@ -82,6 +82,8 @@ def yt_download_audio(youtube_id: str, out_dir: Path) -> Path:
     # too, since it's the same yt-dlp against the same IP.
     if cookies := os.environ.get("YOUTUBE_COOKIES_FILE"):
         opts["cookiefile"] = cookies
+    if proxy := os.environ.get("YOUTUBE_PROXY"):
+        opts["proxy"] = proxy
     with yt_dlp.YoutubeDL(opts) as ydl:
         ydl.download([f"https://www.youtube.com/watch?v={youtube_id}"])
     if not target.exists():
@@ -109,6 +111,8 @@ def yt_auto_captions(youtube_id: str, lang: str, out_dir: Path) -> Path:
     }
     if cookies := os.environ.get("YOUTUBE_COOKIES_FILE"):
         opts["cookiefile"] = cookies
+    if proxy := os.environ.get("YOUTUBE_PROXY"):
+        opts["proxy"] = proxy
     with yt_dlp.YoutubeDL(opts) as ydl:
         ydl.download([f"https://www.youtube.com/watch?v={youtube_id}"])
     prefer = [out_dir / f"{youtube_id}.{lang}.vtt", out_dir / f"{youtube_id}.{lang}-orig.vtt"]

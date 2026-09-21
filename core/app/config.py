@@ -27,6 +27,13 @@ class Settings(BaseSettings):
     # (e.g. the "Get cookies.txt LOCALLY" extension) and point this at that file — no account
     # password ever touches this app, cookies are just proof-of-not-a-bot to YouTube.
     youtube_cookies_file: str = ""
+    # Datacenter/cloud IPs (confirmed on Oracle's whole free-tier ARM pool, not just one
+    # instance — a fresh IP got blocked identically to the old one) get a hard "sign in to
+    # confirm you're not a bot" wall that no cookie, PO-token, or player-client trick clears,
+    # because it's the IP's reputation being challenged, not the request. A residential proxy
+    # routes yt-dlp's YouTube traffic through a non-datacenter IP instead. Format:
+    # http://user:pass@host:port (or socks5://...). Empty = no proxy, direct connection.
+    youtube_proxy: str = ""
 
     # Auth
     jwt_secret: str = "change-me-in-production"

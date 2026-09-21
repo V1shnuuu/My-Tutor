@@ -502,6 +502,19 @@ button { cursor: pointer; }
 }
 .admin-topbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 0 16px; border-bottom: 1px solid var(--rule); margin-bottom: 18px; }
 .admin-topbar h1 { font: 700 30px/1 var(--font-hand); color: var(--ink-display); margin: 0; }
+
+/* ---------------- course picker (shown when 2+ courses are published at once) ---------------- */
+.course-picker h1 { font: 700 30px/1.1 var(--font-hand); color: var(--ink-display); margin: 0 0 18px; }
+.course-picker-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.course-picker-item {
+  display: flex; flex-direction: column; gap: 4px; width: 100%; text-align: start;
+  padding: 12px 14px; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper-2);
+  color: var(--ink-2); font: inherit; cursor: pointer;
+}
+.course-picker-item:hover { background: var(--highlighter); color: var(--highlighter-ink); }
+.course-picker-item .title { font-weight: 600; }
+.course-picker-item .desc { font-size: 13px; color: var(--ink-3); }
+.course-picker-item:hover .desc { color: inherit; opacity: .8; }
 .admin-topbar-actions { display: flex; gap: 8px; margin-inline-start: auto; flex-wrap: wrap; }
 .admin-err { background: rgba(180, 35, 24, .1); color: var(--danger); border: 1px solid var(--danger); border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; font-size: 14px; }
 .admin-card { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 18px 20px; margin-bottom: 18px; }

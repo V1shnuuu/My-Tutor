@@ -141,8 +141,21 @@ export const listPlaylistVideos = (token: string, courseId: string) =>
   req<{ videos: PlaylistVideo[] }>(token, "GET", `/admin/course/courses/${courseId}/playlist/videos`).then((r) => r.videos);
 
 // ---------------------------------------------------------------- student
-export async function getPublishedCourse(): Promise<CourseTree | null> {
-  const r = await fetch(`${API}/course`);
+/** Every currently-published course, lightweight — feeds the course picker when more than
+ * one is live at once. Empty array (not null) on failure, so callers can treat "couldn't
+ * reach the server" the same as "nothing published" without a separate branch. */
+export async function getPublishedCourses(): Promise<Course[]> {
+  const r = await fetch(`${API}/courses`);
+  if (!r.ok) return [];
+  return r.json();
+}
+
+/** With no courseId: resolves to "the" published course only if there's exactly one — the
+ * zero-friction path for a single-course deployment. With two or more live at once, callers
+ * must fetch getPublishedCourses() and pass the one the student picked. */
+export async function getPublishedCourse(courseId?: string): Promise<CourseTree | null> {
+  const qs = courseId ? `?course_id=${encodeURIComponent(courseId)}` : "";
+  const r = await fetch(`${API}/course${qs}`);
   if (!r.ok) return null;  // a failed fetch is "no course to show", not a crash — see courseToVideos
   return r.json();
 }
